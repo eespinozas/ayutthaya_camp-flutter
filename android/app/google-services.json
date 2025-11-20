@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "611359423677",
+    "project_id": "ayuthaya-camp",
+    "storage_bucket": "ayuthaya-camp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:611359423677:android:b00380b52f4c2a0fafcbd4",
+        "android_client_info": {
+          "package_name": "com.ayutthaya.ayutthaya_camp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "611359423677-kfuaab78lln0sqoqjhrj3oamtb357ka7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlLsSxyjTvm0lNUOQHZIVfCvZqjz6owgw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "611359423677-kfuaab78lln0sqoqjhrj3oamtb357ka7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
