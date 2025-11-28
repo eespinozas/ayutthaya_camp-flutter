@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(gcloud:*)",
+      "Bash(gsutil version:*)",
+      "Bash(powershell -Command \"(New-Object Net.WebClient).DownloadFile(''https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe'', ''GoogleCloudSDKInstaller.exe'')\")",
+      "Bash(flutter format:*)",
+      "Bash(flutter run:*)",
+      "Bash(where:*)",
+      "Bash(gsutil cors set:*)",
+      "Bash(gsutil cors:*)",
+      "Bash(Select-String -Pattern \"exception|error|assertion\" -Context 3,3)",
+      "Bash(Select-Object -Last 30)",
+      "Bash(firebase deploy:*)",
+      "Bash(firebase use:*)",
+      "Bash(python scripts/seed_config.py:*)",
+      "Bash(test:*)",
+      "Bash(flutter logs:*)",
+      "Bash(python scripts/update_plans_classes.py:*)",
+      "Bash(python scripts/seed_firebase.py:*)",
+      "Bash(python scripts/fix_user_classespermonth.py:*)",
+      "Bash(/proc/$PID/fd/0)",
+      "Bash(python scripts/cancel_bookings.py:*)",
+      "Bash(python scripts/check_user.py:*)",
+      "Bash(timeout /t 10)",
+      "Bash(python scripts/recreate_schedules.py:*)",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 20\")",
+      "Bash(nc localhost 12345)",
+      "Bash(flutter clean:*)",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 25\")",
+      "Bash($null)",
+      "Bash(firebase:*)",
+      "Bash(npm install)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

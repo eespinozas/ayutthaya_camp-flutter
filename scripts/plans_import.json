@@ -1,0 +1,64 @@
+{
+  "plans": {
+    "plan_novato": {
+      "name": "Plan Novato",
+      "price": 10000,
+      "durationDays": 30,
+      "description": "1 clase mensual - Ideal para probar",
+      "active": true,
+      "displayOrder": 1,
+      "createdAt": {
+        ".sv": "timestamp"
+      },
+      "updatedAt": null
+    },
+    "plan_iniciado": {
+      "name": "Plan Iniciado",
+      "price": 35000,
+      "durationDays": 30,
+      "description": "4 clases mensuales - Para empezar tu entrenamiento",
+      "active": true,
+      "displayOrder": 2,
+      "createdAt": {
+        ".sv": "timestamp"
+      },
+      "updatedAt": null
+    },
+    "plan_guerrero": {
+      "name": "Plan Guerrero",
+      "price": 45000,
+      "durationDays": 30,
+      "description": "8 clases mensuales - Entrena de forma regular",
+      "active": true,
+      "displayOrder": 3,
+      "createdAt": {
+        ".sv": "timestamp"
+      },
+      "updatedAt": null
+    },
+    "plan_nak_muay": {
+      "name": "Plan Nak Muay",
+      "price": 55000,
+      "durationDays": 30,
+      "description": "12 clases mensuales - Mejora tu técnica",
+      "active": true,
+      "displayOrder": 4,
+      "createdAt": {
+        ".sv": "timestamp"
+      },
+      "updatedAt": null
+    },
+    "plan_peleador": {
+      "name": "Plan Peleador",
+      "price": 65000,
+      "durationDays": 30,
+      "description": "Clases ilimitadas - Entrena todos los días",
+      "active": true,
+      "displayOrder": 5,
+      "createdAt": {
+        ".sv": "timestamp"
+      },
+      "updatedAt": null
+    }
+  }
+}

@@ -1,1 +1,42 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"ayuthaya-camp","appId":"1:611359423677:android:b00380b52f4c2a0fafcbd4","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"ayuthaya-camp","configurations":{"android":"1:611359423677:android:b00380b52f4c2a0fafcbd4","ios":"1:611359423677:ios:2c3bff64909754f7afcbd4","web":"1:611359423677:web:e16824168b1803b2afcbd4"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ],
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "ayuthaya-camp",
+          "appId": "1:611359423677:android:b00380b52f4c2a0fafcbd4",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "ayuthaya-camp",
+          "configurations": {
+            "android": "1:611359423677:android:b00380b52f4c2a0fafcbd4",
+            "ios": "1:611359423677:ios:2c3bff64909754f7afcbd4",
+            "web": "1:611359423677:web:e16824168b1803b2afcbd4"
+          }
+        }
+      }
+    }
+  }
+}

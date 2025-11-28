@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../core/api_client.dart';
-import '../features/auth/data/auth_api.dart';
-import '../features/auth/data/auth_repository_impl.dart';
-import '../features/auth/domain/auth_repository.dart';
 import '../features/auth/presentation/viewmodels/auth_viewmodel.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
-import '../features/dashboard/presentation/pages/main_nav_bar.dart'; // 👈 NUEVO: barra inferior
-// import '../features/shell/presentation/pages/shell_page.dart'; // ya no usamos ShellPage visualmente
-
+import '../features/dashboard/presentation/pages/main_nav_bar.dart';
+import '../features/admin/presentation/pages/admin_main_nav_bar.dart';
 import '../features/dashboard/presentation/viewmodels/dashboard_viewmodel.dart';
+import '../features/payments/viewmodels/payment_viewmodel.dart';
+import '../features/plans/viewmodels/plan_viewmodel.dart';
+import '../features/schedules/viewmodels/class_schedule_viewmodel.dart';
+import '../features/bookings/viewmodels/booking_viewmodel.dart';
 
 import 'theme.dart';
 
@@ -33,34 +31,34 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // 1) ApiClient (HTTP → tu backend)
-        Provider<ApiClient>(
-          create: (_) => ApiClient(
-            baseUrl: const String.fromEnvironment('API_BASE_URL', defaultValue: '').isNotEmpty
-                ? const String.fromEnvironment('API_BASE_URL')
-                : (dotenv.maybeGet('API_BASE_URL') ?? 'http://localhost:3000'),
-          ),
-        ),
-
-        // 2) Auth API
-        ProxyProvider<ApiClient, AuthApi>(
-          update: (_, apiClient, __) => AuthApi(apiClient),
-        ),
-
-        // 3) Auth Repository
-        ProxyProvider<AuthApi, AuthRepository>(
-          update: (_, api, __) => AuthRepositoryImpl(api: api),
-        ),
-
-        // 4) Auth ViewModel (maneja login, sesión, etc.)
+        // Auth ViewModel (Firebase Auth directo)
         ChangeNotifierProvider<AuthViewModel>(
-          create: (ctx) =>
-              AuthViewModel(ctx.read<AuthRepository>())..checkSession(),
+          create: (_) => AuthViewModel()..checkSession(),
         ),
 
-        // 5) Dashboard ViewModel
+        // Dashboard ViewModel
         ChangeNotifierProvider<DashboardViewModel>(
           create: (_) => DashboardViewModel(),
+        ),
+
+        // Payment ViewModel (Firebase directo)
+        ChangeNotifierProvider<PaymentViewModel>(
+          create: (_) => PaymentViewModel(),
+        ),
+
+        // Plan ViewModel (Firebase directo)
+        ChangeNotifierProvider<PlanViewModel>(
+          create: (_) => PlanViewModel(),
+        ),
+
+        // ClassSchedule ViewModel (Firebase directo)
+        ChangeNotifierProvider<ClassScheduleViewModel>(
+          create: (_) => ClassScheduleViewModel(),
+        ),
+
+        // Booking ViewModel (Firebase directo)
+        ChangeNotifierProvider<BookingViewModel>(
+          create: (_) => BookingViewModel(),
         ),
       ],
       child: MaterialApp(
@@ -68,6 +66,18 @@ class App extends StatelessWidget {
         title: 'Ayutthaya',
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
+
+        // Configuración de localización para español
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('es', 'ES'), // Español
+          Locale('en', 'US'), // Inglés (fallback)
+        ],
+        locale: const Locale('es', 'ES'),
 
         routes: {
           Routes.login: (_) => const LoginPage(),
@@ -98,11 +108,17 @@ class _SplashDecider extends StatelessWidget {
         }
 
         // ✅ IMPORTANTE:
-        // Si está logeado → entramos a la app con la barra inferior (MainNavBar)
+        // Si está logeado → verifica rol
+        // - Admin → AdminMainNavBar
+        // - Student → MainNavBar
         // Si NO está logeado → LoginPage
-        return vm.isLoggedIn
-            ? const MainNavBar()
-            : const LoginPage();
+        if (!vm.isLoggedIn) {
+          return const LoginPage();
+        }
+
+        return vm.isAdmin
+            ? const AdminMainNavBar()
+            : const MainNavBar();
       },
     );
   }

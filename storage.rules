@@ -1,0 +1,37 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ============================================
+    // RECEIPTS - Comprobantes de pago
+    // ============================================
+    match /receipts/{userId}/{fileName} {
+      // Permitir lectura a:
+      // 1. El usuario dueño del comprobante
+      // 2. Usuarios con rol admin
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+
+      // Permitir escritura solo al usuario dueño
+      allow write: if request.auth != null && request.auth.uid == userId &&
+        // Validar tamaño del archivo (máximo 10MB)
+        request.resource.size < 10 * 1024 * 1024 &&
+        // Validar tipo de contenido
+        (
+          request.resource.contentType.matches('image/jpeg') ||
+          request.resource.contentType.matches('image/png') ||
+          request.resource.contentType.matches('application/pdf')
+        );
+    }
+
+    // ============================================
+    // Denegar todo lo demás
+    // ============================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

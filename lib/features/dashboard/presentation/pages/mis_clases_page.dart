@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
+
+import '../../../auth/presentation/viewmodels/auth_viewmodel.dart';
+import '../../../auth/presentation/widgets/membership_guard.dart';
+import '../../../bookings/viewmodels/booking_viewmodel.dart';
+import '../../../bookings/models/booking.dart';
 
 class MisClasesPage extends StatefulWidget {
   const MisClasesPage({super.key});
@@ -23,9 +29,11 @@ class _MisClasesPageState extends State<MisClasesPage>
 
   Future<void> _initializeLocale() async {
     await initializeDateFormatting('es_ES', null);
-    setState(() {
-      _localeInitialized = true;
-    });
+    if (mounted) {
+      setState(() {
+        _localeInitialized = true;
+      });
+    }
   }
 
   @override
@@ -34,104 +42,72 @@ class _MisClasesPageState extends State<MisClasesPage>
     super.dispose();
   }
 
-  // Mock data - en producción esto vendrá de tu base de datos
-  List<Map<String, dynamic>> _getReservedClasses() {
-    // TODO: Obtener desde la base de datos/API las clases reservadas del usuario
+  String _formatTime(String time24) {
+    final parts = time24.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = parts[1];
+
+    if (hour < 12) {
+      return hour == 0 ? '12:$minute AM' : '$hour:$minute AM';
+    } else if (hour == 12) {
+      return '12:$minute PM';
+    } else {
+      return '${hour - 12}:$minute PM';
+    }
+  }
+
+  Future<void> _cancelClass(Booking booking) async {
+    // Validar que falten más de 24 horas para la clase
     final now = DateTime.now();
+    final timeParts = booking.scheduleTime.split(':');
+    final classDateTime = DateTime(
+      booking.classDate.year,
+      booking.classDate.month,
+      booking.classDate.day,
+      int.parse(timeParts[0]),
+      int.parse(timeParts[1]),
+    );
 
-    return [
-      {
-        'id': '1',
-        'name': 'Muay Thai',
-        'instructor': 'Francisco Poveda',
-        'date': now.add(const Duration(days: 1)),
-        'time': '07:00 AM',
-        'duration': 60,
-        'level': 'Todos los niveles',
-        'status': 'upcoming', // upcoming, completed, cancelled
-        'location': 'Sala Principal',
-      },
-      {
-        'id': '2',
-        'name': 'Muay Thai',
-        'instructor': 'Francisco Poveda',
-        'date': now.add(const Duration(days: 2)),
-        'time': '18:00 PM',
-        'duration': 60,
-        'level': 'Todos los niveles',
-        'status': 'upcoming',
-        'location': 'Sala Principal',
-      },
-      {
-        'id': '3',
-        'name': 'Muay Thai',
-        'instructor': 'Francisco Poveda',
-        'date': now.add(const Duration(days: 5)),
-        'time': '09:30 AM',
-        'duration': 60,
-        'level': 'Todos los niveles',
-        'status': 'upcoming',
-        'location': 'Sala Principal',
-      },
-      {
-        'id': '4',
-        'name': 'Muay Thai',
-        'instructor': 'Francisco Poveda',
-        'date': now.subtract(const Duration(days: 2)),
-        'time': '07:00 AM',
-        'duration': 60,
-        'level': 'Todos los niveles',
-        'status': 'completed',
-        'location': 'Sala Principal',
-        'attended': true,
-      },
-      {
-        'id': '5',
-        'name': 'Muay Thai',
-        'instructor': 'Francisco Poveda',
-        'date': now.subtract(const Duration(days: 5)),
-        'time': '18:00 PM',
-        'duration': 60,
-        'level': 'Todos los niveles',
-        'status': 'completed',
-        'location': 'Sala Principal',
-        'attended': true,
-      },
-      {
-        'id': '6',
-        'name': 'Muay Thai',
-        'instructor': 'Francisco Poveda',
-        'date': now.subtract(const Duration(days: 7)),
-        'time': '19:30 PM',
-        'duration': 60,
-        'level': 'Todos los niveles',
-        'status': 'completed',
-        'location': 'Sala Principal',
-        'attended': false, // Falta
-      },
-      {
-        'id': '7',
-        'name': 'Muay Thai',
-        'instructor': 'Francisco Poveda',
-        'date': now.add(const Duration(days: 10)),
-        'time': '08:00 AM',
-        'duration': 60,
-        'level': 'Todos los niveles',
-        'status': 'cancelled',
-        'location': 'Sala Principal',
-        'cancelledAt': now.subtract(const Duration(days: 1)),
-      },
-    ];
-  }
+    final hoursUntilClass = classDateTime.difference(now).inHours;
 
-  List<Map<String, dynamic>> _filterClassesByStatus(String status) {
-    return _getReservedClasses()
-        .where((classData) => classData['status'] == status)
-        .toList();
-  }
+    if (hoursUntilClass < 24) {
+      // No se puede cancelar porque faltan menos de 24 horas
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber, color: Colors.orange),
+              SizedBox(width: 8),
+              Text(
+                'No se puede cancelar',
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+          content: Text(
+            'Para cancelar una clase debes hacerlo con al menos 24 horas de anticipación.\n\n'
+            'Tu clase es el ${DateFormat('dd MMM yyyy', 'es_ES').format(booking.classDate)} '
+            'a las ${_formatTime(booking.scheduleTime)}.\n\n'
+            'Faltan ${hoursUntilClass} horas para tu clase.',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Entendido',
+                style: TextStyle(color: Colors.orangeAccent),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
 
-  void _cancelClass(Map<String, dynamic> classData) {
-    showDialog(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2A2A2A),
@@ -140,33 +116,20 @@ class _MisClasesPageState extends State<MisClasesPage>
           style: TextStyle(color: Colors.white),
         ),
         content: Text(
-          '¿Estás seguro de cancelar tu clase de ${classData['name']} del ${DateFormat('dd MMM yyyy', 'es_ES').format(classData['date'])} a las ${classData['time']}?',
+          '¿Estás seguro de cancelar tu clase de ${booking.scheduleType} del ${DateFormat('dd MMM yyyy', 'es_ES').format(booking.classDate)} a las ${_formatTime(booking.scheduleTime)}?\n\n'
+          'Faltan $hoursUntilClass horas para tu clase.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text(
               'No',
               style: TextStyle(color: Colors.white70),
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Aquí llamar a la API/BD para cancelar la reserva
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Reserva cancelada exitosamente'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-              setState(() {
-                // En producción, esto actualizaría el estado desde la BD
-                classData['status'] = 'cancelled';
-                classData['cancelledAt'] = DateTime.now();
-              });
-            },
+            onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
             ),
@@ -178,6 +141,42 @@ class _MisClasesPageState extends State<MisClasesPage>
         ],
       ),
     );
+
+    if (confirmed != true) return;
+
+    // Mostrar loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: Colors.orangeAccent),
+      ),
+    );
+
+    final bookingVM = context.read<BookingViewModel>();
+    final success = await bookingVM.cancelBooking(
+      booking.id!,
+      'Cancelado por el usuario',
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context); // Cerrar loading
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reserva cancelada exitosamente'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(bookingVM.errorMessage ?? 'Error al cancelar'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -201,7 +200,24 @@ class _MisClasesPageState extends State<MisClasesPage>
       );
     }
 
-    return Scaffold(
+    final authVM = context.watch<AuthViewModel>();
+    final user = authVM.currentUser;
+
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF1E1E1E),
+        body: const Center(
+          child: Text(
+            'Debes iniciar sesión para ver tus clases',
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
+      );
+    }
+
+    return MembershipGuard(
+      pageName: 'Mis Clases',
+      child: Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
         backgroundColor: const Color(0xFF2A2A2A),
@@ -225,70 +241,300 @@ class _MisClasesPageState extends State<MisClasesPage>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildClassList('upcoming'),
-          _buildClassList('completed'),
-          _buildClassList('cancelled'),
+          _buildBookingsList(user.uid, BookingStatus.confirmed),
+          _buildCompletedList(user.uid),
+          _buildBookingsList(user.uid, BookingStatus.cancelled),
         ],
+      ),
       ),
     );
   }
 
-  Widget _buildClassList(String status) {
-    final classes = _filterClassesByStatus(status);
+  Widget _buildBookingsList(String userId, BookingStatus status) {
+    final bookingVM = context.watch<BookingViewModel>();
 
-    if (classes.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              status == 'upcoming'
-                  ? Icons.event_available
-                  : status == 'completed'
-                      ? Icons.check_circle_outline
-                      : Icons.event_busy,
-              size: 64,
-              color: Colors.white24,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              status == 'upcoming'
-                  ? 'No tienes clases próximas'
-                  : status == 'completed'
-                      ? 'Aún no has completado ninguna clase'
-                      : 'No tienes clases canceladas',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white38,
-                fontSize: 16,
+    return StreamBuilder<List<Booking>>(
+      stream: bookingVM.getUserBookings(userId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.orangeAccent),
+          );
+        }
+
+        if (snapshot.hasError) {
+          // Log detallado del error
+          debugPrint('❌ ERROR EN MIS_CLASES_PAGE - StreamBuilder (Bookings):');
+          debugPrint('Error: ${snapshot.error}');
+          debugPrint('StackTrace: ${snapshot.stackTrace}');
+
+          final errorMsg = snapshot.error.toString();
+
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Error al cargar clases',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SelectableText(
+                    errorMsg,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (errorMsg.contains('index'))
+                    const Text(
+                      'Necesitas crear un índice en Firestore.\nCopia el link del error y ábrelo en tu navegador.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
               ),
             ),
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: classes.length,
-      itemBuilder: (context, index) {
-        final classData = classes[index];
-        return _buildClassCard(classData, status);
+        final allBookings = snapshot.data ?? [];
+
+        debugPrint('📋 MIS_CLASES - Total bookings recibidas: ${allBookings.length}');
+        for (var booking in allBookings) {
+          debugPrint('   Booking: ${booking.scheduleType} - ${booking.classDate} - Status: ${booking.status.name}');
+          debugPrint('   isFuture: ${booking.isFuture()}, isToday: ${booking.isToday()}, isPast: ${booking.isPast()}');
+        }
+
+        final filteredBookings = allBookings.where((booking) {
+          if (status == BookingStatus.confirmed) {
+            // Incluir clases futuras Y clases de hoy
+            final shouldInclude = booking.status == BookingStatus.confirmed &&
+                                  (booking.isFuture() || booking.isToday());
+            debugPrint('   Filtering ${booking.scheduleType}: status=${booking.status.name}, isFuture=${booking.isFuture()}, isToday=${booking.isToday()}, included=$shouldInclude');
+            return shouldInclude;
+          }
+          return booking.status == status;
+        }).toList();
+
+        debugPrint('📋 Bookings filtradas ($status): ${filteredBookings.length}');
+
+        if (filteredBookings.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  status == BookingStatus.confirmed
+                      ? Icons.event_available
+                      : status == BookingStatus.cancelled
+                          ? Icons.event_busy
+                          : Icons.check_circle_outline,
+                  size: 64,
+                  color: Colors.white24,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  status == BookingStatus.confirmed
+                      ? 'No tienes clases próximas'
+                      : status == BookingStatus.cancelled
+                          ? 'No tienes clases canceladas'
+                          : 'Aún no has completado ninguna clase',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: filteredBookings.length,
+          itemBuilder: (context, index) {
+            final booking = filteredBookings[index];
+            return _buildBookingCard(booking);
+          },
+        );
       },
     );
   }
 
-  Widget _buildClassCard(Map<String, dynamic> classData, String status) {
-    final date = classData['date'] as DateTime;
-    final isUpcoming = status == 'upcoming';
-    final isCompleted = status == 'completed';
-    final attended = classData['attended'] ?? false;
+  Widget _buildCompletedList(String userId) {
+    final bookingVM = context.watch<BookingViewModel>();
+
+    return StreamBuilder<List<Booking>>(
+      stream: bookingVM.getUserBookings(userId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.orangeAccent),
+          );
+        }
+
+        if (snapshot.hasError) {
+          // Log detallado del error
+          debugPrint('❌ ERROR EN MIS_CLASES_PAGE - StreamBuilder (Completed):');
+          debugPrint('Error: ${snapshot.error}');
+          debugPrint('StackTrace: ${snapshot.stackTrace}');
+
+          final errorMsg = snapshot.error.toString();
+
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Error al cargar clases completadas',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SelectableText(
+                    errorMsg,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (errorMsg.contains('index'))
+                    const Text(
+                      'Necesitas crear un índice en Firestore.\nCopia el link del error y ábrelo en tu navegador.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final allBookings = snapshot.data ?? [];
+        final completedBookings = allBookings.where((booking) {
+          return booking.status == BookingStatus.attended ||
+              booking.status == BookingStatus.noShow;
+        }).toList();
+
+        if (completedBookings.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(
+                  Icons.check_circle_outline,
+                  size: 64,
+                  color: Colors.white24,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Aún no has completado ninguna clase',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white38,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: completedBookings.length,
+          itemBuilder: (context, index) {
+            final booking = completedBookings[index];
+            return _buildBookingCard(booking);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildBookingCard(Booking booking) {
+    final isUpcoming = booking.status == BookingStatus.confirmed && booking.isFuture();
+    final isAttended = booking.status == BookingStatus.attended;
+    final isNoShow = booking.status == BookingStatus.noShow;
+    final isCancelled = booking.status == BookingStatus.cancelled;
+
+    // Verificar si se puede cancelar (más de 24 horas de anticipación)
+    final now = DateTime.now();
+    final timeParts = booking.scheduleTime.split(':');
+    final classDateTime = DateTime(
+      booking.classDate.year,
+      booking.classDate.month,
+      booking.classDate.day,
+      int.parse(timeParts[0]),
+      int.parse(timeParts[1]),
+    );
+    final hoursUntilClass = classDateTime.difference(now).inHours;
+    final canCancel = hoursUntilClass >= 24;
+
+    Color statusColor = Colors.orangeAccent;
+    String statusText = 'Confirmada';
+    IconData statusIcon = Icons.check_circle;
+
+    if (isAttended) {
+      statusColor = Colors.green;
+      statusText = 'Asistió';
+      statusIcon = Icons.check_circle;
+    } else if (isNoShow) {
+      statusColor = Colors.red;
+      statusText = 'No asistió';
+      statusIcon = Icons.cancel;
+    } else if (isCancelled) {
+      statusColor = Colors.orange;
+      statusText = 'Cancelada';
+      statusIcon = Icons.event_busy;
+    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       color: const Color(0xFF2A2A2A),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: statusColor.withOpacity(0.3),
+          width: 1,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -297,163 +543,212 @@ class _MisClasesPageState extends State<MisClasesPage>
           children: [
             // Header con fecha y estado
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        DateFormat('EEEE, dd MMM yyyy', 'es_ES').format(date),
+                        DateFormat('EEEE, dd MMM yyyy', 'es_ES').format(booking.classDate),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _formatTime(booking.scheduleTime),
                         style: const TextStyle(
                           color: Colors.orangeAccent,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: statusColor.withOpacity(0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(statusIcon, color: statusColor, size: 16),
+                      const SizedBox(width: 4),
                       Text(
-                        classData['time'],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
+                        statusText,
+                        style: TextStyle(
+                          color: statusColor,
                           fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (isCompleted)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: attended
-                          ? Colors.green.withOpacity(0.2)
-                          : Colors.red.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: attended ? Colors.green : Colors.red,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          attended ? Icons.check_circle : Icons.cancel,
-                          size: 16,
-                          color: attended ? Colors.green : Colors.red,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          attended ? 'Asistió' : 'Falta',
-                          style: TextStyle(
-                            color: attended ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
               ],
             ),
 
             const Divider(color: Colors.white12, height: 24),
 
-            // Información de la clase
+            // Detalles de la clase
             Row(
               children: [
-                const Icon(
-                  Icons.fitness_center,
-                  color: Colors.white70,
-                  size: 20,
-                ),
+                Icon(Icons.sports_kabaddi, color: Colors.white60, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  classData['name'],
+                  booking.scheduleType,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                const Icon(
-                  Icons.person,
-                  color: Colors.white60,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  classData['instructor'],
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 15,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-
             Row(
               children: [
-                const Icon(
-                  Icons.location_on,
-                  color: Colors.white60,
-                  size: 18,
-                ),
+                Icon(Icons.person, color: Colors.white60, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  classData['location'],
+                  booking.instructor,
                   style: const TextStyle(
                     color: Colors.white70,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Icon(
-                  Icons.access_time,
-                  color: Colors.white60,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${classData['duration']} min',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 15,
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
 
-            // Botón de cancelar solo para clases próximas
+            // Indicador de confirmación de asistencia
+            if (booking.status == BookingStatus.confirmed) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: booking.userConfirmedAttendance
+                      ? Colors.green.withOpacity(0.15)
+                      : booking.missedConfirmationWindow()
+                          ? Colors.red.withOpacity(0.15)
+                          : booking.canConfirmAttendance()
+                              ? Colors.orange.withOpacity(0.15)
+                              : Colors.grey.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: booking.userConfirmedAttendance
+                        ? Colors.green.withOpacity(0.4)
+                        : booking.missedConfirmationWindow()
+                            ? Colors.red.withOpacity(0.4)
+                            : booking.canConfirmAttendance()
+                                ? Colors.orange.withOpacity(0.4)
+                                : Colors.grey.withOpacity(0.4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      booking.userConfirmedAttendance
+                          ? Icons.check_circle
+                          : booking.missedConfirmationWindow()
+                              ? Icons.cancel
+                              : booking.canConfirmAttendance()
+                                  ? Icons.schedule
+                                  : Icons.event,
+                      color: booking.userConfirmedAttendance
+                          ? Colors.green
+                          : booking.missedConfirmationWindow()
+                              ? Colors.red
+                              : booking.canConfirmAttendance()
+                                  ? Colors.orange
+                                  : Colors.grey,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        booking.getConfirmationStatusText(),
+                        style: TextStyle(
+                          color: booking.userConfirmedAttendance
+                              ? Colors.green
+                              : booking.missedConfirmationWindow()
+                                  ? Colors.red
+                                  : booking.canConfirmAttendance()
+                                      ? Colors.orange
+                                      : Colors.grey,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Botón confirmar si está en ventana de confirmación
+              if (booking.canConfirmAttendance() && !booking.userConfirmedAttendance) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final bookingVM = context.read<BookingViewModel>();
+                      final success = await bookingVM.confirmAttendance(booking.id!);
+                      if (success && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Asistencia confirmada'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.check, size: 20),
+                    label: const Text('Confirmar Asistencia'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orangeAccent,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+
+            // Botón cancelar (solo para próximas)
             if (isUpcoming) ...[
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () => _cancelClass(classData),
+                  onPressed: canCancel ? () => _cancelClass(booking) : null,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
+                    foregroundColor: canCancel ? Colors.red : Colors.grey,
+                    side: BorderSide(color: canCancel ? Colors.red : Colors.grey),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  icon: const Icon(Icons.cancel_outlined, size: 20),
-                  label: const Text(
-                    'Cancelar Reserva',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  icon: Icon(
+                    canCancel ? Icons.cancel_outlined : Icons.lock_clock,
+                    size: 20,
+                  ),
+                  label: Text(
+                    canCancel
+                        ? 'Cancelar Reserva'
+                        : 'Cancelación no disponible (menos de 24h)',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

@@ -1,12 +1,24 @@
 // lib/features/auth/presentation/pages/register_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import '../../../escuelas/data/escuelas_repository_http.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-const _baseUrl = "http://localhost:3000"; // en emulador Android usa "http://10.0.2.2:3000"
+// Modelo simple para School
+class School {
+  final String id;
+  final String name;
+
+  const School({required this.id, required this.name});
+
+  factory School.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return School(
+      id: doc.id,
+      name: data['name'] ?? data['nombre'] ?? '',
+    );
+  }
+}
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -26,16 +38,16 @@ class _RegisterPageState extends State<RegisterPage> {
   final _repeatPassCtrl = TextEditingController();
 
   bool _loading = false;
-  bool _loadingEscuelas = true;
-  List<Escuela> _escuelas = [];
-  Escuela? _escuelaSeleccionada;
-  String? _errorEscuelas;
+  bool _loadingSchools = true;
+  List<School> _schools = [];
+  School? _selectedSchool;
+  String? _errorSchools;
 
   @override
   void initState() {
     super.initState();
     _setupAuthPersistence();
-    _cargarEscuelas();
+    _cargarSchools();
   }
 
   Future<void> _setupAuthPersistence() async {
@@ -60,28 +72,86 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  Future<void> _cargarEscuelas() async {
+  Future<void> _cargarSchools() async {
     setState(() {
-      _loadingEscuelas = true;
-      _errorEscuelas = null;
+      _loadingSchools = true;
+      _errorSchools = null;
     });
     try {
-      final repo = EscuelasRepositoryHttp();
-      final items = await repo.fetchEscuelas();
+      debugPrint('📚 Cargando escuelas desde Firestore...');
+      final snapshot = await FirebaseFirestore.instance.collection('schools').get();
+      debugPrint('✅ Snapshot recibido: ${snapshot.docs.length} documentos');
+
+      final items = snapshot.docs.map((doc) {
+        debugPrint('  - School ID: ${doc.id}, data: ${doc.data()}');
+        return School.fromFirestore(doc);
+      }).toList();
+
+      debugPrint('📊 Total escuelas cargadas: ${items.length}');
+
       setState(() {
-        _escuelas = items;
-        _escuelaSeleccionada = items.isNotEmpty ? items.first : null;
+        _schools = items;
+        _selectedSchool = items.isNotEmpty ? items.first : null;
       });
-    } catch (e) {
-      setState(() => _errorEscuelas = 'No se pudieron cargar las escuelas.');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error cargando escuelas: $e');
+      debugPrint('Stack trace: $stackTrace');
+      setState(() => _errorSchools = 'No se pudieron cargar las escuelas: $e');
     } finally {
-      if (mounted) setState(() => _loadingEscuelas = false);
+      if (mounted) setState(() => _loadingSchools = false);
+    }
+  }
+
+  Future<void> _createDemoSchools() async {
+    setState(() => _loadingSchools = true);
+    try {
+      debugPrint('🏫 Creando escuelas de ejemplo...');
+
+      final schools = [
+        {'name': 'Ayutthaya Camp Centro', 'active': true},
+        {'name': 'Ayutthaya Camp Norte', 'active': true},
+        {'name': 'Ayutthaya Camp Sur', 'active': true},
+      ];
+
+      for (var school in schools) {
+        await FirebaseFirestore.instance.collection('schools').add({
+          ...school,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        debugPrint('  ✅ Creada: ${school['name']}');
+      }
+
+      debugPrint('🎉 Escuelas creadas exitosamente');
+
+      // Recargar escuelas
+      await _cargarSchools();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Escuelas creadas exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error creando escuelas: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creando escuelas: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingSchools = false);
     }
   }
 
   Future<void> _onRegister() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_escuelaSeleccionada == null) {
+    if (_selectedSchool == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecciona una escuela')),
       );
@@ -94,7 +164,7 @@ class _RegisterPageState extends State<RegisterPage> {
       final apellido = _apellidoCtrl.text.trim();
       final email = _emailCtrl.text.trim();
       final pass = _passCtrl.text.trim();
-      final escuelaId = _escuelaSeleccionada!.id;
+      final schoolId = _selectedSchool!.id;
 
       // 1) Crear en Firebase Auth
       final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -107,31 +177,18 @@ class _RegisterPageState extends State<RegisterPage> {
       // 2) Enviar verificación
       await user.sendEmailVerification();
 
-      // 3) ID Token para backend (Bearer)
-      final idToken = await user.getIdToken(true);
+      // 3) Crear documento del usuario en Firestore
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'email': email,
+        'name': '$nombre $apellido',
+        'role': 'student',
+        'membershipStatus': 'none', // none, pending, active, expired, frozen
+        'schoolId': schoolId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
-      // 4) Crear en tu backend (estado pendiente de verificación)
-      final res = await http.post(
-        Uri.parse("$_baseUrl/api/users/"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $idToken",
-        },
-        body: jsonEncode({
-          "uid": user.uid,
-          "nombre": nombre,
-          "apellido": apellido,
-          "email": email,
-          "escuelaId": escuelaId,
-          "estado": "pendingEmail",
-        }),
-      );
-
-      if (res.statusCode != 200 && res.statusCode != 201) {
-        throw Exception("Error backend (${res.statusCode}): ${res.body}");
-      }
-
-      // 5) Cerrar sesión SIEMPRE para forzar el flujo de verificación antes del acceso
+      // 4) Cerrar sesión SIEMPRE para forzar el flujo de verificación antes del acceso
       await FirebaseAuth.instance.signOut();
 
       // Pequeño respiro para que cualquier listener de auth se entere del signOut
@@ -139,7 +196,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (!mounted) return;
 
-      // 6) Notificar y enviar al login limpiando el stack
+      // 5) Notificar y enviar al login limpiando el stack
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -170,7 +227,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isFormBusy = _loading || _loadingEscuelas;
+    final isFormBusy = _loading || _loadingSchools;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Registro')),
@@ -280,42 +337,88 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  if (_loadingEscuelas)
+                  if (_loadingSchools)
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: CircularProgressIndicator(),
                       ),
                     )
-                  else if (_errorEscuelas != null)
+                  else if (_errorSchools != null)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _errorEscuelas!,
+                          _errorSchools!,
                           style: const TextStyle(color: Colors.red),
                         ),
                         const SizedBox(height: 8),
                         OutlinedButton.icon(
-                          onPressed: _cargarEscuelas,
+                          onPressed: _cargarSchools,
                           icon: const Icon(Icons.refresh),
                           label: const Text('Reintentar'),
                         ),
                       ],
                     )
+                  else if (_schools.isEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.warning, color: Colors.orange, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'No hay escuelas disponibles',
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Necesitas crear escuelas en Firestore primero.',
+                                style: TextStyle(fontSize: 13),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: _createDemoSchools,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Crear escuelas de ejemplo'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
                   else
-                    DropdownButtonFormField<Escuela>(
-                      value: _escuelaSeleccionada,
-                      items: _escuelas
+                    DropdownButtonFormField<School>(
+                      value: _selectedSchool,
+                      items: _schools
                           .map(
-                            (e) => DropdownMenuItem<Escuela>(
+                            (e) => DropdownMenuItem<School>(
                               value: e,
-                              child: Text(e.nombre.isEmpty ? e.id : e.nombre),
+                              child: Text(e.name.isEmpty ? e.id : e.name),
                             ),
                           )
                           .toList(),
                       onChanged: (v) => setState(() {
-                        _escuelaSeleccionada = v;
+                        _selectedSchool = v;
                       }),
                       decoration: const InputDecoration(
                         labelText: 'Escuela',

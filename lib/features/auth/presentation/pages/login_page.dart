@@ -1,9 +1,12 @@
 // lib/features/auth/presentation/pages/login_page.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// 👇 importa la navbar
+// 👇 importa las navbars
 import 'package:ayutthaya_camp/features/dashboard/presentation/pages/main_nav_bar.dart';
+import 'package:ayutthaya_camp/features/admin/presentation/pages/admin_main_nav_bar.dart';
+import '../viewmodels/auth_viewmodel.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -32,18 +35,24 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final email = _email.text.trim();
       final pass = _password.text.trim();
+      final authVM = context.read<AuthViewModel>();
 
-      // 1) Login con Firebase
-      final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: pass,
-      );
+      // 1) Login usando AuthViewModel
+      final success = await authVM.login(email: email, password: pass);
 
-      // 2) Refrescar estado y validar verificación
-      await cred.user?.reload();
-      final user = FirebaseAuth.instance.currentUser!;
-      if (!user.emailVerified) {
-        await FirebaseAuth.instance.signOut();
+      if (!success) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authVM.error ?? 'Error de autenticación')),
+        );
+        setState(() => _loading = false);
+        return;
+      }
+
+      // 2) Validar verificación de email (excepto para admin o emails que empiezan con "admin")
+      final user = authVM.currentUser;
+      if (user != null && !user.emailVerified && !authVM.isAdmin && !email.startsWith('admin')) {
+        await authVM.logout();
         if (!mounted) return;
 
         await showDialog(
@@ -53,20 +62,28 @@ class _LoginPageState extends State<LoginPage> {
             onResend: _onResendVerification,
           ),
         );
+        setState(() => _loading = false);
         return;
       }
 
-      // (Opcional) Token para backend:
-      // final idToken = await user.getIdToken(true);
-
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inicio de sesión exitoso')),
+        SnackBar(
+          content: Text(
+            authVM.isAdmin
+              ? 'Bienvenido Admin!'
+              : 'Inicio de sesión exitoso'
+          ),
+        ),
       );
 
-      // 3) Ir a la app con NAVBAR (MainNavBar), no al dashboard directo
+      // 3) Redirigir según el rol
+      final Widget destination = authVM.isAdmin
+          ? const AdminMainNavBar()
+          : const MainNavBar();
+
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainNavBar()),
+        MaterialPageRoute(builder: (_) => destination),
         (route) => false,
       );
     } on FirebaseAuthException catch (e) {
