@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificando Email - Ayutthaya Camp</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(180deg, #FF8C00 0%, #FF6B00 30%, #CC5500 60%, #1a1a1a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 140, 0, 0.2);
+      padding: 60px 40px;
+      max-width: 500px;
+      text-align: center;
+      border-top: 4px solid #FF8C00;
+    }
+
+    .spinner {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 30px;
+      border: 6px solid rgba(255, 140, 0, 0.2);
+      border-top-color: #FF8C00;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    h1 {
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    p {
+      color: #e2e8f0;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .error {
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    .success {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner"></div>
+    <h1>Verificando tu email...</h1>
+    <p>Por favor espera mientras verificamos tu correo electrónico.</p>
+    <div id="error-message" class="error" style="display: none;"></div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, applyActionCode } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    // Tu configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvzSmDVLKNUxNaS-ia8YvU4m3TXFVf-ZE",
+      authDomain: "ayuthaya-camp.firebaseapp.com",
+      projectId: "ayuthaya-camp",
+      storageBucket: "ayuthaya-camp.firebasestorage.app",
+      messagingSenderId: "611359423677",
+      appId: "1:611359423677:web:e16824168b1803b2afcbd4"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Obtener el action code de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const oobCode = urlParams.get('oobCode');
+
+    async function verifyEmail() {
+      console.log('URL actual:', window.location.href);
+      console.log('mode:', mode);
+      console.log('oobCode:', oobCode);
+
+      if (!oobCode) {
+        showError('Código de verificación no válido o faltante. URL: ' + window.location.href);
+        return;
+      }
+
+      if (mode !== 'verifyEmail') {
+        showError('Esta página solo maneja verificación de email. Modo recibido: ' + mode);
+        return;
+      }
+
+      try {
+        console.log('Intentando aplicar código de verificación...');
+
+        // Aplicar el código de verificación
+        await applyActionCode(auth, oobCode);
+
+        console.log('¡Verificación exitosa!');
+
+        // Verificación exitosa - mostrar mensaje brevemente y luego redirigir
+        document.querySelector('h1').textContent = '¡Verificado!';
+        document.querySelector('p').textContent = 'Redirigiendo...';
+
+        // Esperar 500ms antes de redirigir
+        setTimeout(() => {
+          window.location.href = '/email-verified.html';
+        }, 500);
+      } catch (error) {
+        console.error('Error verificando email:', error);
+        console.error('Código de error:', error.code);
+        console.error('Mensaje:', error.message);
+
+        let errorMessage = 'Error al verificar el correo electrónico.';
+
+        switch (error.code) {
+          case 'auth/expired-action-code':
+            errorMessage = 'El código de verificación ha expirado. Por favor solicita un nuevo correo de verificación.';
+            break;
+          case 'auth/invalid-action-code':
+            errorMessage = 'El código de verificación no es válido o ya fue utilizado.';
+            break;
+          case 'auth/user-disabled':
+            errorMessage = 'Esta cuenta ha sido deshabilitada.';
+            break;
+          case 'auth/user-not-found':
+            errorMessage = 'No se encontró la cuenta asociada.';
+            break;
+        }
+
+        showError(errorMessage);
+      }
+    }
+
+    function showError(message) {
+      const errorDiv = document.getElementById('error-message');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+
+      // Ocultar el spinner
+      document.querySelector('.spinner').style.display = 'none';
+
+      // Cambiar el título
+      document.querySelector('h1').textContent = 'Error de Verificación';
+      document.querySelector('h1').style.color = '#ff6b6b';
+
+      // Cambiar el texto
+      document.querySelectorAll('p')[0].textContent = 'Hubo un problema al verificar tu correo electrónico.';
+    }
+
+    // Ejecutar verificación automáticamente
+    verifyEmail();
+  </script>
+</body>
+</html>

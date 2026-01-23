@@ -433,4 +433,272 @@ class BookingService {
       throw Exception('Error al contar clases del mes: $e');
     }
   }
+
+  /// Procesar check-in por código QR genérico del gimnasio
+  ///
+  /// Lógica:
+  /// - Detecta automáticamente qué clase está activa ahora (ventana de 20 min)
+  /// - Si hay clase activa (0-20 min): marca asistencia
+  /// - Si escanea después de 20 min de una clase: marca esa clase como no asistida
+  /// - Si no hay clases hoy: error
+  Future<Map<String, dynamic>> processQRCheckIn({
+    required String userId,
+    required String userName,
+    required String userEmail,
+  }) async {
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final currentDayOfWeek = now.weekday; // 1 = Monday, 7 = Sunday
+
+      debugPrint('🔍 Procesando QR Check-in genérico:');
+      debugPrint('   - Usuario: $userName ($userId)');
+      debugPrint('   - Hora actual: ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+      debugPrint('   - Día: $currentDayOfWeek');
+
+      // PASO 1: Buscar todas las clases de hoy
+      final allSchedulesSnapshot = await _firestore
+          .collection('class_schedules')
+          .where('active', isEqualTo: true)
+          .get();
+
+      // Clasificar clases en: activas (0-20 min) y pasadas (>20 min)
+      List<Map<String, dynamic>> activeClasses = [];
+      List<Map<String, dynamic>> recentlyPassedClasses = [];
+
+      for (var doc in allSchedulesSnapshot.docs) {
+        final data = doc.data();
+        final classDays = List<int>.from(data['daysOfWeek'] ?? []);
+
+        // Verificar si la clase es hoy
+        if (!classDays.contains(currentDayOfWeek)) continue;
+
+        final classTime = data['time'] as String;
+        final parts = classTime.split(':');
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+
+        final classStartTime = DateTime(now.year, now.month, now.day, hour, minute);
+        final minutesSinceStart = now.difference(classStartTime).inMinutes;
+
+        // Clase activa: entre 0 y 20 minutos desde el inicio
+        if (minutesSinceStart >= 0 && minutesSinceStart <= 20) {
+          activeClasses.add({
+            'id': doc.id,
+            'time': classTime,
+            'type': data['type'],
+            'instructor': data['instructor'],
+            'capacity': data['capacity'] ?? 15,
+            'startTime': classStartTime,
+            'minutesSinceStart': minutesSinceStart,
+          });
+          debugPrint('   ✅ Clase activa encontrada: ${data['type']} a las $classTime (${minutesSinceStart} min)');
+        }
+        // Clase que pasó hace poco: entre 21 minutos y hasta el final del día
+        else if (minutesSinceStart > 20 && classStartTime.isBefore(now)) {
+          recentlyPassedClasses.add({
+            'id': doc.id,
+            'time': classTime,
+            'type': data['type'],
+            'instructor': data['instructor'],
+            'startTime': classStartTime,
+            'minutesSinceStart': minutesSinceStart,
+          });
+          debugPrint('   ⏰ Clase pasada encontrada: ${data['type']} a las $classTime (hace ${minutesSinceStart} min)');
+        }
+      }
+
+      // CASO 1: HAY CLASE(S) ACTIVA(S) - Registrar asistencia
+      if (activeClasses.isNotEmpty) {
+        debugPrint('📍 ${activeClasses.length} clase(s) activa(s) encontrada(s)');
+
+        // Ordenar por tiempo más reciente (la que empezó más recientemente)
+        activeClasses.sort((a, b) =>
+          (b['minutesSinceStart'] as int).compareTo(a['minutesSinceStart'] as int)
+        );
+
+        final targetClass = activeClasses.first;
+        final scheduleId = targetClass['id'] as String;
+        final scheduleTime = targetClass['time'] as String;
+        final scheduleType = targetClass['type'] as String;
+        final instructor = targetClass['instructor'] as String;
+
+        debugPrint('   → Registrando asistencia en: $scheduleType a las $scheduleTime');
+
+        // Verificar si ya tiene booking para esta clase
+        final existingBooking = await _firestore
+            .collection('bookings')
+            .where('userId', isEqualTo: userId)
+            .where('scheduleId', isEqualTo: scheduleId)
+            .where('classDate', isEqualTo: Timestamp.fromDate(today))
+            .limit(1)
+            .get();
+
+        if (existingBooking.docs.isNotEmpty) {
+          final bookingId = existingBooking.docs.first.id;
+          final existingData = existingBooking.docs.first.data();
+          final currentStatus = existingData['status'];
+
+          if (currentStatus == BookingStatus.attended.name) {
+            return {
+              'success': true,
+              'message': 'Ya tienes registrada tu asistencia a $scheduleType de las $scheduleTime',
+              'action': 'already_attended',
+              'classTime': scheduleTime,
+              'classType': scheduleType,
+            };
+          }
+
+          // Actualizar booking existente a attended
+          await _firestore.collection('bookings').doc(bookingId).update({
+            'status': BookingStatus.attended.name,
+            'attendedAt': FieldValue.serverTimestamp(),
+            'userConfirmedAttendance': true,
+            'attendanceConfirmedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+          return {
+            'success': true,
+            'message': 'Asistencia registrada exitosamente',
+            'action': 'marked_attended',
+            'classTime': scheduleTime,
+            'classType': scheduleType,
+          };
+        } else {
+          // No tiene booking previo, crear uno nuevo como attended
+          debugPrint('   - Creando nuevo booking...');
+
+          // Verificar capacidad
+          final capacity = await _getAvailableCapacity(scheduleId, today);
+          if (capacity <= 0) {
+            throw Exception('La clase de $scheduleType a las $scheduleTime está llena');
+          }
+
+          final booking = Booking(
+            userId: userId,
+            userName: userName,
+            userEmail: userEmail,
+            scheduleId: scheduleId,
+            scheduleTime: scheduleTime,
+            scheduleType: scheduleType,
+            instructor: instructor,
+            classDate: today,
+            status: BookingStatus.attended,
+            createdAt: now,
+            userConfirmedAttendance: true,
+            attendanceConfirmedAt: now,
+            attendedAt: now,
+          );
+
+          final docRef = await _firestore.collection('bookings').add(booking.toMap());
+          debugPrint('✅ Booking creado y marcado como attended: ${docRef.id}');
+
+          return {
+            'success': true,
+            'message': 'Asistencia registrada exitosamente',
+            'action': 'created_and_attended',
+            'classTime': scheduleTime,
+            'classType': scheduleType,
+          };
+        }
+      }
+
+      // CASO 2: NO HAY CLASES ACTIVAS - Buscar clase más reciente que haya pasado
+      if (recentlyPassedClasses.isNotEmpty) {
+        debugPrint('⚠️ No hay clases activas. Buscando clase más reciente que pasó...');
+
+        // Ordenar por la que pasó más recientemente
+        recentlyPassedClasses.sort((a, b) =>
+          (a['minutesSinceStart'] as int).compareTo(b['minutesSinceStart'] as int)
+        );
+
+        final mostRecentClass = recentlyPassedClasses.first;
+        final scheduleId = mostRecentClass['id'] as String;
+        final scheduleTime = mostRecentClass['time'] as String;
+        final scheduleType = mostRecentClass['type'] as String;
+
+        debugPrint('   → Clase más reciente: $scheduleType a las $scheduleTime (hace ${mostRecentClass['minutesSinceStart']} min)');
+
+        // Buscar o crear booking para esta clase y marcarlo como noShow
+        final existingBooking = await _firestore
+            .collection('bookings')
+            .where('userId', isEqualTo: userId)
+            .where('scheduleId', isEqualTo: scheduleId)
+            .where('classDate', isEqualTo: Timestamp.fromDate(today))
+            .limit(1)
+            .get();
+
+        if (existingBooking.docs.isNotEmpty) {
+          final bookingId = existingBooking.docs.first.id;
+          final existingData = existingBooking.docs.first.data();
+          final currentStatus = existingData['status'];
+
+          if (currentStatus == BookingStatus.noShow.name) {
+            return {
+              'success': true,
+              'message': 'Esta clase de $scheduleType ($scheduleTime) ya está marcada como no asistida',
+              'action': 'already_no_show',
+              'classTime': scheduleTime,
+              'classType': scheduleType,
+            };
+          }
+
+          // Marcar booking existente como noShow
+          await _firestore.collection('bookings').doc(bookingId).update({
+            'status': BookingStatus.noShow.name,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+          return {
+            'success': true,
+            'message': 'La clase de $scheduleType ($scheduleTime) ha sido marcada como no asistida',
+            'action': 'marked_no_show',
+            'classTime': scheduleTime,
+            'classType': scheduleType,
+          };
+        } else {
+          // No tiene booking, crear uno como noShow
+          debugPrint('   - No tiene booking, creando como noShow...');
+
+          final booking = Booking(
+            userId: userId,
+            userName: userName,
+            userEmail: userEmail,
+            scheduleId: scheduleId,
+            scheduleTime: scheduleTime,
+            scheduleType: scheduleType,
+            instructor: mostRecentClass['instructor'] as String,
+            classDate: today,
+            status: BookingStatus.noShow,
+            createdAt: now,
+          );
+
+          final docRef = await _firestore.collection('bookings').add(booking.toMap());
+          debugPrint('❌ Booking creado como noShow: ${docRef.id}');
+
+          return {
+            'success': true,
+            'message': 'La clase de $scheduleType ($scheduleTime) ha sido marcada como no asistida',
+            'action': 'created_no_show',
+            'classTime': scheduleTime,
+            'classType': scheduleType,
+          };
+        }
+      }
+
+      // CASO 3: No hay clases hoy
+      throw Exception(
+        'No hay clases programadas para hoy o aún no ha comenzado ninguna clase'
+      );
+
+    } catch (e) {
+      debugPrint('❌ Error en QR check-in: $e');
+      return {
+        'success': false,
+        'message': e.toString().replaceAll('Exception: ', ''),
+        'action': 'error',
+      };
+    }
+  }
 }

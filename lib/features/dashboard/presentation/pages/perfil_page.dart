@@ -198,6 +198,12 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   Future<void> _uploadProfilePhoto() async {
+    // Capturar auth y userId antes de cualquier operación asíncrona
+    final auth = context.read<AuthViewModel>();
+    final userId = auth.currentUser?.uid;
+
+    if (userId == null) return;
+
     try {
       // En web, solo galería (la cámara requiere permisos especiales)
       final ImageSource source;
@@ -252,11 +258,6 @@ class _PerfilPageState extends State<PerfilPage> {
       setState(() {
         _isUploadingPhoto = true;
       });
-
-      final auth = context.read<AuthViewModel>();
-      final userId = auth.currentUser?.uid;
-
-      if (userId == null) return;
 
       // Subir a Firebase Storage
       final storageRef = FirebaseStorage.instance

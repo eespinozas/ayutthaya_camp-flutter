@@ -14,6 +14,12 @@ class NotificationService {
   /// Inicializar el servicio de notificaciones
   Future<void> initialize() async {
     try {
+      // En web, las notificaciones solo funcionan en HTTPS o localhost
+      if (kIsWeb) {
+        debugPrint('🌐 Inicializando notificaciones en web...');
+        debugPrint('   Nota: Requiere HTTPS o localhost');
+      }
+
       // Solicitar permisos
       NotificationSettings settings = await _messaging.requestPermission(
         alert: true,
@@ -27,12 +33,24 @@ class NotificationService {
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         debugPrint('✅ Notificaciones autorizadas');
 
-        // Obtener token FCM
-        String? token = await _messaging.getToken();
-        debugPrint('🔑 FCM Token: $token');
-
         // Configurar handlers
         _setupMessageHandlers();
+
+        // Intentar obtener token (puede fallar en web si no hay service worker)
+        try {
+          String? token = await _messaging.getToken(
+            vapidKey: kIsWeb
+              ? 'YOUR_VAPID_KEY_HERE' // Reemplazar con tu clave VAPID
+              : null,
+          );
+          debugPrint('🔑 FCM Token: $token');
+        } catch (e) {
+          if (e.toString().contains('failed-service-worker-registration')) {
+            debugPrint('⚠️ Service Worker no registrado (normal en desarrollo local sin HTTPS)');
+          } else {
+            debugPrint('⚠️ No se pudo obtener FCM token: $e');
+          }
+        }
 
         return;
       }
@@ -40,6 +58,7 @@ class NotificationService {
       debugPrint('❌ Notificaciones no autorizadas');
     } catch (e) {
       debugPrint('❌ Error inicializando notificaciones: $e');
+      // No lanzar error, continuar sin notificaciones
     }
   }
 
@@ -95,7 +114,22 @@ class NotificationService {
   /// Guardar FCM token del usuario en Firestore
   Future<void> saveUserToken(String userId) async {
     try {
-      String? token = await _messaging.getToken();
+      // En web, verificar si estamos en un contexto seguro (HTTPS)
+      if (kIsWeb) {
+        debugPrint('🌐 Intentando obtener FCM token en web...');
+
+        // Verificar si el navegador soporta notificaciones
+        if (!await _isNotificationSupported()) {
+          debugPrint('⚠️ Navegador no soporta notificaciones push');
+          return;
+        }
+      }
+
+      String? token = await _messaging.getToken(
+        vapidKey: kIsWeb
+          ? 'YOUR_VAPID_KEY_HERE' // Reemplazar con tu clave VAPID de Firebase Console
+          : null,
+      );
 
       if (token != null) {
         await _firestore.collection('users').doc(userId).update({
@@ -104,9 +138,37 @@ class NotificationService {
         });
 
         debugPrint('✅ FCM Token guardado para usuario: $userId');
+      } else {
+        debugPrint('⚠️ No se pudo obtener FCM token');
       }
     } catch (e) {
-      debugPrint('❌ Error guardando FCM token: $e');
+      // Manejar específicamente el error del service worker en web
+      if (e.toString().contains('failed-service-worker-registration')) {
+        debugPrint('⚠️ Service Worker no disponible en este entorno');
+        debugPrint('   Las notificaciones push solo funcionan en HTTPS o localhost');
+      } else {
+        debugPrint('❌ Error guardando FCM token: $e');
+      }
+      // No lanzar el error, solo registrar
+    }
+  }
+
+  /// Verificar si las notificaciones están soportadas
+  Future<bool> _isNotificationSupported() async {
+    if (!kIsWeb) return true;
+
+    try {
+      // En web, verificar permisos
+      NotificationSettings settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      return settings.authorizationStatus != AuthorizationStatus.denied;
+    } catch (e) {
+      debugPrint('⚠️ Error verificando soporte de notificaciones: $e');
+      return false;
     }
   }
 

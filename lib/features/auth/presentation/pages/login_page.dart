@@ -1,11 +1,13 @@
 // lib/features/auth/presentation/pages/login_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 // 👇 importa las navbars
 import 'package:ayutthaya_camp/features/dashboard/presentation/pages/main_nav_bar.dart';
 import 'package:ayutthaya_camp/features/admin/presentation/pages/admin_main_nav_bar.dart';
+import 'package:ayutthaya_camp/core/services/auth_email_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
 class LoginPage extends StatefulWidget {
@@ -115,23 +117,32 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// Reenvía el correo de verificación.
+  /// Reenvía el correo de verificación usando SendGrid (email profesional).
   /// Nota: Para enviarlo, el usuario debe estar autenticado; hacemos un login silencioso.
   Future<void> _onResendVerification() async {
     try {
       final email = _email.text.trim();
       final pass = _password.text.trim();
 
+      // Login silencioso para autenticar al usuario
       final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: pass,
       );
-      await cred.user?.sendEmailVerification();
+
+      // Enviar email profesional con SendGrid
+      final emailService = AuthEmailService();
+      await emailService.sendVerificationEmail();
+
+      // Logout después de enviar
       await FirebaseAuth.instance.signOut();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Correo de verificación reenviado')),
+          const SnackBar(
+            content: Text('📧 Correo de verificación enviado. Revisa tu bandeja de entrada.'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -154,56 +165,219 @@ class _LoginPageState extends State<LoginPage> {
     final busy = _loading;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _email,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).primaryColor.withOpacity(0.1),
+              Colors.white,
+            ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Card(
+                elevation: 8,
+                shadowColor: Colors.black.withOpacity(0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Logo circular
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: kIsWeb
+                                ? Image.network(
+                                    'images/canvas.jpeg',
+                                    height: 120,
+                                    width: 120,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        height: 120,
+                                        width: 120,
+                                        color: Theme.of(context).primaryColor,
+                                        child: const Icon(
+                                          Icons.fitness_center,
+                                          size: 60,
+                                          color: Colors.white,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Image.asset(
+                                    'assets/images/canvas.jpeg',
+                                    height: 120,
+                                    width: 120,
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Título
+                        Text(
+                          'Bienvenido',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'a Ayutthaya',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Input Email
+                        TextFormField(
+                          controller: _email,
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            hintText: 'tu@email.com',
+                            prefixIcon: const Icon(Icons.email_outlined),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (v) =>
+                              (v == null || v.isEmpty) ? 'Ingresa tu email' : null,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Input Password
+                        TextFormField(
+                          controller: _password,
+                          decoration: InputDecoration(
+                            labelText: 'Contraseña',
+                            hintText: '••••••••',
+                            prefixIcon: const Icon(Icons.lock_outlined),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          obscureText: true,
+                          validator: (v) =>
+                              (v == null || v.length < 6) ? 'Mínimo 6 caracteres' : null,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Botón Ingresar
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: FilledButton(
+                            onPressed: busy ? null : _onLogin,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: busy
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Ingresar',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Olvidaste tu contraseña
+                        TextButton(
+                          onPressed: busy
+                              ? null
+                              : () => Navigator.pushNamed(context, '/forgot-password'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.orange,
+                          ),
+                          child: const Text('¿Olvidaste tu contraseña?'),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Divider
+                        Row(
+                          children: [
+                            const Expanded(child: Divider()),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'o',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ),
+                            const Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Crear cuenta
+                        OutlinedButton(
+                          onPressed: busy
+                              ? null
+                              : () => Navigator.pushNamed(context, '/register'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.orange,
+                            side: const BorderSide(color: Colors.orange),
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Crear cuenta nueva',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Ingresa tu email' : null,
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _password,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: Icon(Icons.lock),
-                    ),
-                    obscureText: true,
-                    validator: (v) =>
-                        (v == null || v.length < 6) ? 'Mínimo 6 caracteres' : null,
-                  ),
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    onPressed: busy ? null : _onLogin,
-                    child: busy
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Ingresar'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed:
-                        busy ? null : () => Navigator.pushNamed(context, '/register'),
-                    child: const Text('¿No tienes cuenta? Crear una'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

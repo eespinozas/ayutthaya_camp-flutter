@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/admin_dashboard_viewmodel.dart';
+import 'admin_qr_codes_page.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -154,15 +155,34 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     ),
                   ],
                 ),
-                IconButton(
-                  onPressed: () {
-                    // TODO: Implementar notificaciones
-                  },
-                  icon: const Icon(
-                    Icons.notifications_outlined,
-                    color: Colors.white70,
-                    size: 28,
-                  ),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const AdminQRCodesPage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.qr_code_2,
+                        color: Colors.orangeAccent,
+                        size: 28,
+                      ),
+                      tooltip: 'Códigos QR de Clases',
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        // TODO: Implementar notificaciones
+                      },
+                      icon: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white70,
+                        size: 28,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

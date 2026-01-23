@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
+import '../features/auth/presentation/pages/forgot_password_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/dashboard/presentation/pages/main_nav_bar.dart';
 import '../features/admin/presentation/pages/admin_main_nav_bar.dart';
@@ -19,6 +20,7 @@ import 'theme.dart';
 class Routes {
   static const login = '/login';
   static const register = '/register';
+  static const forgotPassword = '/forgot-password';
   static const dashboard = '/dashboard';
   static const shell = '/shell'; // (lo puedes dejar si se usa en otra parte)
   static const mainNav = '/main'; // 👈 NUEVA ruta (navbar)
@@ -82,6 +84,7 @@ class App extends StatelessWidget {
         routes: {
           Routes.login: (_) => const LoginPage(),
           Routes.register: (_) => const RegisterPage(),
+          Routes.forgotPassword: (_) => const ForgotPasswordPage(),
           Routes.dashboard: (_) => const DashboardPage(),
           // Routes.shell: (_) => const ShellPage(), // ya no lo usamos como pantalla inicial
           Routes.mainNav: (_) => const MainNavBar(), // 👈 ruta a la navbar

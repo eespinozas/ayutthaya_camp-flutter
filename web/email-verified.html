@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Email Verificado - Ayutthaya Camp</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(180deg, #FF8C00 0%, #FF6B00 30%, #CC5500 60%, #1a1a1a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 140, 0, 0.2);
+      padding: 60px 40px;
+      max-width: 500px;
+      text-align: center;
+      border-top: 4px solid #FF8C00;
+    }
+
+    .success-icon {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #FF8C00 0%, #FF6B00 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 30px;
+      box-shadow: 0 8px 24px rgba(255, 107, 0, 0.4);
+      animation: scaleIn 0.5s ease-out;
+    }
+
+    .success-icon svg {
+      width: 60px;
+      height: 60px;
+      stroke: #000000;
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h1 {
+      color: #ffffff;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    p {
+      color: #e2e8f0;
+      font-size: 17px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .button {
+      background: linear-gradient(135deg, #FF8C00 0%, #FF6B00 100%);
+      color: #000000;
+      padding: 16px 48px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 8px 24px rgba(255, 107, 0, 0.4);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(255, 107, 0, 0.6);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .info {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 140, 0, 0.2);
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes checkmark {
+      0% {
+        stroke-dashoffset: 100;
+      }
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .checkmark {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: checkmark 0.8s ease-out 0.3s forwards;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 40px 24px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      p {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="success-icon">
+      <svg viewBox="0 0 52 52">
+        <path class="checkmark" d="M14,27 L22,35 L38,17" />
+      </svg>
+    </div>
+
+    <h1>¡Email Verificado!</h1>
+    <p>Tu correo electrónico ha sido verificado exitosamente. Ya puedes cerrar esta ventana y volver a la aplicación para iniciar sesión.</p>
+
+    <button class="button" onclick="tryOpenApp()">Volver a la App</button>
+
+    <p class="info">Si la aplicación no se abre automáticamente, cierra esta ventana manualmente.</p>
+  </div>
+
+  <script>
+    // Intentar abrir la aplicación automáticamente
+    function tryOpenApp() {
+      tryCloseWindow();
+    }
+
+    // Función para intentar cerrar la ventana
+    function tryCloseWindow() {
+      // Método 1: Cerrar si fue abierta por window.open
+      try {
+        window.close();
+      } catch (e) {
+        console.log('No se pudo cerrar automáticamente');
+      }
+
+      // Método 2: Si no se cerró, intentar con opener
+      if (window.opener) {
+        try {
+          window.open('', '_self').close();
+        } catch (e) {
+          console.log('Método opener falló');
+        }
+      }
+
+      // Si nada funcionó, mostrar mensaje
+      setTimeout(() => {
+        if (!document.hidden) {
+          document.querySelector('p').innerHTML =
+            'Esta ventana debería cerrarse automáticamente.<br>Si no se cierra, puedes cerrarla manualmente.';
+        }
+      }, 1000);
+    }
+
+    // Intentar cerrar automáticamente después de 2 segundos
+    setTimeout(() => {
+      tryCloseWindow();
+    }, 2000);
+  </script>
+</body>
+</html>

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import 'perfil_page.dart';
+import 'qr_checkin_page.dart';
 import '../../../auth/presentation/viewmodels/auth_viewmodel.dart';
 import '../../../bookings/viewmodels/booking_viewmodel.dart';
 import '../../../bookings/models/booking.dart';
@@ -75,13 +76,23 @@ class DashboardPage extends StatelessWidget {
         backgroundColor: const Color(0xFF2A2A2A),
         elevation: 0,
         title: const Text(
-          'Inicio',
+          'Ayutthaya App',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
+          // Indicador de estado de membresía
+          _MembershipStatusChip(
+            estaActivo: estaActivo,
+            membershipStatus: vm.membershipStatus,
+            onTap: () {
+              // Navega al tab de Pagos
+              onNavigateToPagos?.call();
+            },
+          ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(
               Icons.person_outline,
@@ -98,6 +109,25 @@ class DashboardPage extends StatelessWidget {
             tooltip: 'Mi Perfil',
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const QRCheckInPage(),
+            ),
+          );
+        },
+        backgroundColor: Colors.orangeAccent,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.qr_code_scanner, size: 28),
+        label: const Text(
+          'Check-in',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -167,6 +197,86 @@ class DashboardPage extends StatelessWidget {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// WIDGET: CHIP DE ESTADO DE MEMBRESÍA (EN EL APPBAR)
+// -----------------------------------------------------------------------------
+class _MembershipStatusChip extends StatelessWidget {
+  final bool estaActivo;
+  final String? membershipStatus;
+  final VoidCallback onTap;
+
+  const _MembershipStatusChip({
+    required this.estaActivo,
+    required this.membershipStatus,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Determinar color, icono y texto basado en el estado
+    Color bgColor;
+    Color textColor;
+    IconData icon;
+    String statusText;
+
+    if (estaActivo) {
+      bgColor = Colors.green.withValues(alpha: 0.2);
+      textColor = Colors.green;
+      icon = Icons.check_circle;
+      statusText = 'Membresía Activa';
+    } else if (membershipStatus == 'expired') {
+      bgColor = Colors.red.withValues(alpha: 0.2);
+      textColor = Colors.red;
+      icon = Icons.cancel;
+      statusText = 'Vencida';
+    } else if (membershipStatus == 'pending') {
+      bgColor = Colors.orange.withValues(alpha: 0.2);
+      textColor = Colors.orange;
+      icon = Icons.pending;
+      statusText = 'Pendiente';
+    } else {
+      bgColor = Colors.grey.withValues(alpha: 0.2);
+      textColor = Colors.grey;
+      icon = Icons.info_outline;
+      statusText = 'Sin plan';
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: textColor.withValues(alpha: 0.5),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: textColor,
+              size: 16,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              statusText,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );

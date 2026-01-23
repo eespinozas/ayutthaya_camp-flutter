@@ -49,9 +49,17 @@ class _QRScannerPageState extends State<QRScannerPage> {
       final data = jsonDecode(barcode.rawValue!);
 
       // Validar que sea un QR válido del sistema
-      if (data['type'] == 'quick_booking' && data['gym'] == 'Ayutthaya Camp') {
-        // Devolver los datos del QR
-        Navigator.pop(context, data);
+      if (data['gym'] == 'Ayutthaya Camp') {
+        // Verificar el tipo de QR
+        if (data['type'] == 'quick_booking' ||
+            data['type'] == 'attendance_checkin' ||
+            data['type'] == 'gym_checkin') {
+          // Devolver los datos del QR
+          Navigator.pop(context, data);
+        } else {
+          // Tipo de QR no reconocido
+          _showInvalidQRDialog('Tipo de código QR no reconocido');
+        }
       } else {
         // QR no válido
         _showInvalidQRDialog('Este código QR no es válido para Ayutthaya Camp');
