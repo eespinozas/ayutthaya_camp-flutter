@@ -1,0 +1,187 @@
+# Fastfile for Ayutthaya Camp
+# Production-ready configuration for Android and iOS deployments
+
+default_platform(:android)
+
+# ========================================
+# ANDROID PLATFORM
+# ========================================
+
+platform :android do
+  desc "Deploy Android AAB to Google Play Console"
+  lane :deploy do |options|
+    track = options[:track] || ENV['SUPPLY_TRACK'] || 'internal'
+    aab_path = options[:aab] || ENV['SUPPLY_AAB'] || '../build/app/outputs/bundle/release/app-release.aab'
+    package_name = ENV['SUPPLY_PACKAGE_NAME'] || 'com.ayutthaya.ayutthaya_camp'
+
+    unless File.exist?(aab_path)
+      UI.user_error!("❌ AAB file not found at: #{aab_path}")
+    end
+
+    UI.message("🚀 Deploying Android to track: #{track}")
+    UI.message("📦 AAB: #{aab_path}")
+    UI.message("📱 Package: #{package_name}")
+
+    supply(
+      track: track,
+      aab: aab_path,
+      package_name: package_name,
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      json_key_data: ENV['SUPPLY_JSON_KEY_DATA']
+    )
+
+    UI.success("✅ Successfully uploaded to Google Play (#{track})")
+  end
+
+  desc "Promote a build from internal to beta"
+  lane :promote_to_beta do
+    promote(
+      from_track: 'internal',
+      to_track: 'beta'
+    )
+  end
+
+  desc "Promote a build from beta to production"
+  lane :promote_to_production do
+    promote(
+      from_track: 'beta',
+      to_track: 'production',
+      rollout: '0.1'  # 10% rollout
+    )
+  end
+
+  private_lane :promote do |options|
+    from = options[:from_track]
+    to = options[:to_track]
+    package_name = ENV['SUPPLY_PACKAGE_NAME'] || 'com.ayutthaya.ayutthaya_camp'
+
+    UI.message("⬆️  Promoting from #{from} to #{to}")
+
+    supply(
+      track: from,
+      track_promote_to: to,
+      package_name: package_name,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      rollout: options[:rollout],
+      json_key_data: ENV['SUPPLY_JSON_KEY_DATA']
+    )
+
+    UI.success("✅ Successfully promoted to #{to}")
+  end
+
+  desc "Download metadata from Google Play Console"
+  lane :fetch_metadata do
+    supply(
+      package_name: ENV['SUPPLY_PACKAGE_NAME'] || 'com.ayutthaya.ayutthaya_camp',
+      json_key_data: ENV['SUPPLY_JSON_KEY_DATA'],
+      skip_upload_apk: true,
+      skip_upload_aab: true
+    )
+  end
+end
+
+# ========================================
+# iOS PLATFORM
+# ========================================
+
+platform :ios do
+  desc "Deploy iOS IPA to TestFlight"
+  lane :testflight do |options|
+    ipa_path = options[:ipa] || '../build/ios/ipa/ayutthaya_camp.ipa'
+    api_key_id = ENV['APP_STORE_CONNECT_API_KEY_ID']
+    issuer_id = ENV['APP_STORE_CONNECT_ISSUER_ID']
+    api_key_path = "~/.appstoreconnect/private_keys/AuthKey_#{api_key_id}.p8"
+
+    unless File.exist?(File.expand_path(ipa_path))
+      UI.user_error!("❌ IPA file not found at: #{ipa_path}")
+    end
+
+    unless File.exist?(File.expand_path(api_key_path))
+      UI.user_error!("❌ App Store Connect API Key not found at: #{api_key_path}")
+    end
+
+    UI.message("🚀 Deploying iOS to TestFlight")
+    UI.message("📦 IPA: #{ipa_path}")
+
+    pilot(
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: true,
+      api_key_path: api_key_path,
+      distribute_external: false,
+      notify_external_testers: false
+    )
+
+    UI.success("✅ Successfully uploaded to TestFlight")
+  end
+
+  desc "Deploy iOS IPA to App Store"
+  lane :appstore do |options|
+    ipa_path = options[:ipa] || '../build/ios/ipa/ayutthaya_camp.ipa'
+    api_key_id = ENV['APP_STORE_CONNECT_API_KEY_ID']
+    issuer_id = ENV['APP_STORE_CONNECT_ISSUER_ID']
+    api_key_path = "~/.appstoreconnect/private_keys/AuthKey_#{api_key_id}.p8"
+
+    unless File.exist?(File.expand_path(ipa_path))
+      UI.user_error!("❌ IPA file not found at: #{ipa_path}")
+    end
+
+    unless File.exist?(File.expand_path(api_key_path))
+      UI.user_error!("❌ App Store Connect API Key not found at: #{api_key_path}")
+    end
+
+    UI.message("🚀 Deploying iOS to App Store")
+    UI.message("📦 IPA: #{ipa_path}")
+
+    deliver(
+      ipa: ipa_path,
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true,
+      api_key_path: api_key_path,
+      submit_for_review: false,
+      automatic_release: false,
+      precheck_include_in_app_purchases: false
+    )
+
+    UI.success("✅ Successfully uploaded to App Store")
+  end
+
+  desc "Download metadata from App Store Connect"
+  lane :fetch_metadata do
+    api_key_id = ENV['APP_STORE_CONNECT_API_KEY_ID']
+    api_key_path = "~/.appstoreconnect/private_keys/AuthKey_#{api_key_id}.p8"
+
+    deliver_download_metadata(
+      api_key_path: api_key_path,
+      app_identifier: 'com.ayutthaya.ayutthayaCamp'
+    )
+  end
+
+  desc "Take screenshots for App Store"
+  lane :screenshots do
+    snapshot
+  end
+
+  desc "Register new devices for ad-hoc distribution"
+  lane :register_devices do
+    register_devices(
+      devices_file: './devices.txt'
+    )
+  end
+end
+
+# ========================================
+# ERROR HANDLING
+# ========================================
+
+error do |lane, exception, options|
+  UI.error("❌ Error in lane #{lane}")
+  UI.error(exception.message)
+end

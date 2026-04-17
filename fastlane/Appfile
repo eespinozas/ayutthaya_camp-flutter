@@ -1,0 +1,37 @@
+# Appfile - Fastlane Configuration
+# https://docs.fastlane.tools/advanced/Appfile/
+
+# ========================================
+# ANDROID CONFIGURATION
+# ========================================
+
+for_platform :android do
+  package_name "com.ayutthaya.ayutthaya_camp"
+
+  # Google Play Service Account JSON
+  # Set via environment variable SUPPLY_JSON_KEY_DATA or SUPPLY_JSON_KEY
+  # json_key_file ENV["SUPPLY_JSON_KEY"] || "path/to/service-account.json"
+end
+
+# ========================================
+# iOS CONFIGURATION
+# ========================================
+
+for_platform :ios do
+  app_identifier "com.ayutthaya.ayutthayaCamp"
+
+  # Apple ID (if using username/password authentication - not recommended)
+  # apple_id ENV["FASTLANE_APPLE_ID"] || "your-email@example.com"
+
+  # iTunes Connect Team ID
+  itc_team_id ENV["APP_STORE_CONNECT_TEAM_ID"]
+
+  # Developer Portal Team ID
+  team_id ENV["APPLE_DEVELOPER_TEAM_ID"]
+
+  # For App Store Connect API Key authentication (recommended)
+  # The API Key is configured via environment variables:
+  # - APP_STORE_CONNECT_API_KEY_ID
+  # - APP_STORE_CONNECT_ISSUER_ID
+  # - APP_STORE_CONNECT_API_KEY (the .p8 file content)
+end

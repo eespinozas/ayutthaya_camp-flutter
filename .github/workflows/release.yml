@@ -1,0 +1,284 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.3)'
+        required: true
+        type: string
+      play_track:
+        description: 'Google Play track'
+        required: false
+        type: choice
+        default: 'internal'
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+      ios_target:
+        description: 'iOS distribution target'
+        required: false
+        type: choice
+        default: 'testflight'
+        options:
+          - testflight
+          - appstore
+
+jobs:
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_code: ${{ steps.version.outputs.version_code }}
+      play_track: ${{ steps.inputs.outputs.play_track }}
+      ios_target: ${{ steps.inputs.outputs.ios_target }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+
+          # Calculate version code from git commits
+          VERSION_CODE=$(git rev-list --count HEAD)
+
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_code=${VERSION_CODE}" >> $GITHUB_OUTPUT
+          echo "📦 Version: ${VERSION}"
+          echo "🔢 Version Code: ${VERSION_CODE}"
+
+      - name: Set deployment targets
+        id: inputs
+        run: |
+          PLAY_TRACK="${{ github.event.inputs.play_track || 'internal' }}"
+          IOS_TARGET="${{ github.event.inputs.ios_target || 'testflight' }}"
+
+          echo "play_track=${PLAY_TRACK}" >> $GITHUB_OUTPUT
+          echo "ios_target=${IOS_TARGET}" >> $GITHUB_OUTPUT
+          echo "🎯 Android target: ${PLAY_TRACK}"
+          echo "🎯 iOS target: ${IOS_TARGET}"
+
+  release-android:
+    name: Release Android
+    runs-on: ubuntu-latest
+    needs: prepare
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+
+      - name: Install Fastlane
+        run: |
+          gem install fastlane -v 2.219.0
+          fastlane --version
+
+      - name: Update version in pubspec.yaml
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          VERSION_CODE="${{ needs.prepare.outputs.version_code }}"
+          sed -i "s/^version:.*/version: ${VERSION}+${VERSION_CODE}/" pubspec.yaml
+          echo "✅ Updated pubspec.yaml to ${VERSION}+${VERSION_CODE}"
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Decode Android keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Build Android App Bundle
+        run: |
+          flutter build appbundle \
+            --release \
+            --build-number=${{ needs.prepare.outputs.version_code }} \
+            --build-name=${{ needs.prepare.outputs.version }}
+
+      - name: Upload to Google Play
+        env:
+          SUPPLY_JSON_KEY_DATA: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          SUPPLY_PACKAGE_NAME: com.ayutthaya.ayutthaya_camp
+          SUPPLY_TRACK: ${{ needs.prepare.outputs.play_track }}
+          SUPPLY_AAB: build/app/outputs/bundle/release/app-release.aab
+        run: |
+          fastlane supply \
+            --aab $SUPPLY_AAB \
+            --track $SUPPLY_TRACK \
+            --json_key_data "$SUPPLY_JSON_KEY_DATA" \
+            --package_name $SUPPLY_PACKAGE_NAME \
+            --skip_upload_apk \
+            --skip_upload_metadata \
+            --skip_upload_images \
+            --skip_upload_screenshots
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-${{ needs.prepare.outputs.version }}
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+  release-ios:
+    name: Release iOS
+    runs-on: macos-14
+    needs: prepare
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+
+      - name: Install Fastlane
+        run: |
+          gem install fastlane -v 2.219.0
+          fastlane --version
+
+      - name: Update version in pubspec.yaml
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          VERSION_CODE="${{ needs.prepare.outputs.version_code }}"
+          sed -i '' "s/^version:.*/version: ${VERSION}+${VERSION_CODE}/" pubspec.yaml
+          echo "✅ Updated pubspec.yaml to ${VERSION}+${VERSION_CODE}"
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Setup App Store Connect API Key
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+
+      - name: Import Apple certificates
+        env:
+          CERTIFICATES_P12: ${{ secrets.APPLE_CERTIFICATES_P12 }}
+          CERTIFICATES_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Import certificate
+          echo "$CERTIFICATES_P12" | base64 -d > certificate.p12
+          security import certificate.p12 \
+            -k $KEYCHAIN_PATH \
+            -P "$CERTIFICATES_PASSWORD" \
+            -T /usr/bin/codesign
+
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+      - name: Install provisioning profiles
+        env:
+          PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          echo "$PROVISIONING_PROFILE" | base64 -d > $PP_PATH
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Build iOS IPA
+        run: |
+          flutter build ipa \
+            --release \
+            --build-number=${{ needs.prepare.outputs.version_code }} \
+            --build-name=${{ needs.prepare.outputs.version }} \
+            --export-options-plist=ios/ExportOptions.plist
+
+      - name: Deploy to TestFlight
+        if: needs.prepare.outputs.ios_target == 'testflight'
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          fastlane pilot upload \
+            --ipa build/ios/ipa/ayutthaya_camp.ipa \
+            --skip_waiting_for_build_processing \
+            --api_key_path ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+
+      - name: Deploy to App Store
+        if: needs.prepare.outputs.ios_target == 'appstore'
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          fastlane deliver \
+            --ipa build/ios/ipa/ayutthaya_camp.ipa \
+            --skip_metadata \
+            --skip_screenshots \
+            --force \
+            --api_key_path ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-${{ needs.prepare.outputs.version }}
+          path: build/ios/ipa/*.ipa
+          retention-days: 30
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true

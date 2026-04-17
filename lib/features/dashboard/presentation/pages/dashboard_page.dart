@@ -11,7 +11,7 @@ import '../../../bookings/models/booking.dart';
 // TODO: ajusta el import a la página real donde el alumno elige escuela/plan/sube comprobante
 // import '../../seleccion_escuela/presentation/pages/seleccion_escuela_page.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   final VoidCallback? onNavigateToPagos;
 
   const DashboardPage({
@@ -20,25 +20,62 @@ class DashboardPage extends StatelessWidget {
   });
 
   @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  bool _isRefreshing = false;
+
+  /// Función para actualizar el dashboard
+  Future<void> _refreshData() async {
+    setState(() => _isRefreshing = true);
+
+    final vm = context.read<DashboardViewModel>();
+    await vm.reload();
+
+    setState(() => _isRefreshing = false);
+
+    // Mostrar mensaje de actualización
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 12),
+              Text('Dashboard actualizado'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
 
     if (vm.loading) {
       return const Scaffold(
-        backgroundColor: Color(0xFF1E1E1E),
+        backgroundColor: Color(0xFF0F0F0F),
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: Color(0xFFFF6A00),
+          ),
         ),
       );
     }
 
     if (vm.errorMsg != null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         body: Center(
           child: Text(
             vm.errorMsg!,
-            style: const TextStyle(color: Colors.redAccent),
+            style: const TextStyle(color: Color(0xFFEF4444)),
           ),
         ),
       );
@@ -71,33 +108,72 @@ class DashboardPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
-        title: const Text(
-          'Ayutthaya App',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.fitness_center, color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'AYUTTHAYA CAMP',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
         ),
         actions: [
+          // Indicador de actualización
+          if (_isRefreshing)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: const Color(0xFFFF6A00),
+                ),
+              ),
+            ),
           // Indicador de estado de membresía
           _MembershipStatusChip(
             estaActivo: estaActivo,
             membershipStatus: vm.membershipStatus,
             onTap: () {
-              // Navega al tab de Pagos
-              onNavigateToPagos?.call();
+              widget.onNavigateToPagos?.call();
             },
           ),
           const SizedBox(width: 8),
           IconButton(
             icon: const Icon(
-              Icons.person_outline,
-              color: Colors.white70,
-              size: 28,
+              Icons.person_rounded,
+              color: Colors.white,
+              size: 26,
             ),
             onPressed: () {
               Navigator.of(context).push(
@@ -110,31 +186,17 @@ class DashboardPage extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const QRCheckInPage(),
-            ),
-          );
-        },
-        backgroundColor: Colors.orangeAccent,
-        foregroundColor: Colors.black,
-        icon: const Icon(Icons.qr_code_scanner, size: 28),
-        label: const Text(
-          'Check-in',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: Center(
+            return RefreshIndicator(
+              onRefresh: _refreshData,
+              color: const Color(0xFFFF6A00),
+              backgroundColor: const Color(0xFF1A1A1A),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 900),
                   child: Column(
@@ -147,7 +209,7 @@ class DashboardPage extends StatelessWidget {
                         _AccountActivationCard(
                           onActivate: () {
                             // Navega al tab de Pagos para matricularse
-                            onNavigateToPagos?.call();
+                            widget.onNavigateToPagos?.call();
                           },
                         ),
 
@@ -184,7 +246,7 @@ class DashboardPage extends StatelessWidget {
                             pagos: ultimos3Pagos,
                             onVerTodos: () {
                               // Navega al tab de Pagos
-                              onNavigateToPagos?.call();
+                              widget.onNavigateToPagos?.call();
                             },
                           );
                         },
@@ -195,6 +257,7 @@ class DashboardPage extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
             );
           },
         ),
@@ -295,71 +358,102 @@ class _AccountActivationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Paleta amarilla/alerta sobre fondo oscuro:
-    final bg = Colors.amber.shade100;
-    final border = Colors.amber.shade400;
-    final iconColor = Colors.amber.shade800;
-    final textColor = Colors.amber.shade900;
-
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border, width: 1),
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFFF6A00).withValues(alpha: 0.25),
+            const Color(0xFFFF8534).withValues(alpha: 0.15),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFFF6A00),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // fila icono + título
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_rounded, color: iconColor, size: 28),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Tu cuenta no está activa',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
                   ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF6A00).withValues(alpha: 0.4),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.warning_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Activa tu Membresía',
+                      style: TextStyle(
+                        color: Color(0xFFFF6A00),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Completa tu matrícula para empezar',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            'Para poder reservar clases y completar tu perfil, primero debes matricularte y subir tu comprobante de pago.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.4,
-              color: textColor,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
+          const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
+            height: 52,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: const Color(0xFFFF6A00),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 0,
+                shadowColor: const Color(0xFFFF6A00).withValues(alpha: 0.5),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               onPressed: onActivate,
               child: const Text(
-                'Matricularme ahora',
+                'MATRICULARME AHORA',
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
                 ),
               ),
             ),
@@ -387,39 +481,57 @@ class _PlanHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = Colors.white;
-    final subtle = Colors.white70;
-
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF1A1A1A),
+            const Color(0xFF1A1A1A).withValues(alpha: 0.9),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFFF6A00).withValues(alpha: 0.25),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6A00).withValues(alpha: 0.1),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-      child: Wrap(
-        runSpacing: 16,
-        spacing: 32,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _InfoChip(
             label: 'Plan',
             value: planNombre,
             icon: Icons.fitness_center,
-            textColor: textColor,
-            subtle: subtle,
+          ),
+          Container(
+            width: 1,
+            height: 50,
+            color: Colors.white.withValues(alpha: 0.1),
           ),
           _InfoChip(
-            label: 'Clases restantes',
+            label: 'Clases',
             value: '$clasesRestantes',
             icon: Icons.confirmation_num_outlined,
-            textColor: textColor,
-            subtle: subtle,
+          ),
+          Container(
+            width: 1,
+            height: 50,
+            color: Colors.white.withValues(alpha: 0.1),
           ),
           _InfoChip(
             label: 'Vigencia',
             value: vigenciaHasta,
-            icon: Icons.schedule,
-            textColor: textColor,
-            subtle: subtle,
+            icon: Icons.calendar_today,
           ),
         ],
       ),
@@ -431,49 +543,55 @@ class _InfoChip extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  final Color textColor;
-  final Color subtle;
 
   const _InfoChip({
     required this.label,
     required this.value,
     required this.icon,
-    required this.textColor,
-    required this.subtle,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Column(
       children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey.shade800,
-          child: Icon(icon, color: Colors.white),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFFFF6A00).withValues(alpha: 0.25),
+                const Color(0xFFFF8534).withValues(alpha: 0.15),
+              ],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Icon(icon, color: const Color(0xFFFF6A00), size: 28),
         ),
-        const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: subtle,
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        )
+        const SizedBox(height: 12),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.5,
+          ),
+        ),
       ],
     );
   }
@@ -537,21 +655,50 @@ class _ResumenBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Definir gradientes según el color
+    List<Color> gradientColors;
+    IconData icon;
+
+    if (label.contains('Agendadas')) {
+      gradientColors = [const Color(0xFFFBBF24), const Color(0xFFF59E0B)];
+      icon = Icons.event_available;
+    } else if (label.contains('Asistidas')) {
+      gradientColors = [const Color(0xFF10B981), const Color(0xFF059669)];
+      icon = Icons.check_circle;
+    } else {
+      gradientColors = [const Color(0xFFEF4444), const Color(0xFFDC2626)];
+      icon = Icons.cancel;
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors[1].withValues(alpha: 0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(icon, color: Colors.white, size: 32),
+          const SizedBox(height: 10),
           Text(
             '$valor',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              height: 1,
             ),
           ),
           const SizedBox(height: 8),
@@ -560,8 +707,9 @@ class _ResumenBox extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -588,14 +736,21 @@ class _Ultimos3PagosCard extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.orangeAccent.withOpacity(0.3),
-          width: 2,
+          color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6A00).withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,22 +758,29 @@ class _Ultimos3PagosCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Últimos Pagos',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              const Row(
+                children: [
+                  Icon(Icons.payments, color: Color(0xFFFF6A00), size: 24),
+                  SizedBox(width: 12),
+                  Text(
+                    'Últimos Pagos',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
-              GestureDetector(
-                onTap: onVerTodos,
+              TextButton(
+                onPressed: onVerTodos,
                 child: const Text(
                   'Ver todos',
                   style: TextStyle(
-                    color: Colors.orangeAccent,
+                    color: Color(0xFFFF6A00),
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -648,13 +810,13 @@ class _Ultimos3PagosCard extends StatelessWidget {
                       : Colors.red;
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFF0F0F0F),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: statusColor.withOpacity(0.3),
-                    width: 1,
+                    color: statusColor.withValues(alpha: 0.3),
+                    width: 1.5,
                   ),
                 ),
                 child: Row(
@@ -684,23 +846,29 @@ class _Ultimos3PagosCard extends StatelessWidget {
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                        horizontal: 12,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: statusColor,
-                          width: 1,
+                        gradient: LinearGradient(
+                          colors: [statusColor, statusColor.withValues(alpha: 0.8)],
                         ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: statusColor.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Text(
                         pago['status'],
-                        style: TextStyle(
-                          color: statusColor,
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -823,28 +991,38 @@ class _TodayClassesSection extends StatelessWidget {
 
             if (todayBookings.isEmpty) {
               return Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                    width: 2,
+                  ),
                 ),
-                child: Column(
-                  children: const [
-                    Icon(
-                      Icons.event_busy,
-                      size: 48,
-                      color: Colors.white24,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(
+                          Icons.event_busy,
+                          size: 48,
+                          color: Colors.white24,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'No tienes clases agendadas para hoy',
+                          style: TextStyle(
+                            color: Colors.white54,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 12),
-                    Text(
-                      'No tienes clases agendadas para hoy',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                  ),
                 ),
               );
             }
@@ -927,7 +1105,7 @@ class _TodayClassCard extends StatelessWidget {
         color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: statusColor.withOpacity(0.3),
+          color: statusColor.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -943,7 +1121,7 @@ class _TodayClassCard extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.2),
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

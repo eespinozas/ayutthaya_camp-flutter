@@ -6,7 +6,7 @@
 import * as admin from "firebase-admin";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions";
-import {sendEmail, isValidEmail, initializeSendGrid} from "../email/emailService";
+import {sendEmail, isValidEmail, initializeResend} from "../email/resendService";
 import {generateVerifyEmailTemplate} from "../email/templates/verifyEmail";
 import {getAppConfig} from "../email/sendgridConfig";
 
@@ -87,7 +87,17 @@ export const sendVerificationEmail = onCall<
         };
       }
 
-      // 4. GENERAR LINK DE VERIFICACIÓN OFICIAL DE FIREBASE
+      // 4. OBTENER NOMBRE DEL USUARIO DESDE FIRESTORE
+      let userName: string | undefined;
+      try {
+        const userDoc = await admin.firestore().collection("users").doc(userId).get();
+        userName = userDoc.data()?.name;
+      } catch (error) {
+        logger.warn("⚠️ No se pudo obtener el nombre del usuario desde Firestore", {userId});
+        // Continuar sin el nombre
+      }
+
+      // 5. GENERAR LINK DE VERIFICACIÓN OFICIAL DE FIREBASE
       const appConfig = getAppConfig();
       const actionCodeSettings = {
         url: `https://${appConfig.firebaseActionDomain}/verify-email.html`, // URL de auto-verificación
@@ -98,7 +108,7 @@ export const sendVerificationEmail = onCall<
         .auth()
         .generateEmailVerificationLink(requestEmail, actionCodeSettings);
 
-      // 5. EXTRAER EL oobCode DEL LINK DE FIREBASE
+      // 6. EXTRAER EL oobCode DEL LINK DE FIREBASE
       // El link de Firebase tiene formato: https://.../__/auth/action?mode=verifyEmail&oobCode=XXX&...
       const url = new URL(firebaseLink);
       const oobCode = url.searchParams.get("oobCode");
@@ -107,27 +117,29 @@ export const sendVerificationEmail = onCall<
         throw new HttpsError("internal", "No se pudo extraer el código de verificación");
       }
 
-      // 6. CREAR LINK DIRECTO A NUESTRA PÁGINA (BYPASS FIREBASE UI)
+      // 7. CREAR LINK DIRECTO A NUESTRA PÁGINA (BYPASS FIREBASE UI)
       const verificationLink = `https://${appConfig.firebaseActionDomain}/verify-email.html?mode=verifyEmail&oobCode=${oobCode}`;
 
       logger.info("🔗 Link de verificación directo generado", {
         userId,
         email: requestEmail,
+        userName,
         hasOobCode: !!oobCode,
       });
 
-      // 7. GENERAR HTML DEL EMAIL
+      // 8. GENERAR HTML DEL EMAIL CON PERSONALIZACIÓN
       const htmlContent = generateVerifyEmailTemplate({
         verificationLink,
         userEmail: requestEmail,
+        userName,
         logoUrl: appConfig.logoUrl,
         appName: appConfig.appName,
         supportEmail: appConfig.supportEmail,
         companyAddress: appConfig.companyAddress,
       });
 
-      // 8. ENVIAR EMAIL VÍA SENDGRID
-      initializeSendGrid();
+      // 9. ENVIAR EMAIL VÍA RESEND
+      initializeResend();
       await sendEmail({
         to: requestEmail,
         subject: `Verifica tu correo electrónico - ${appConfig.appName}`,

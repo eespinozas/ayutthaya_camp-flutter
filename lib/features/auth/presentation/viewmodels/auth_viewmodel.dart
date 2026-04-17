@@ -74,25 +74,41 @@ class AuthViewModel extends ChangeNotifier {
 
         notifyListeners();
       } else {
-        // Si el documento no existe y el email empieza con "admin", crear como admin
+        // Si el documento no existe, crearlo automáticamente
         final userEmail = _user?.email ?? '';
-        if (userEmail.startsWith('admin')) {
-          await _firestore.collection('users').doc(userId).set({
-            'email': userEmail,
-            'name': _user?.displayName ?? '',
-            'role': 'admin',
-            'membershipStatus': 'active',
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-          _userRole = 'admin';
-          _membershipStatus = 'active';
-          notifyListeners();
-          debugPrint('Admin user document created for $userEmail');
-        }
+        final userName = _user?.displayName ?? '';
+
+        // Determinar el rol y estado según el email
+        final isAdmin = userEmail.startsWith('admin');
+        final role = isAdmin ? 'admin' : 'student';
+        final membershipStatus = isAdmin ? 'active' : 'none';
+
+        debugPrint('⚠️ Usuario no encontrado en Firestore, creando documento...');
+        debugPrint('   UID: $userId');
+        debugPrint('   Email: $userEmail');
+        debugPrint('   Rol: $role');
+
+        await _firestore.collection('users').doc(userId).set({
+          'email': userEmail,
+          'searchKey': userEmail.toLowerCase(), // Para búsquedas fáciles en Firebase Console
+          'name': userName,
+          'role': role,
+          'membershipStatus': membershipStatus,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        _userRole = role;
+        _membershipStatus = membershipStatus;
+        notifyListeners();
+
+        debugPrint('✅ Documento de usuario creado exitosamente');
       }
     } catch (e) {
-      debugPrint('Error loading user data: $e');
+      debugPrint('❌ Error loading/creating user data: $e');
+      // Valores por defecto en caso de error
+      _userRole = 'student';
+      _membershipStatus = 'none';
     }
   }
 
@@ -158,6 +174,7 @@ class AuthViewModel extends ChangeNotifier {
       // 4. Crear documento del usuario en Firestore
       await _firestore.collection('users').doc(cred.user!.uid).set({
         'email': email,
+        'searchKey': email.toLowerCase(), // Para búsquedas fáciles en Firebase Console
         'name': displayName ?? '',
         'role': 'student',
         'membershipStatus': 'none', // none, pending, active, expired, frozen
@@ -167,6 +184,24 @@ class AuthViewModel extends ChangeNotifier {
 
       _user = cred.user;
       _userRole = 'student';
+
+      // 5. Notificar a admins sobre nuevo registro
+      try {
+        await NotificationService().sendNotificationToAdmins(
+          title: '👤 Nuevo Usuario Registrado',
+          body: '${displayName ?? email} se ha registrado en la aplicación',
+          data: {
+            'type': 'new_user',
+            'userId': cred.user!.uid,
+            'userEmail': email,
+            'userName': displayName ?? '',
+          },
+        );
+        debugPrint('✅ Notificación de nuevo usuario enviada a admins');
+      } catch (e) {
+        debugPrint('⚠️ Error enviando notificación de nuevo usuario: $e');
+        // No lanzar error, el registro ya se completó
+      }
 
       return true;
     } on FirebaseAuthException catch (e) {

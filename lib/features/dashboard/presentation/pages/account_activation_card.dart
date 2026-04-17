@@ -10,11 +10,11 @@ class AccountActivationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Colores base: ajusta a tu theme si ya tienes un color brand
-    final bg = Colors.amber.shade100;
-    final border = Colors.amber.shade400;
-    final iconColor = Colors.amber.shade800;
-    final textColor = Colors.amber.shade900;
+    // Colores base: naranja oscuro
+    final bg = Colors.orange.shade50;
+    final border = Colors.orange.shade400;
+    final iconColor = Colors.deepOrange.shade800;
+    final textColor = Colors.deepOrange.shade900; // Naranja muy oscuro
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

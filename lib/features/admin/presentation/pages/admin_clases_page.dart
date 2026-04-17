@@ -43,10 +43,10 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
   Widget build(BuildContext context) {
     if (!_localeInitialized) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
           child: CircularProgressIndicator(
-            color: Colors.orangeAccent,
+            color: const Color(0xFFFF6A00),
           ),
         ),
       );
@@ -64,12 +64,34 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
               selectedDate.day == DateTime.now().day;
 
           return Scaffold(
-            backgroundColor: const Color(0xFF1E1E1E),
+            backgroundColor: const Color(0xFF0F0F0F),
             appBar: AppBar(
-              backgroundColor: const Color(0xFF2A2A2A),
-              title: const Text(
-                'Gestión de Clases',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              backgroundColor: const Color(0xFF1A1A1A),
+              elevation: 0,
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.fitness_center, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Gestión de Clases',
+                    style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                ],
               ),
               centerTitle: false,
             ),
@@ -129,8 +151,8 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                           icon: const Icon(Icons.today, size: 18),
                           label: const Text('Ir a Hoy'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.orangeAccent,
-                            side: const BorderSide(color: Colors.orangeAccent),
+                            foregroundColor: const Color(0xFFFF6A00),
+                            side: const BorderSide(color: const Color(0xFFFF6A00)),
                           ),
                         ),
                       ],
@@ -145,7 +167,7 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(
-                          child: CircularProgressIndicator(color: Colors.orangeAccent),
+                          child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
                         );
                       }
 
@@ -265,7 +287,7 @@ class _ClassCardState extends State<_ClassCard> {
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF2A2A2A),
+            color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: statusColor.withValues(alpha: 0.3),
@@ -380,7 +402,7 @@ class _ClassCardState extends State<_ClassCard> {
                     children: [
                       const Icon(
                         Icons.people,
-                        color: Colors.orangeAccent,
+                        color: const Color(0xFFFF6A00),
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -419,7 +441,7 @@ class _ClassCardState extends State<_ClassCard> {
                         decoration: BoxDecoration(
                           color: hasAttended
                               ? Colors.green.withValues(alpha: 0.1)
-                              : const Color(0xFF1E1E1E),
+                              : const Color(0xFF0F0F0F),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: hasAttended

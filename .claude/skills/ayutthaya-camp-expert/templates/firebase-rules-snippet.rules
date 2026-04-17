@@ -1,0 +1,29 @@
+// Firestore Rules Snippet for {{FeatureName}}
+// Add this to your firestore.rules file
+
+// ============================================
+// {{FEATURE_NAME}}S - User manages own {{feature_name}}s
+// ============================================
+match /{{feature_name}}s/{{{feature_name}}Id} {
+  // Read: user can read own {{feature_name}}s, admin can read all
+  allow read: if request.auth != null && (
+    resource.data.userId == request.auth.uid ||
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+  );
+
+  // Create: user can create own {{feature_name}}s
+  allow create: if request.auth != null &&
+    request.resource.data.userId == request.auth.uid;
+
+  // Update: user can update own {{feature_name}}s, admin can update all
+  allow update: if request.auth != null && (
+    resource.data.userId == request.auth.uid ||
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+  );
+
+  // Delete: user can delete own {{feature_name}}s, admin can delete all
+  allow delete: if request.auth != null && (
+    resource.data.userId == request.auth.uid ||
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+  );
+}

@@ -15,20 +15,91 @@ class AdminAlumnosPage extends StatefulWidget {
 
 class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool _isRefreshing = false;
+
+  /// Función para actualizar la lista
+  Future<void> _refreshData() async {
+    setState(() => _isRefreshing = true);
+
+    // Esperar un momento para dar feedback visual
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    setState(() => _isRefreshing = false);
+
+    // Mostrar mensaje de actualización
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 12),
+              Text('Lista actualizada'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2A2A2A),
-        title: const Text(
-          'Gestión de Alumnos',
-          style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+        backgroundColor: const Color(0xFF1A1A1A),
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.people_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Gestión de Alumnos',
+              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+          ],
         ),
         centerTitle: false,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          if (_isRefreshing)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFFFF6A00),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: Color(0xFFFF6A00)),
+              onPressed: _refreshData,
+              tooltip: 'Actualizar',
+            ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore.collection('users').snapshots(),
@@ -44,7 +115,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
 
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: Colors.orangeAccent),
+              child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
             );
           }
 
@@ -61,7 +132,8 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
               .where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
                 final status = data['membershipStatus'] ?? 'none';
-                return status == 'pending' || status == 'none';
+                // Solo usuarios que han pagado matrícula y esperan aprobación
+                return status == 'pending';
               })
               .toList();
 
@@ -81,38 +153,43 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
               })
               .toList();
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Stats
+          return RefreshIndicator(
+            onRefresh: _refreshData,
+            color: const Color(0xFFFF6A00),
+            backgroundColor: const Color(0xFF1A1A1A),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                // Enhanced Stats Cards
                 Row(
                   children: [
                     Expanded(
-                      child: _buildStatCard(
+                      child: _buildEnhancedStatCard(
                         label: 'Pendientes',
                         value: '${pendingUsers.length}',
-                        icon: Icons.pending_actions,
-                        color: Colors.orange,
+                        icon: Icons.pending_actions_rounded,
+                        gradientColors: const [Color(0xFFF59E0B), Color(0xFFEF4444)],
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildStatCard(
+                      child: _buildEnhancedStatCard(
                         label: 'Activos',
                         value: '${activeUsers.length}',
-                        icon: Icons.check_circle,
-                        color: Colors.green,
+                        icon: Icons.check_circle_rounded,
+                        gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildStatCard(
+                      child: _buildEnhancedStatCard(
                         label: 'Inactivos',
                         value: '${inactiveUsers.length}',
-                        icon: Icons.cancel_outlined,
-                        color: Colors.red,
+                        icon: Icons.cancel_rounded,
+                        gradientColors: const [Color(0xFF6B7280), Color(0xFF4B5563)],
                       ),
                     ),
                   ],
@@ -195,38 +272,53 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                 ],
               ],
             ),
+          ),
           );
         },
       ),
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildEnhancedStatCard({
     required String label,
     required String value,
     required IconData icon,
-    required Color color,
+    required List<Color> gradientColors,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors[0].withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 24),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
           const SizedBox(height: 12),
           Text(
             value,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -250,10 +342,10 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         title: const Row(
           children: [
-            Icon(Icons.info_outline, color: Colors.orangeAccent),
+            Icon(Icons.info_outline, color: const Color(0xFFFF6A00)),
             SizedBox(width: 12),
             Text(
               'Ir a Pagos',
@@ -273,9 +365,9 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orangeAccent.withOpacity(0.1),
+                color: const Color(0xFFFF6A00).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFFFF6A00).withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,7 +375,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                   const Text(
                     'Para activar al usuario:',
                     style: TextStyle(
-                      color: Colors.orangeAccent,
+                      color: const Color(0xFFFF6A00),
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -321,7 +413,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
               widget.onNavigateToPagos();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent,
+              backgroundColor: const Color(0xFFFF6A00),
               foregroundColor: Colors.black,
             ),
             icon: const Icon(Icons.payment, size: 18),
@@ -385,7 +477,7 @@ class _UserCardWithName extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A2A2A),
+              color: const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -449,7 +541,7 @@ class _UserCardWithName extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.orange.withOpacity(0.3),
@@ -512,7 +604,7 @@ class _UserCardWithName extends StatelessWidget {
               builder: (context) => ElevatedButton.icon(
                 onPressed: onActivate,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orangeAccent,
+                  backgroundColor: const Color(0xFFFF6A00),
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
@@ -537,7 +629,7 @@ class _UserCardWithName extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -598,7 +690,7 @@ class _UserCardWithName extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.red.withOpacity(0.3),

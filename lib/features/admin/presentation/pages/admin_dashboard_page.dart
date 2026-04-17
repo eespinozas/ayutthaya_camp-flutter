@@ -34,10 +34,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Widget build(BuildContext context) {
     if (!_localeInitialized) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
           child: CircularProgressIndicator(
-            color: Colors.orangeAccent,
+            color: const Color(0xFFFF6A00),
           ),
         ),
       );
@@ -53,16 +53,16 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         builder: (context, viewModel, child) {
           if (viewModel.loading) {
             return Scaffold(
-              backgroundColor: const Color(0xFF1E1E1E),
+              backgroundColor: const Color(0xFF0F0F0F),
               body: const Center(
-                child: CircularProgressIndicator(color: Colors.orangeAccent),
+                child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
               ),
             );
           }
 
           if (viewModel.errorMsg != null) {
             return Scaffold(
-              backgroundColor: const Color(0xFF1E1E1E),
+              backgroundColor: const Color(0xFF0F0F0F),
               body: Center(
                 child: Text(
                   'Error: ${viewModel.errorMsg}',
@@ -121,70 +121,103 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           }
 
           return Scaffold(
-            backgroundColor: const Color(0xFF1E1E1E),
+            backgroundColor: const Color(0xFF0F0F0F),
             body: RefreshIndicator(
               onRefresh: viewModel.reload,
-              color: Colors.orangeAccent,
+              color: const Color(0xFFFF6A00),
               child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Dashboard',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$dayName, $dateStr',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+            // Enhanced Header with Welcome Banner
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const AdminQRCodesPage(),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.dashboard_outlined,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Dashboard Admin',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '$dayName, $dateStr',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.qr_code_2,
-                        color: Colors.orangeAccent,
-                        size: 28,
-                      ),
-                      tooltip: 'Códigos QR de Clases',
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      onPressed: () {
-                        // TODO: Implementar notificaciones
-                      },
-                      icon: const Icon(
-                        Icons.notifications_outlined,
-                        color: Colors.white70,
-                        size: 28,
+                  ),
+                  Row(
+                    children: [
+                      _buildHeaderIconButton(
+                        icon: Icons.qr_code_2,
+                        tooltip: 'Códigos QR',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const AdminQRCodesPage(),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 8),
+                      _buildHeaderIconButton(
+                        icon: Icons.notifications_outlined,
+                        tooltip: 'Notificaciones',
+                        badge: alertas.isNotEmpty ? '${alertas.length}' : null,
+                        onPressed: () {
+                          // TODO: Implementar notificaciones
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 24),
@@ -208,29 +241,43 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               crossAxisSpacing: 12,
               childAspectRatio: 1.5,
               children: [
-                _buildKPICard(
-                  label: 'Total Asistencias',
-                  value: '${todayStats['totalAsistencias']}/${todayStats['capacidadTotalHoy']}',
-                  icon: Icons.people,
-                  color: Colors.blue,
+                _buildEnhancedKPICard(
+                  label: 'Asistencias Hoy',
+                  value: '${todayStats['totalAsistencias']}',
+                  subtitle: '/${todayStats['capacidadTotalHoy']} capacidad',
+                  icon: Icons.people_rounded,
+                  gradientColors: const [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                  percentage: (todayStats['capacidadTotalHoy'] as int?) != null && (todayStats['capacidadTotalHoy'] as int) > 0
+                    ? (todayStats['totalAsistencias'] as int) / (todayStats['capacidadTotalHoy'] as int)
+                    : 0.0,
                 ),
-                _buildKPICard(
-                  label: 'Clases',
-                  value: '${todayStats['clasesCompletadas']}/${todayStats['clasesTotales']}',
+                _buildEnhancedKPICard(
+                  label: 'Clases Hoy',
+                  value: '${todayStats['clasesCompletadas']}',
+                  subtitle: '/${todayStats['clasesTotales']} total',
                   icon: Icons.fitness_center,
-                  color: Colors.green,
+                  gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
+                  percentage: (todayStats['clasesTotales'] as int?) != null && (todayStats['clasesTotales'] as int) > 0
+                    ? (todayStats['clasesCompletadas'] as int) / (todayStats['clasesTotales'] as int)
+                    : 0.0,
                 ),
-                _buildKPICard(
+                _buildEnhancedKPICard(
                   label: 'Nuevos Alumnos',
                   value: '${todayStats['alumnosNuevos']}',
-                  icon: Icons.person_add,
-                  color: Colors.purple,
+                  subtitle: 'hoy',
+                  icon: Icons.person_add_rounded,
+                  gradientColors: const [Color(0xFFF59E0B), Color(0xFFEF4444)],
+                  showTrend: true,
+                  trendUp: (todayStats['alumnosNuevos'] as int?) != null && (todayStats['alumnosNuevos'] as int) > 0,
                 ),
-                _buildKPICard(
-                  label: 'Pagos Recibidos',
-                  value: '\$${todayStats['pagosRecibidos']! ~/ 1000}K',
-                  icon: Icons.attach_money,
-                  color: Colors.orange,
+                _buildEnhancedKPICard(
+                  label: 'Ingresos Hoy',
+                  value: '\$${(todayStats['pagosRecibidos']! / 1000).toStringAsFixed(1)}K',
+                  subtitle: 'total recibido',
+                  icon: Icons.payments_rounded,
+                  gradientColors: const [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                  showTrend: true,
+                  trendUp: (todayStats['pagosRecibidos'] as int?) != null && (todayStats['pagosRecibidos'] as int) > 0,
                 ),
               ],
             ),
@@ -260,7 +307,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
+                    color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -363,47 +410,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             const SizedBox(height: 12),
 
             ...alertas.map((alerta) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.orangeAccent.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.orangeAccent.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        alerta['icon'] as IconData,
-                        color: Colors.orangeAccent,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        alerta['text'] as String,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white38,
-                    ),
-                  ],
-                ),
+              return _buildInteractiveAlert(
+                icon: alerta['icon'] as IconData,
+                text: alerta['text'] as String,
+                count: alerta['count'] as int,
+                onTap: () {
+                  // TODO: Navegar a la sección correspondiente
+                },
               );
             }).toList(),
 
@@ -418,29 +431,75 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
-  Widget _buildKPICard({
+  Widget _buildHeaderIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+    String? badge,
+  }) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            onPressed: onPressed,
+            icon: Icon(icon, color: Colors.white, size: 24),
+            tooltip: tooltip,
+          ),
+        ),
+        if (badge != null)
+          Positioned(
+            top: -4,
+            right: -4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFF6A00), width: 2),
+              ),
+              child: Text(
+                badge,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEnhancedKPICard({
     required String label,
     required String value,
+    required String subtitle,
     required IconData icon,
-    required Color color,
+    required List<Color> gradientColors,
+    double? percentage,
+    bool showTrend = false,
+    bool trendUp = true,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.8),
-            color.withOpacity(0.6),
-          ],
+          colors: gradientColors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: gradientColors[0].withValues(alpha: 0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -448,10 +507,44 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 28,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: Colors.white, size: 24),
+              ),
+              if (showTrend)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        trendUp ? Icons.trending_up : Icons.trending_flat,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        trendUp ? '+' : '~',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,21 +553,133 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 value,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  height: 1.2,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (percentage != null) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: percentage,
+                    minHeight: 4,
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 4),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInteractiveAlert({
+    required IconData icon,
+    required String text,
+    required int count,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        text,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Toca para revisar',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Color(0xFFFF6A00),
+                    size: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

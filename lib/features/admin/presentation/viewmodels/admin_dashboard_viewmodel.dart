@@ -118,11 +118,11 @@ class AdminDashboardViewModel extends ChangeNotifier {
         return role == 'student';
       }).toList();
 
-      // Usuarios pendientes
+      // Usuarios pendientes (han pagado matrícula y esperan aprobación)
       pendingUsers = students.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
         final status = data['membershipStatus'] ?? 'none';
-        return status == 'pending' || status == 'none';
+        return status == 'pending';
       }).length;
 
       // Usuarios activos

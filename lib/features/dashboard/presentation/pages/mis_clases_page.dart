@@ -75,10 +75,17 @@ class _MisClasesPageState extends State<MisClasesPage>
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: const Color(0xFF2A2A2A),
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: const Color(0xFFFF8534).withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
           title: const Row(
             children: [
-              Icon(Icons.warning_amber, color: Colors.orange),
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFFF8534)),
               SizedBox(width: 8),
               Text(
                 'No se puede cancelar',
@@ -98,7 +105,7 @@ class _MisClasesPageState extends State<MisClasesPage>
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Entendido',
-                style: TextStyle(color: Colors.orangeAccent),
+                style: TextStyle(color: const Color(0xFFFF6A00)),
               ),
             ),
           ],
@@ -110,7 +117,7 @@ class _MisClasesPageState extends State<MisClasesPage>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         title: const Text(
           'Cancelar Reserva',
           style: TextStyle(color: Colors.white),
@@ -149,7 +156,7 @@ class _MisClasesPageState extends State<MisClasesPage>
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(
-        child: CircularProgressIndicator(color: Colors.orangeAccent),
+        child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
       ),
     );
 
@@ -183,9 +190,9 @@ class _MisClasesPageState extends State<MisClasesPage>
   Widget build(BuildContext context) {
     if (!_localeInitialized) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2A2A2A),
+          backgroundColor: const Color(0xFF1A1A1A),
           title: const Text(
             'Mis Clases',
             style: TextStyle(fontWeight: FontWeight.w600),
@@ -194,7 +201,7 @@ class _MisClasesPageState extends State<MisClasesPage>
         ),
         body: const Center(
           child: CircularProgressIndicator(
-            color: Colors.orangeAccent,
+            color: const Color(0xFFFF6A00),
           ),
         ),
       );
@@ -205,7 +212,7 @@ class _MisClasesPageState extends State<MisClasesPage>
 
     if (user == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
           child: Text(
             'Debes iniciar sesión para ver tus clases',
@@ -218,9 +225,9 @@ class _MisClasesPageState extends State<MisClasesPage>
     return MembershipGuard(
       pageName: 'Mis Clases',
       child: Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         title: const Text(
           'Mis Clases',
           style: TextStyle(fontWeight: FontWeight.w600),
@@ -228,8 +235,8 @@ class _MisClasesPageState extends State<MisClasesPage>
         centerTitle: false,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.orangeAccent,
-          labelColor: Colors.orangeAccent,
+          indicatorColor: const Color(0xFFFF6A00),
+          labelColor: const Color(0xFFFF6A00),
           unselectedLabelColor: Colors.white60,
           tabs: const [
             Tab(text: 'Próximas'),
@@ -258,7 +265,7 @@ class _MisClasesPageState extends State<MisClasesPage>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.orangeAccent),
+            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
           );
         }
 
@@ -305,7 +312,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                       'Necesitas crear un índice en Firestore.\nCopia el link del error y ábrelo en tu navegador.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.orangeAccent,
+                        color: const Color(0xFFFF6A00),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -389,7 +396,7 @@ class _MisClasesPageState extends State<MisClasesPage>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.orangeAccent),
+            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
           );
         }
 
@@ -436,7 +443,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                       'Necesitas crear un índice en Firestore.\nCopia el link del error y ábrelo en tu navegador.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.orangeAccent,
+                        color: const Color(0xFFFF6A00),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -508,7 +515,7 @@ class _MisClasesPageState extends State<MisClasesPage>
     final hoursUntilClass = classDateTime.difference(now).inHours;
     final canCancel = hoursUntilClass >= 24;
 
-    Color statusColor = Colors.orangeAccent;
+    Color statusColor = const Color(0xFFFF6A00);
     String statusText = 'Confirmada';
     IconData statusIcon = Icons.check_circle;
 
@@ -528,7 +535,7 @@ class _MisClasesPageState extends State<MisClasesPage>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      color: const Color(0xFF2A2A2A),
+      color: const Color(0xFF1A1A1A),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
@@ -561,7 +568,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                       Text(
                         _formatTime(booking.scheduleTime),
                         style: const TextStyle(
-                          color: Colors.orangeAccent,
+                          color: const Color(0xFFFF6A00),
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -714,7 +721,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                     icon: const Icon(Icons.check, size: 20),
                     label: const Text('Confirmar Asistencia'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orangeAccent,
+                      backgroundColor: const Color(0xFFFF6A00),
                       foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),

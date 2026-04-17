@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import '../models/payment.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/config/app_constants.dart';
 
 class PaymentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -13,6 +14,122 @@ class PaymentService {
 
   // Formatos de archivo permitidos para comprobantes
   static const List<String> allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
+
+  /// Verificar si existe un pago duplicado según el tipo:
+  /// - Matrícula: 1 vez al AÑO
+  /// - Mensualidad: 1 vez al MES
+  Future<Map<String, dynamic>> _checkDuplicatePayment(String userId, PaymentType type) async {
+    try {
+      final now = DateTime.now();
+
+      // ✅ FIX #4: Para MATRÍCULA, validar membresía activa y fecha de última matrícula
+      if (type == PaymentType.enrollment) {
+        debugPrint('🔍 Verificando condiciones para nueva matrícula...');
+
+        // Verificar estado de membresía actual
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data()!;
+          final membershipStatus = userData['membershipStatus'] ?? 'none';
+
+          // Si tiene membresía activa, bloquear
+          if (membershipStatus == 'active') {
+            return {
+              'allowed': false,
+              'message': 'Ya tienes una membresía activa.\n\n'
+                  'Para extender tu plan, realiza un pago de mensualidad en lugar de matrícula.',
+            };
+          }
+
+          // Si tiene pago pendiente, bloquear
+          if (membershipStatus == 'pending') {
+            return {
+              'allowed': false,
+              'message': 'Ya tienes un pago de matrícula pendiente de aprobación.\n\n'
+                  'Por favor espera la revisión del administrador antes de enviar otro comprobante.',
+            };
+          }
+
+          // Verificar fecha de última matrícula (solo si fue aprobada)
+          final enrollmentDate = userData['enrollmentDate'] as Timestamp?;
+          if (enrollmentDate != null) {
+            final lastEnrollment = enrollmentDate.toDate();
+            final daysSinceEnrollment = now.difference(lastEnrollment).inDays;
+
+            debugPrint('   Última matrícula: $lastEnrollment');
+            debugPrint('   Días desde última matrícula: $daysSinceEnrollment');
+
+            if (daysSinceEnrollment < MembershipConstants.minDaysForRenewEnrollment) {
+              final daysRemaining = MembershipConstants.minDaysForRenewEnrollment - daysSinceEnrollment;
+              return {
+                'allowed': false,
+                'message': 'Solo puedes renovar tu matrícula después de 1 año.\n\n'
+                    'Tu última matrícula fue el ${lastEnrollment.day}/${lastEnrollment.month}/${lastEnrollment.year}.\n'
+                    'Podrás renovar en $daysRemaining días.',
+              };
+            }
+          }
+        }
+
+        debugPrint('✅ Usuario puede realizar nueva matrícula');
+        return {'allowed': true};
+      }
+
+      // Para MENSUALIDAD: Verificar en el mes actual (lógica original)
+      final startDate = DateTime(now.year, now.month, 1);
+      final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+      debugPrint('🔍 Verificando pagos duplicados de mensualidad:');
+      debugPrint('   Desde: $startDate');
+      debugPrint('   Hasta: $endDate');
+
+      final snapshot = await _firestore
+          .collection('payments')
+          .where('userId', isEqualTo: userId)
+          .where('type', isEqualTo: type.name)
+          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .get();
+
+      debugPrint('   Pagos encontrados: ${snapshot.docs.length}');
+
+      if (snapshot.docs.isNotEmpty) {
+        final existingPayment = Payment.fromFirestore(snapshot.docs.first);
+
+        if (existingPayment.status == PaymentStatus.pending) {
+          return {
+            'allowed': false,
+            'message': 'Ya tienes un pago de mensualidad pendiente de revisión este mes.\n\n'
+                'Por favor espera a que sea revisado antes de enviar otro.',
+          };
+        } else if (existingPayment.status == PaymentStatus.approved) {
+          return {
+            'allowed': false,
+            'message': 'Ya realizaste el pago de mensualidad este mes.\n\n'
+                'Solo puedes pagar una vez por mes.',
+          };
+        } else if (existingPayment.status == PaymentStatus.rejected) {
+          // Si fue rechazado, permitir crear uno nuevo
+          debugPrint('✅ Pago anterior rechazado, se permite crear nuevo pago');
+          return {'allowed': true};
+        }
+
+        return {
+          'allowed': false,
+          'message': 'Ya existe un registro de pago de mensualidad este mes.',
+        };
+      }
+
+      return {'allowed': true};
+    } catch (e) {
+      debugPrint('⚠️ Error verificando pagos duplicados: $e');
+      // En caso de error, ser conservadores y no permitir
+      return {
+        'allowed': false,
+        'message': 'Error al verificar pagos anteriores. Por favor intenta nuevamente.',
+      };
+    }
+  }
 
   /// Crear un pago y subir el comprobante
   Future<String> createPayment({
@@ -37,6 +154,15 @@ class PaymentService {
       if (receiptFile == null && receiptBytes == null) {
         throw Exception('Se requiere un archivo o bytes del comprobante');
       }
+
+      // Verificar si ya existe un pago duplicado (matrícula: anual, mensualidad: mensual)
+      debugPrint('🔍 Verificando pagos duplicados...');
+      final paymentCheck = await _checkDuplicatePayment(userId, type);
+      if (paymentCheck['allowed'] == false) {
+        debugPrint('⚠️ ${paymentCheck['message']}');
+        throw Exception(paymentCheck['message']);
+      }
+      debugPrint('✅ No hay pagos duplicados, continuando...');
 
       // Subir archivo a Firebase Storage
       debugPrint('📤 Subiendo comprobante a Firebase Storage...');
@@ -73,6 +199,27 @@ class PaymentService {
           'updatedAt': FieldValue.serverTimestamp(),
         });
         debugPrint('✅ Usuario actualizado a estado "pending"');
+      }
+
+      // Notificar a admins sobre nuevo pago pendiente
+      try {
+        final paymentTypeText = type == PaymentType.enrollment ? 'Matrícula' : 'Mensualidad';
+        await NotificationService().sendNotificationToAdmins(
+          title: '💳 Nuevo Comprobante de Pago',
+          body: '$userName subió comprobante de $paymentTypeText - Plan: $plan',
+          data: {
+            'type': 'new_payment',
+            'paymentId': docRef.id,
+            'userId': userId,
+            'paymentType': type.name,
+            'plan': plan,
+            'amount': amount.toString(),
+          },
+        );
+        debugPrint('✅ Notificación de nuevo pago enviada a admins');
+      } catch (e) {
+        debugPrint('⚠️ Error enviando notificación de nuevo pago: $e');
+        // No lanzar error, el pago ya se creó
       }
 
       return docRef.id;
@@ -204,13 +351,46 @@ class PaymentService {
   /// Rechazar pago (admin)
   Future<void> rejectPayment(String paymentId, String adminId, String reason) async {
     try {
+      // Obtener datos del pago antes de actualizar
+      final paymentDoc = await _firestore.collection('payments').doc(paymentId).get();
+      final paymentData = paymentDoc.data();
+
+      if (paymentData == null) {
+        throw Exception('Pago no encontrado');
+      }
+
+      // Actualizar estado del pago
       await _firestore.collection('payments').doc(paymentId).update({
         'status': PaymentStatus.rejected.name,
         'rejectionReason': reason,
         'reviewedBy': adminId,
         'reviewedAt': FieldValue.serverTimestamp(),
       });
+
+      // ✅ FIX #3: Notificar al usuario del rechazo
+      if (MembershipConstants.notifyUserOnPaymentRejection) {
+        final userId = paymentData['userId'] as String;
+        final paymentType = paymentData['type'] as String;
+        final paymentTypeText = paymentType == 'enrollment' ? 'matrícula' : 'mensualidad';
+
+        await NotificationService().sendNotificationToUser(
+          userId: userId,
+          title: '❌ Pago Rechazado',
+          body: 'Tu comprobante de $paymentTypeText ha sido rechazado.\n\n'
+              'Motivo: $reason\n\n'
+              'Por favor sube un nuevo comprobante válido.',
+          data: {
+            'type': 'payment_rejected',
+            'paymentId': paymentId,
+            'reason': reason,
+            'paymentType': paymentType,
+          },
+        );
+
+        debugPrint('✅ Usuario notificado del rechazo: $userId');
+      }
     } catch (e) {
+      debugPrint('❌ Error al rechazar pago: $e');
       throw Exception('Error al rechazar pago: $e');
     }
   }
@@ -356,6 +536,35 @@ class PaymentService {
       return snapshot.docs.isNotEmpty;
     } catch (e) {
       throw Exception('Error al verificar matrícula: $e');
+    }
+  }
+
+  /// Eliminar pago fallido (para permitir reintento)
+  Future<void> deleteFailedPayment(String paymentId) async {
+    try {
+      debugPrint('Eliminando pago fallido: $paymentId');
+      await _firestore.collection('payments').doc(paymentId).delete();
+      debugPrint('✅ Pago fallido eliminado');
+    } catch (e) {
+      debugPrint('❌ Error eliminando pago fallido: $e');
+      throw Exception('Error al eliminar pago: $e');
+    }
+  }
+
+  /// Verificar si hay pagos fallidos recientes para un usuario
+  Future<List<Payment>> getFailedPayments(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('payments')
+          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: PaymentStatus.failed.name)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return snapshot.docs.map((doc) => Payment.fromFirestore(doc)).toList();
+    } catch (e) {
+      debugPrint('❌ Error obteniendo pagos fallidos: $e');
+      return [];
     }
   }
 

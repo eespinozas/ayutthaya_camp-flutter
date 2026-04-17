@@ -2,7 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 /// Servicio para enviar emails transaccionales personalizados
-/// mediante Cloud Functions y SendGrid
+/// mediante Cloud Functions y Resend
 class AuthEmailService {
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;

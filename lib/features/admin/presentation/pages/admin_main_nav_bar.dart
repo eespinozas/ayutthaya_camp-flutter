@@ -47,7 +47,7 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
     final currentPage = _buildPage(_selectedIndex);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: const Color(0xFF0F0F0F),
       body: SafeArea(
         child: currentPage,
       ),
@@ -58,8 +58,8 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
             _selectedIndex = idx;
           });
         },
-        backgroundColor: const Color(0xFF2A2A2A),
-        selectedItemColor: Colors.orangeAccent,
+        backgroundColor: const Color(0xFF1A1A1A),
+        selectedItemColor: const Color(0xFFFF6A00),
         unselectedItemColor: Colors.white70,
         type: BottomNavigationBarType.fixed,
         items: const [

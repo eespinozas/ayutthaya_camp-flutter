@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../core/services/auth_email_service.dart';
 
 /// Página para verificación de email con diseño moderno
 class EmailVerificationPage extends StatefulWidget {
@@ -11,17 +10,17 @@ class EmailVerificationPage extends StatefulWidget {
 }
 
 class _EmailVerificationPageState extends State<EmailVerificationPage> {
-  final _emailService = AuthEmailService();
   final _auth = FirebaseAuth.instance;
   bool _isSendingEmail = false;
   bool _isCheckingVerification = false;
 
-  /// Envía email de verificación
+  /// Envía email de verificación usando Firebase Auth nativo
   Future<void> _sendVerificationEmail() async {
     setState(() => _isSendingEmail = true);
 
     try {
-      await _emailService.sendVerificationEmail();
+      // ✅ Usar Firebase Auth nativo (NO Cloud Function)
+      await _auth.currentUser?.sendEmailVerification();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

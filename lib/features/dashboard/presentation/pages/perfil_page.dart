@@ -30,10 +30,38 @@ class _PerfilPageState extends State<PerfilPage> {
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isUploadingPhoto = false;
+  bool _isRefreshing = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
   final ImagePicker _picker = ImagePicker();
+
+  /// Función para actualizar el perfil
+  Future<void> _refreshData() async {
+    setState(() => _isRefreshing = true);
+
+    await _loadUserData();
+
+    setState(() => _isRefreshing = false);
+
+    // Mostrar mensaje de actualización
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 12),
+              Text('Perfil actualizado'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -179,7 +207,7 @@ class _PerfilPageState extends State<PerfilPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: Color(0xFFFF6B35),
+              primary: const Color(0xFFFF6A00),
               onPrimary: Colors.white,
               surface: Color(0xFF2A2A2A),
               onSurface: Colors.white,
@@ -214,7 +242,7 @@ class _PerfilPageState extends State<PerfilPage> {
         final selected = await showDialog<ImageSource>(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: const Color(0xFF2A2A2A),
+            backgroundColor: const Color(0xFF1A1A1A),
             title: const Text(
               'Seleccionar foto',
               style: TextStyle(color: Colors.white),
@@ -223,7 +251,7 @@ class _PerfilPageState extends State<PerfilPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.camera_alt, color: Color(0xFFFF6B35)),
+                  leading: const Icon(Icons.camera_alt, color: const Color(0xFFFF6A00)),
                   title: const Text(
                     'Cámara',
                     style: TextStyle(color: Colors.white),
@@ -231,7 +259,7 @@ class _PerfilPageState extends State<PerfilPage> {
                   onTap: () => Navigator.pop(context, ImageSource.camera),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library, color: Color(0xFFFF6B35)),
+                  leading: const Icon(Icons.photo_library, color: const Color(0xFFFF6A00)),
                   title: const Text(
                     'Galería',
                     style: TextStyle(color: Colors.white),
@@ -323,9 +351,9 @@ class _PerfilPageState extends State<PerfilPage> {
     final auth = context.watch<AuthViewModel>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -338,16 +366,35 @@ class _PerfilPageState extends State<PerfilPage> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          if (_isRefreshing)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: const Color(0xFFFF6A00),
+                ),
+              ),
+            ),
+        ],
       ),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: Color(0xFFFF6B35),
+                color: const Color(0xFFFF6A00),
               ),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
+          : RefreshIndicator(
+              onRefresh: _refreshData,
+              color: const Color(0xFFFF6A00),
+              backgroundColor: const Color(0xFF1A1A1A),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -363,7 +410,7 @@ class _PerfilPageState extends State<PerfilPage> {
                               decoration: BoxDecoration(
                                 gradient: _photoUrl == null
                                     ? const LinearGradient(
-                                        colors: [Color(0xFFFF6B35), Color(0xFFFF8C42)],
+                                        colors: [const Color(0xFFFF6A00), Color(0xFFFF8C42)],
                                       )
                                     : null,
                                 color: _photoUrl != null ? Colors.grey.shade300 : null,
@@ -382,7 +429,7 @@ class _PerfilPageState extends State<PerfilPage> {
                                                 ? loadingProgress.cumulativeBytesLoaded /
                                                     loadingProgress.expectedTotalBytes!
                                                 : null,
-                                            color: const Color(0xFFFF6B35),
+                                            color: const Color(0xFFFF6A00),
                                           ),
                                         );
                                       },
@@ -411,9 +458,9 @@ class _PerfilPageState extends State<PerfilPage> {
                                 height: 32,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: const Color(0xFFFF6B35),
+                                  color: const Color(0xFFFF6A00),
                                   border: Border.all(
-                                    color: const Color(0xFF1E1E1E),
+                                    color: const Color(0xFF0F0F0F),
                                     width: 2,
                                   ),
                                 ),
@@ -471,7 +518,7 @@ class _PerfilPageState extends State<PerfilPage> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A),
+                          color: const Color(0xFF1A1A1A),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: Colors.white12,
@@ -604,7 +651,7 @@ class _PerfilPageState extends State<PerfilPage> {
                     ElevatedButton(
                       onPressed: _isSaving ? null : _saveChanges,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6B35),
+                        backgroundColor: const Color(0xFFFF6A00),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -676,6 +723,7 @@ class _PerfilPageState extends State<PerfilPage> {
                 ),
               ),
             ),
+          ),
     );
   }
 
@@ -699,9 +747,9 @@ class _PerfilPageState extends State<PerfilPage> {
         fontSize: 16,
       ),
       decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(
-          color: enabled ? Colors.white70 : Colors.white38,
+        hintText: label,
+        hintStyle: TextStyle(
+          color: enabled ? Colors.orange[600] : Colors.orange[900],
         ),
         prefixIcon: Icon(
           icon,
@@ -709,7 +757,7 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: enabled ? const Color(0xFF2A2A2A) : const Color(0xFF1A1A1A),
+        fillColor: enabled ? const Color(0xFF1A1A1A) : const Color(0xFF1A1A1A),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.white12),
@@ -720,7 +768,7 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFFF6B35), width: 2),
+          borderSide: const BorderSide(color: const Color(0xFFFF6A00), width: 2),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

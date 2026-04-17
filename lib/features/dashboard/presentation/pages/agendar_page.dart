@@ -118,14 +118,25 @@ class _AgendarPageState extends State<AgendarPage> {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.green.withOpacity(0.3),
-                  width: 1,
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF10B981).withValues(alpha: 0.2),
+                    const Color(0xFF059669).withValues(alpha: 0.1),
+                  ],
                 ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                    blurRadius: 8,
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -407,12 +418,38 @@ class _AgendarPageState extends State<AgendarPage> {
     return MembershipGuard(
       pageName: 'Agendar',
       child: Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2A2A2A),
-          title: const Text(
-            'Agendar Clase',
-            style: TextStyle(fontWeight: FontWeight.w600),
+          backgroundColor: const Color(0xFF1A1A1A),
+          elevation: 0,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.calendar_month, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'AGENDAR CLASE',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
           ),
           centerTitle: false,
         ),
@@ -420,12 +457,23 @@ class _AgendarPageState extends State<AgendarPage> {
           children: [
             // Calendario
             Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF2A2A2A),
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(20),
                 bottomRight: Radius.circular(20),
               ),
+              border: Border.all(
+                color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: TableCalendar(
               firstDay: DateTime.now(),
@@ -449,33 +497,57 @@ class _AgendarPageState extends State<AgendarPage> {
               // Estilos del calendario
               calendarStyle: CalendarStyle(
                 // Días
-                defaultTextStyle: const TextStyle(color: Colors.white70),
-                weekendTextStyle: const TextStyle(color: Colors.orangeAccent),
-                outsideTextStyle: const TextStyle(color: Colors.white24),
+                defaultTextStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.w500,
+                ),
+                weekendTextStyle: const TextStyle(
+                  color: Color(0xFFFF8534),
+                  fontWeight: FontWeight.w600,
+                ),
+                outsideTextStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
 
                 // Día seleccionado
                 selectedDecoration: const BoxDecoration(
-                  color: Colors.orangeAccent,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFFF6A00),
+                      blurRadius: 8,
+                      spreadRadius: -2,
+                    ),
+                  ],
                 ),
                 selectedTextStyle: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
                 ),
 
                 // Día de hoy
                 todayDecoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.3),
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.25),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFFF6A00),
+                    width: 2,
+                  ),
                 ),
                 todayTextStyle: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFFF6A00),
+                  fontWeight: FontWeight.w900,
                 ),
 
                 // Marcadores
                 markerDecoration: const BoxDecoration(
-                  color: Colors.orangeAccent,
+                  color: Color(0xFFFF6A00),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -508,25 +580,67 @@ class _AgendarPageState extends State<AgendarPage> {
           // Título de clases disponibles
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.calendar_today,
-                  color: Colors.orangeAccent,
-                  size: 20,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFFF6A00).withValues(alpha: 0.15),
+                    const Color(0xFFFF8534).withValues(alpha: 0.05),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  _selectedDay != null
-                      ? 'Clases disponibles - ${DateFormat('dd MMM yyyy', 'es_ES').format(_selectedDay!)}'
-                      : 'Selecciona un día',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.event_available,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Clases Disponibles',
+                          style: TextStyle(
+                            color: Color(0xFFFF6A00),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _selectedDay != null
+                              ? DateFormat('EEEE, dd MMMM yyyy', 'es_ES').format(_selectedDay!)
+                              : 'Selecciona un día',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -1110,19 +1224,26 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
     final alreadyBooked = _alreadyBooked ?? false;
     final hasPassed = widget.hasClassPassed(widget.schedule.time, widget.selectedDay);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: hasPassed ? const Color(0xFF1E1E1E) : const Color(0xFF2A2A2A),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: hasPassed ? const Color(0xFF0F0F0F) : const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
           color: isFull
-              ? Colors.red.withOpacity(0.3)
+              ? const Color(0xFFEF4444).withValues(alpha: 0.5)
               : hasPassed
-                  ? Colors.grey.withOpacity(0.3)
-                  : Colors.transparent,
-          width: 1,
+                  ? Colors.grey.withValues(alpha: 0.3)
+                  : const Color(0xFFFF6A00).withValues(alpha: 0.2),
+          width: 1.5,
         ),
+        boxShadow: hasPassed ? [] : [
+          BoxShadow(
+            color: (isFull ? const Color(0xFFEF4444) : const Color(0xFFFF6A00)).withValues(alpha: 0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1169,21 +1290,36 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 14,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: hasPassed
-                            ? Colors.grey.withOpacity(0.2)
-                            : Colors.orangeAccent.withOpacity(0.2),
+                        gradient: hasPassed
+                            ? LinearGradient(
+                                colors: [
+                                  Colors.grey.withValues(alpha: 0.3),
+                                  Colors.grey.withValues(alpha: 0.2),
+                                ],
+                              )
+                            : const LinearGradient(
+                                colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                              ),
                         borderRadius: BorderRadius.circular(20),
+                        boxShadow: hasPassed ? [] : [
+                          BoxShadow(
+                            color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Text(
                         widget.formatTime(widget.schedule.time),
                         style: TextStyle(
-                          color: hasPassed ? Colors.grey : Colors.orangeAccent,
-                          fontWeight: FontWeight.bold,
+                          color: hasPassed ? Colors.grey : Colors.white,
+                          fontWeight: FontWeight.w900,
                           fontSize: 14,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -1246,11 +1382,13 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
                 style: ElevatedButton.styleFrom(
                   backgroundColor: (_isLoading || isFull || alreadyBooked || hasPassed)
                       ? Colors.grey.shade800
-                      : Colors.orangeAccent,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                      : const Color(0xFFFF6A00),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
+                  shadowColor: const Color(0xFFFF6A00).withValues(alpha: 0.5),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: _isLoading
@@ -1271,8 +1409,10 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
                                     ? 'YA AGENDADA'
                                     : 'RESERVAR CLASE',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: (isFull || alreadyBooked || hasPassed) ? Colors.white38 : Colors.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          letterSpacing: 1,
+                          color: (isFull || alreadyBooked || hasPassed) ? Colors.white38 : Colors.white,
                         ),
                       ),
               ),

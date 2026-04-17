@@ -2,11 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/booking.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/config/app_constants.dart';
 
 class BookingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Crear una reserva
+  /// Generar clave única para tracking de capacidad (formato: YYYY-MM-DD)
+  String _getDateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  /// Crear una reserva con transacción atómica para evitar race conditions
   Future<String> createBooking(Booking booking) async {
     try {
       // Verificar que no sea una hora pasada
@@ -40,7 +46,6 @@ class BookingService {
       await _checkClassLimit(booking.userId, booking.classDate);
 
       // Verificar que no haya duplicados (mismo usuario, mismo horario, misma fecha)
-      // Buscar todas las reservas del usuario para ese scheduleId
       final existingBookings = await _firestore
           .collection('bookings')
           .where('userId', isEqualTo: booking.userId)
@@ -60,20 +65,69 @@ class BookingService {
         }
       }
 
-      // Verificar capacidad disponible
-      final capacity = await _getAvailableCapacity(
-        booking.scheduleId,
-        booking.classDate,
-      );
+      // 🔒 TRANSACCIÓN ATÓMICA: Verificar capacidad y crear booking
+      String? bookingId;
 
-      if (capacity <= 0) {
-        throw Exception('Esta clase está llena');
+      await _firestore.runTransaction((transaction) async {
+        // Obtener referencia al schedule para capacidad máxima
+        final scheduleRef = _firestore.collection('class_schedules').doc(booking.scheduleId);
+        final scheduleSnapshot = await transaction.get(scheduleRef);
+
+        if (!scheduleSnapshot.exists) {
+          throw Exception('Horario de clase no encontrado');
+        }
+
+        final maxCapacity = scheduleSnapshot.data()?['capacity'] ?? 15;
+
+        // Crear clave única para el contador de capacidad (formato: scheduleId_YYYY-MM-DD)
+        final dateKey = _getDateKey(booking.classDate);
+        final capacityRef = _firestore
+            .collection('class_schedules')
+            .doc(booking.scheduleId)
+            .collection('capacity_tracking')
+            .doc(dateKey);
+
+        // Obtener contador actual
+        final capacitySnapshot = await transaction.get(capacityRef);
+
+        int currentBookings = 0;
+        if (capacitySnapshot.exists) {
+          currentBookings = capacitySnapshot.data()?['currentBookings'] ?? 0;
+        }
+
+        // Verificar si hay espacio disponible
+        if (currentBookings >= maxCapacity) {
+          throw Exception('Esta clase está llena (${currentBookings}/${maxCapacity})');
+        }
+
+        // Crear la reserva
+        final bookingRef = _firestore.collection('bookings').doc();
+        transaction.set(bookingRef, booking.toMap());
+        bookingId = bookingRef.id;
+
+        // Incrementar contador de capacidad
+        transaction.set(
+          capacityRef,
+          {
+            'currentBookings': currentBookings + 1,
+            'maxCapacity': maxCapacity,
+            'lastUpdated': FieldValue.serverTimestamp(),
+            'scheduleId': booking.scheduleId,
+            'classDate': Timestamp.fromDate(booking.classDate),
+          },
+          SetOptions(merge: true),
+        );
+
+        debugPrint('✅ Booking creado: $bookingId (${currentBookings + 1}/${maxCapacity})');
+      });
+
+      if (bookingId == null) {
+        throw Exception('Error: No se pudo crear la reserva');
       }
 
-      // Crear la reserva
-      final docRef = await _firestore.collection('bookings').add(booking.toMap());
+      final docRef = _firestore.collection('bookings').doc(bookingId);
 
-      // Programar recordatorios de confirmación
+      // Programar recordatorios de confirmación y notificar a admins
       try {
         final notificationService = NotificationService();
 
@@ -98,8 +152,24 @@ class BookingService {
         );
 
         debugPrint('✅ Recordatorios programados para booking: ${docRef.id}');
+
+        // Notificar a admins sobre nueva reserva
+        final formattedDate = '${booking.classDate.day}/${booking.classDate.month}/${booking.classDate.year}';
+        await notificationService.sendNotificationToAdmins(
+          title: '📅 Nueva Reserva de Clase',
+          body: '${booking.userName} se registró a ${booking.scheduleType} - $formattedDate a las ${booking.scheduleTime}',
+          data: {
+            'type': 'new_booking',
+            'bookingId': docRef.id,
+            'userId': booking.userId,
+            'className': booking.scheduleType,
+            'classDate': booking.classDate.toIso8601String(),
+            'classTime': booking.scheduleTime,
+          },
+        );
+        debugPrint('✅ Notificación de nueva reserva enviada a admins');
       } catch (e) {
-        debugPrint('⚠️ Error programando recordatorios: $e');
+        debugPrint('⚠️ Error programando recordatorios o enviando notificaciones: $e');
         // No lanzar error, la reserva ya se creó
       }
 
@@ -109,7 +179,7 @@ class BookingService {
     }
   }
 
-  /// Obtener capacidad disponible para una clase
+  /// Obtener capacidad disponible para una clase (usando contador optimizado)
   Future<int> _getAvailableCapacity(String scheduleId, DateTime classDate) async {
     // Obtener el horario para saber la capacidad máxima
     final scheduleDoc = await _firestore.collection('class_schedules').doc(scheduleId).get();
@@ -119,29 +189,38 @@ class BookingService {
 
     final maxCapacity = scheduleDoc.data()?['capacity'] ?? 15;
 
-    // Contar reservas confirmadas para esa clase
-    final bookings = await _firestore
-        .collection('bookings')
-        .where('scheduleId', isEqualTo: scheduleId)
-        .where('classDate', isEqualTo: Timestamp.fromDate(classDate))
-        .where('status', isEqualTo: BookingStatus.confirmed.name)
+    // Obtener contador de capacidad
+    final dateKey = _getDateKey(classDate);
+    final capacityDoc = await _firestore
+        .collection('class_schedules')
+        .doc(scheduleId)
+        .collection('capacity_tracking')
+        .doc(dateKey)
         .get();
 
-    final bookedCount = bookings.docs.length;
+    int bookedCount = 0;
+    if (capacityDoc.exists) {
+      bookedCount = capacityDoc.data()?['currentBookings'] ?? 0;
+    }
 
     return maxCapacity - bookedCount;
   }
 
-  /// Obtener número de reservas confirmadas para una clase
+  /// Obtener número de reservas confirmadas para una clase (usando contador optimizado)
   Future<int> getBookedCount(String scheduleId, DateTime classDate) async {
-    final bookings = await _firestore
-        .collection('bookings')
-        .where('scheduleId', isEqualTo: scheduleId)
-        .where('classDate', isEqualTo: Timestamp.fromDate(classDate))
-        .where('status', isEqualTo: BookingStatus.confirmed.name)
+    final dateKey = _getDateKey(classDate);
+    final capacityDoc = await _firestore
+        .collection('class_schedules')
+        .doc(scheduleId)
+        .collection('capacity_tracking')
+        .doc(dateKey)
         .get();
 
-    return bookings.docs.length;
+    if (capacityDoc.exists) {
+      return capacityDoc.data()?['currentBookings'] ?? 0;
+    }
+
+    return 0;
   }
 
   /// Obtener reservas de un usuario
@@ -204,17 +283,63 @@ class BookingService {
     });
   }
 
-  /// Cancelar una reserva (usuario)
+  /// Cancelar una reserva (usuario) con decremento atómico del contador
   Future<void> cancelBooking(String bookingId, String reason) async {
     try {
-      await _firestore.collection('bookings').doc(bookingId).update({
-        'status': BookingStatus.cancelled.name,
-        'cancelledAt': FieldValue.serverTimestamp(),
-        'cancellationReason': reason,
-        'updatedAt': FieldValue.serverTimestamp(),
+      // 🔒 TRANSACCIÓN ATÓMICA: Cancelar booking y decrementar contador
+      await _firestore.runTransaction((transaction) async {
+        // Obtener el booking para saber scheduleId y classDate
+        final bookingRef = _firestore.collection('bookings').doc(bookingId);
+        final bookingSnapshot = await transaction.get(bookingRef);
+
+        if (!bookingSnapshot.exists) {
+          throw Exception('Reserva no encontrada');
+        }
+
+        final bookingData = bookingSnapshot.data()!;
+        final scheduleId = bookingData['scheduleId'] as String;
+        final classDate = (bookingData['classDate'] as Timestamp).toDate();
+        final currentStatus = bookingData['status'] as String;
+
+        // Solo decrementar si el estado actual es 'confirmed'
+        if (currentStatus != BookingStatus.confirmed.name) {
+          throw Exception('Solo se pueden cancelar reservas confirmadas');
+        }
+
+        // Actualizar el booking a cancelado
+        transaction.update(bookingRef, {
+          'status': BookingStatus.cancelled.name,
+          'cancelledAt': FieldValue.serverTimestamp(),
+          'cancellationReason': reason,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        // Decrementar contador de capacidad
+        final dateKey = _getDateKey(classDate);
+        final capacityRef = _firestore
+            .collection('class_schedules')
+            .doc(scheduleId)
+            .collection('capacity_tracking')
+            .doc(dateKey);
+
+        final capacitySnapshot = await transaction.get(capacityRef);
+
+        if (capacitySnapshot.exists) {
+          final currentBookings = capacitySnapshot.data()?['currentBookings'] ?? 0;
+
+          // Evitar números negativos
+          final newCount = currentBookings > 0 ? currentBookings - 1 : 0;
+
+          transaction.update(capacityRef, {
+            'currentBookings': newCount,
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
+
+          debugPrint('✅ Booking cancelado: $bookingId (Capacidad: $newCount)');
+        }
       });
 
-      // Cancelar recordatorios programados
+      // Cancelar recordatorios programados (fuera de la transacción)
       try {
         await NotificationService().cancelClassReminders(bookingId);
         debugPrint('✅ Recordatorios cancelados para booking: $bookingId');
@@ -447,6 +572,55 @@ class BookingService {
     required String userEmail,
   }) async {
     try {
+      // ✅ FIX #1 y #2: Validar membresía activa y límite de clases
+      if (MembershipConstants.requireActiveMembershipForQR) {
+        // Obtener datos del usuario
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+
+        if (!userDoc.exists) {
+          return {
+            'success': false,
+            'message': 'Usuario no encontrado',
+            'action': 'user_not_found',
+          };
+        }
+
+        final userData = userDoc.data()!;
+        final membershipStatus = userData['membershipStatus'] ?? 'none';
+
+        // Validar estado de membresía
+        if (membershipStatus != 'active') {
+          return {
+            'success': false,
+            'message': _getMembershipBlockMessage(membershipStatus),
+            'action': 'membership_required',
+            'membershipStatus': membershipStatus,
+          };
+        }
+
+        // Validar límite de clases del plan
+        if (MembershipConstants.enforcePlanLimits) {
+          final plan = userData['plan'];
+          if (plan != null && plan['classesPerMonth'] != null) {
+            final classesThisMonth = await _getAttendedClassesThisMonth(userId);
+            final limit = plan['classesPerMonth'] as int;
+
+            if (classesThisMonth >= limit) {
+              return {
+                'success': false,
+                'message': 'Has alcanzado tu límite de $limit clases este mes.\n\n'
+                    'Actualiza tu plan para continuar entrenando.',
+                'action': 'limit_reached',
+                'classesUsed': classesThisMonth,
+                'classesLimit': limit,
+              };
+            }
+
+            debugPrint('✅ Clases usadas este mes: $classesThisMonth/$limit');
+          }
+        }
+      }
+
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final currentDayOfWeek = now.weekday; // 1 = Monday, 7 = Sunday
@@ -699,6 +873,42 @@ class BookingService {
         'message': e.toString().replaceAll('Exception: ', ''),
         'action': 'error',
       };
+    }
+  }
+
+  /// Obtiene el mensaje de bloqueo según el estado de membresía
+  String _getMembershipBlockMessage(String status) {
+    switch (status) {
+      case 'none':
+        return AppMessages.membershipNone;
+      case 'pending':
+        return AppMessages.membershipPending;
+      case 'inactive':
+        return AppMessages.membershipInactive;
+      default:
+        return AppMessages.membershipUnknown;
+    }
+  }
+
+  /// Cuenta las clases a las que el usuario asistió este mes
+  Future<int> _getAttendedClassesThisMonth(String userId) async {
+    try {
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+      final snapshot = await _firestore
+          .collection('bookings')
+          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: BookingStatus.attended.name)
+          .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+          .where('classDate', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
+          .get();
+
+      return snapshot.docs.length;
+    } catch (e) {
+      debugPrint('❌ Error contando clases del mes: $e');
+      return 0;
     }
   }
 }

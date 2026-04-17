@@ -6,7 +6,7 @@
 import * as admin from "firebase-admin";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions";
-import {sendEmail, isValidEmail, initializeSendGrid} from "../email/emailService";
+import {sendEmail, isValidEmail, initializeResend} from "../email/resendService";
 import {generateResetPasswordTemplate} from "../email/templates/resetPassword";
 import {getAppConfig} from "../email/sendgridConfig";
 
@@ -53,34 +53,37 @@ export const sendPasswordResetEmail = onCall<
     }
 
     // 2. VERIFICAR QUE EL USUARIO EXISTE
-    // IMPORTANTE: Por seguridad, NO revelamos si el email existe o no
-    // Siempre devolvemos éxito para evitar enumeración de usuarios
     try {
-      let userExists = true;
+      let userRecord;
       try {
-        await admin.auth().getUserByEmail(requestEmail);
+        userRecord = await admin.auth().getUserByEmail(requestEmail);
       } catch (error: any) {
         if (error.code === "auth/user-not-found") {
-          userExists = false;
-          logger.info("⚠️ Usuario no encontrado (no se revela al cliente)", {
+          logger.info("⚠️ Usuario no encontrado", {
             email: requestEmail,
           });
+          throw new HttpsError(
+            "not-found",
+            "Este correo electrónico no está registrado"
+          );
         } else {
           throw error;
         }
       }
 
-      // Si el usuario no existe, devolvemos éxito sin enviar email
-      // Esto previene ataques de enumeración de usuarios
-      if (!userExists) {
-        logger.info("✅ Respuesta exitosa (usuario no existe, email no enviado)");
-        return {
-          success: true,
-          message: "Si el email está registrado, recibirás un correo de recuperación",
-        };
+      // 3. OBTENER NOMBRE DEL USUARIO DESDE FIRESTORE
+      let userName: string | undefined;
+      try {
+        const userDoc = await admin.firestore().collection("users").doc(userRecord.uid).get();
+        userName = userDoc.data()?.name;
+      } catch (error) {
+        logger.warn("⚠️ No se pudo obtener el nombre del usuario desde Firestore", {
+          uid: userRecord.uid,
+        });
+        // Continuar sin el nombre
       }
 
-      // 3. GENERAR LINK DE RESET OFICIAL DE FIREBASE
+      // 4. GENERAR LINK DE RESET OFICIAL DE FIREBASE
       const appConfig = getAppConfig();
       const actionCodeSettings = {
         url: `https://${appConfig.firebaseActionDomain}`, // URL de continuación
@@ -91,20 +94,21 @@ export const sendPasswordResetEmail = onCall<
         .auth()
         .generatePasswordResetLink(requestEmail, actionCodeSettings);
 
-      logger.info("🔗 Link de reset generado", {email: requestEmail});
+      logger.info("🔗 Link de reset generado", {email: requestEmail, userName});
 
-      // 4. GENERAR HTML DEL EMAIL
+      // 5. GENERAR HTML DEL EMAIL CON PERSONALIZACIÓN
       const htmlContent = generateResetPasswordTemplate({
         resetLink,
         userEmail: requestEmail,
+        userName,
         logoUrl: appConfig.logoUrl,
         appName: appConfig.appName,
         supportEmail: appConfig.supportEmail,
         companyAddress: appConfig.companyAddress,
       });
 
-      // 5. ENVIAR EMAIL VÍA SENDGRID
-      initializeSendGrid();
+      // 6. ENVIAR EMAIL VÍA RESEND
+      initializeResend();
       await sendEmail({
         to: requestEmail,
         subject: `Restablece tu contraseña - ${appConfig.appName}`,
@@ -117,17 +121,21 @@ export const sendPasswordResetEmail = onCall<
 
       return {
         success: true,
-        message: "Si el email está registrado, recibirás un correo de recuperación",
+        message: "Email de recuperación enviado exitosamente",
       };
     } catch (error: any) {
-      logger.error("❌ Error enviando email de reset:", {
+      // Si ya es un HttpsError, re-lanzarlo sin modificar (ej: not-found, invalid-argument)
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+
+      // Para otros errores inesperados, registrar y devolver mensaje genérico
+      logger.error("❌ Error inesperado enviando email de reset:", {
         email: requestEmail,
         error: error.message,
         stack: error.stack,
       });
 
-      // No exponer detalles técnicos al cliente
-      // Siempre devolver un mensaje genérico
       throw new HttpsError(
         "internal",
         "Error al procesar la solicitud. Por favor, intenta nuevamente."

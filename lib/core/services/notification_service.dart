@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Servicio para manejar notificaciones push con Firebase Cloud Messaging
 class NotificationService {
@@ -40,7 +41,7 @@ class NotificationService {
         try {
           String? token = await _messaging.getToken(
             vapidKey: kIsWeb
-              ? 'YOUR_VAPID_KEY_HERE' // Reemplazar con tu clave VAPID
+              ? dotenv.env['VAPID_KEY'] // ✅ Desde .env (más seguro)
               : null,
           );
           debugPrint('🔑 FCM Token: $token');
@@ -127,7 +128,7 @@ class NotificationService {
 
       String? token = await _messaging.getToken(
         vapidKey: kIsWeb
-          ? 'YOUR_VAPID_KEY_HERE' // Reemplazar con tu clave VAPID de Firebase Console
+          ? dotenv.env['VAPID_KEY'] // ✅ Desde .env (más seguro)
           : null,
       );
 

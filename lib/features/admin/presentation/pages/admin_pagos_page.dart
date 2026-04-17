@@ -17,6 +17,35 @@ class _AdminPagosPageState extends State<AdminPagosPage>
   late AdminPagosViewModel _viewModel;
   bool _localeInitialized = false;
   bool _isProcessingPayment = false;
+  bool _isRefreshing = false;
+
+  /// Función para actualizar la lista
+  Future<void> _refreshData() async {
+    setState(() => _isRefreshing = true);
+
+    // Esperar un momento para dar feedback visual
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    setState(() => _isRefreshing = false);
+
+    // Mostrar mensaje de actualización
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 12),
+              Text('Lista actualizada'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -71,7 +100,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
             Container(
               constraints: const BoxConstraints(maxHeight: 600, maxWidth: 500),
               decoration: BoxDecoration(
-                color: const Color(0xFF2A2A2A),
+                color: const Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ClipRRect(
@@ -216,7 +245,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                       ? loadingProgress.cumulativeBytesLoaded /
                           loadingProgress.expectedTotalBytes!
                       : null,
-                  color: Colors.orangeAccent,
+                  color: const Color(0xFFFF6A00),
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -302,7 +331,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         title: const Text(
           'Aprobar Pago',
           style: TextStyle(color: Colors.white),
@@ -393,7 +422,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         title: const Text(
           'Rechazar Pago',
           style: TextStyle(color: Colors.white),
@@ -410,14 +439,12 @@ class _AdminPagosPageState extends State<AdminPagosPage>
             TextField(
               controller: reasonController,
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Motivo del rechazo',
-                labelStyle: TextStyle(color: Colors.white70),
-                hintText: 'Ej: Comprobante ilegible',
-                hintStyle: TextStyle(color: Colors.white38),
+              decoration: InputDecoration(
+                hintText: 'Motivo del rechazo (Ej: Comprobante ilegible)',
+                hintStyle: TextStyle(color: Colors.orange[600]),
                 filled: true,
-                fillColor: Color(0xFF1E1E1E),
-                border: OutlineInputBorder(),
+                fillColor: const Color(0xFF0F0F0F),
+                border: const OutlineInputBorder(),
               ),
               maxLines: 2,
             ),
@@ -513,18 +540,40 @@ class _AdminPagosPageState extends State<AdminPagosPage>
   Widget build(BuildContext context) {
     if (!_localeInitialized) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2A2A2A),
-          title: const Text(
-            'Gestión de Pagos',
-            style: TextStyle(fontWeight: FontWeight.w600),
+          backgroundColor: const Color(0xFF1A1A1A),
+          elevation: 0,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.payments_rounded, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Gestión de Pagos',
+                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ],
           ),
           centerTitle: false,
         ),
         body: const Center(
           child: CircularProgressIndicator(
-            color: Colors.orangeAccent,
+            color: const Color(0xFFFF6A00),
           ),
         ),
       );
@@ -538,9 +587,9 @@ class _AdminPagosPageState extends State<AdminPagosPage>
         return Stack(
           children: [
             Scaffold(
-              backgroundColor: const Color(0xFF1E1E1E),
+              backgroundColor: const Color(0xFF0F0F0F),
               appBar: AppBar(
-                backgroundColor: const Color(0xFF2A2A2A),
+                backgroundColor: const Color(0xFF1A1A1A),
                 title: Row(
                   children: [
                     const Text(
@@ -568,10 +617,24 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   ],
                 ),
                 centerTitle: false,
+                actions: [
+                  if (_isRefreshing)
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: const Color(0xFFFF6A00),
+                        ),
+                      ),
+                    ),
+                ],
                 bottom: TabBar(
                   controller: _tabController,
-                  indicatorColor: Colors.orangeAccent,
-                  labelColor: Colors.orangeAccent,
+                  indicatorColor: const Color(0xFFFF6A00),
+                  labelColor: const Color(0xFFFF6A00),
                   unselectedLabelColor: Colors.white60,
                   tabs: [
                     Tab(
@@ -622,7 +685,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       CircularProgressIndicator(
-                        color: Colors.orangeAccent,
+                        color: const Color(0xFFFF6A00),
                       ),
                       SizedBox(height: 16),
                       Text(
@@ -653,7 +716,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.orangeAccent),
+            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
           );
         }
 
@@ -790,21 +853,34 @@ class _AdminPagosPageState extends State<AdminPagosPage>
               icon = Icons.payment;
           }
 
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+          return RefreshIndicator(
+            onRefresh: _refreshData,
+            color: const Color(0xFFFF6A00),
+            backgroundColor: const Color(0xFF1A1A1A),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                Icon(
-                  icon,
-                  size: 80,
-                  color: Colors.white24,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white38,
-                    fontSize: 16,
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          icon,
+                          size: 80,
+                          color: Colors.white24,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          message,
+                          style: const TextStyle(
+                            color: Colors.white38,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -812,13 +888,19 @@ class _AdminPagosPageState extends State<AdminPagosPage>
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: payments.length,
-          itemBuilder: (context, index) {
-            final payment = payments[index];
-            return _buildPaymentCard(payment, status);
-          },
+        return RefreshIndicator(
+          onRefresh: _refreshData,
+          color: const Color(0xFFFF6A00),
+          backgroundColor: const Color(0xFF1A1A1A),
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            itemCount: payments.length,
+            itemBuilder: (context, index) {
+              final payment = payments[index];
+              return _buildPaymentCard(payment, status);
+            },
+          ),
         );
       },
     );
@@ -843,7 +925,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      color: const Color(0xFF2A2A2A),
+      color: const Color(0xFF1A1A1A),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: borderColor, width: 2),
@@ -1003,8 +1085,8 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                     child: OutlinedButton.icon(
                       onPressed: () => _viewReceipt(payment),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.orangeAccent,
-                        side: const BorderSide(color: Colors.orangeAccent),
+                        foregroundColor: const Color(0xFFFF6A00),
+                        side: const BorderSide(color: const Color(0xFFFF6A00)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       icon: const Icon(Icons.receipt_long, size: 18),

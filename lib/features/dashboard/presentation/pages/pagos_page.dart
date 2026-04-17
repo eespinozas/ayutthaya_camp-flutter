@@ -5,6 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -92,7 +93,7 @@ class _PagosPageState extends State<PagosPage> {
       barrierDismissible: false,
       builder: (context) => const Center(
         child: CircularProgressIndicator(
-          color: Colors.orangeAccent,
+          color: const Color(0xFFFF6A00),
         ),
       ),
     );
@@ -141,9 +142,9 @@ class _PagosPageState extends State<PagosPage> {
   Widget build(BuildContext context) {
     if (!_localeInitialized) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2A2A2A),
+          backgroundColor: const Color(0xFF1A1A1A),
           title: const Text(
             'Pagos',
             style: TextStyle(fontWeight: FontWeight.w600),
@@ -152,7 +153,7 @@ class _PagosPageState extends State<PagosPage> {
         ),
         body: const Center(
           child: CircularProgressIndicator(
-            color: Colors.orangeAccent,
+            color: const Color(0xFFFF6A00),
           ),
         ),
       );
@@ -164,9 +165,9 @@ class _PagosPageState extends State<PagosPage> {
 
     if (user == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2A2A2A),
+          backgroundColor: const Color(0xFF1A1A1A),
           title: const Text(
             'Pagos',
             style: TextStyle(fontWeight: FontWeight.w600),
@@ -191,9 +192,9 @@ class _PagosPageState extends State<PagosPage> {
         : 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         title: const Text(
           'Pagos',
           style: TextStyle(fontWeight: FontWeight.w600),
@@ -374,7 +375,7 @@ class _PagosPageState extends State<PagosPage> {
                       child: ElevatedButton.icon(
                         onPressed: () => _showPaymentModal('Matrícula'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orangeAccent,
+                          backgroundColor: const Color(0xFFFF6A00),
                           foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -400,7 +401,7 @@ class _PagosPageState extends State<PagosPage> {
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: (status == 'expired' || daysUntilExpiry <= 0)
-                              ? Colors.orangeAccent
+                              ? const Color(0xFFFF6A00)
                               : Colors.grey.shade700,
                           foregroundColor: (status == 'expired' || daysUntilExpiry <= 0)
                               ? Colors.black
@@ -468,7 +469,7 @@ class _PagosPageState extends State<PagosPage> {
                     padding: EdgeInsets.all(32.0),
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: Colors.orangeAccent,
+                        color: const Color(0xFFFF6A00),
                       ),
                     ),
                   );
@@ -561,10 +562,67 @@ class _PagosPageState extends State<PagosPage> {
     );
   }
 
+  Future<void> _deleteFailedPayment(String paymentId) async {
+    final paymentVM = context.read<PaymentViewModel>();
+
+    // Confirmar eliminación
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text(
+          '¿Eliminar pago fallido?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Esto eliminará el registro del pago fallido y podrás intentar subir el comprobante nuevamente.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6A00),
+              foregroundColor: Colors.black,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final success = await paymentVM.deleteFailedPayment(paymentId);
+
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pago eliminado. Puedes intentar subir el comprobante nuevamente.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al eliminar: ${paymentVM.error}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Widget _buildPaymentCard(Payment payment) {
     final isApproved = payment.status == PaymentStatus.approved;
     final isPending = payment.status == PaymentStatus.pending;
     final isRejected = payment.status == PaymentStatus.rejected;
+    final isFailed = payment.status == PaymentStatus.failed;
 
     Color statusColor;
     String statusText;
@@ -575,6 +633,9 @@ class _PagosPageState extends State<PagosPage> {
     } else if (isRejected) {
       statusColor = Colors.red.shade600;
       statusText = 'Rechazado';
+    } else if (isFailed) {
+      statusColor = Colors.orange.shade800;
+      statusText = 'Con Problemas';
     } else {
       statusColor = Colors.amber.shade700;
       statusText = 'Pendiente';
@@ -582,7 +643,7 @@ class _PagosPageState extends State<PagosPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: statusColor.withOpacity(0.3),
@@ -665,13 +726,13 @@ class _PagosPageState extends State<PagosPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.2),
+                  color: const Color(0xFFFF6A00).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   payment.type == PaymentType.enrollment ? 'Matrícula' : 'Mensualidad',
                   style: const TextStyle(
-                    color: Colors.orangeAccent,
+                    color: const Color(0xFFFF6A00),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -713,6 +774,62 @@ class _PagosPageState extends State<PagosPage> {
               ),
             ),
           ],
+          if (isFailed) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.orange.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.orange,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Hubo un problema al procesar este pago. Puedes eliminarlo e intentar nuevamente.',
+                          style: TextStyle(
+                            color: Colors.orange,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _deleteFailedPayment(payment.id!),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFFF6A00),
+                        side: const BorderSide(color: const Color(0xFFFF6A00)),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      icon: const Icon(Icons.delete_outline, size: 16),
+                      label: const Text(
+                        'Eliminar e intentar nuevamente',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -745,6 +862,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
   Plan? _selectedPlan;
   double? _registrationPrice;
   bool _loadingRegistrationPrice = false;
+  bool _isSubmitting = false; // Estado para prevenir doble envío
 
   @override
   void initState() {
@@ -791,8 +909,81 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
     super.dispose();
   }
 
+  Future<bool> _requestStoragePermission() async {
+    if (kIsWeb) return true;
+
+    // Para Android 13+ (API 33+)
+    if (await Permission.photos.isGranted) {
+      return true;
+    }
+
+    // Solicitar permiso de fotos (Android 13+)
+    var status = await Permission.photos.request();
+
+    if (status.isGranted) {
+      return true;
+    }
+
+    // Si no funciona con photos, intentar con storage (Android 12 y anteriores)
+    status = await Permission.storage.request();
+
+    if (status.isPermanentlyDenied) {
+      // Mostrar mensaje para abrir configuración
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Necesitas habilitar los permisos de almacenamiento en la configuración'),
+            action: SnackBarAction(
+              label: 'Abrir',
+              onPressed: () => openAppSettings(),
+            ),
+            duration: const Duration(seconds: 5),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return false;
+    }
+
+    return status.isGranted;
+  }
+
+  Future<bool> _requestCameraPermission() async {
+    if (kIsWeb) return true;
+
+    if (await Permission.camera.isGranted) {
+      return true;
+    }
+
+    final status = await Permission.camera.request();
+
+    if (status.isPermanentlyDenied) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Necesitas habilitar los permisos de cámara en la configuración'),
+            action: SnackBarAction(
+              label: 'Abrir',
+              onPressed: () => openAppSettings(),
+            ),
+            duration: const Duration(seconds: 5),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return false;
+    }
+
+    return status.isGranted;
+  }
+
   Future<void> _pickImage() async {
     try {
+      // Solicitar permiso de almacenamiento
+      if (!await _requestStoragePermission()) {
+        return;
+      }
+
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1920,
@@ -830,6 +1021,11 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
 
   Future<void> _takePhoto() async {
     try {
+      // Solicitar permiso de cámara
+      if (!await _requestCameraPermission()) {
+        return;
+      }
+
       final XFile? image = await _picker.pickImage(
         source: ImageSource.camera,
         maxWidth: 1920,
@@ -869,6 +1065,12 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
     try {
       debugPrint('=== _pickDocument iniciado ===');
       debugPrint('Plataforma: ${kIsWeb ? "Web" : "Móvil"}');
+
+      // Solicitar permiso de almacenamiento para móvil
+      if (!kIsWeb && !await _requestStoragePermission()) {
+        debugPrint('❌ Permiso de almacenamiento denegado');
+        return;
+      }
 
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -986,7 +1188,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
         decoration: BoxDecoration(
           color: Colors.grey[800],
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orangeAccent, width: 2),
+          border: Border.all(color: const Color(0xFFFF6A00), width: 2),
         ),
         child: Center(
           child: Column(
@@ -995,7 +1197,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
               const Icon(
                 Icons.picture_as_pdf,
                 size: 80,
-                color: Colors.orangeAccent,
+                color: const Color(0xFFFF6A00),
               ),
               const SizedBox(height: 12),
               const Text(
@@ -1041,6 +1243,12 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
   }
 
   void _submit() {
+    // Prevenir doble envío
+    if (_isSubmitting) {
+      debugPrint('⚠️ Envío ya en proceso, ignorando clic adicional');
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       if (_receiptImage == null && _receiptBytes == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1061,6 +1269,13 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
         );
         return;
       }
+
+      // Deshabilitar el botón
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      debugPrint('✅ Iniciando envío de comprobante');
 
       final amount = double.parse(_amountController.text);
       final planName = widget.paymentType == 'Matrícula'
@@ -1131,13 +1346,13 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orangeAccent.withOpacity(0.2),
+                    color: const Color(0xFFFF6A00).withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     widget.paymentType,
                     style: const TextStyle(
-                      color: Colors.orangeAccent,
+                      color: const Color(0xFFFF6A00),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1150,7 +1365,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
+                        color: const Color(0xFF1A1A1A),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
@@ -1159,7 +1374,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                              color: Colors.orangeAccent,
+                              color: const Color(0xFFFF6A00),
                               strokeWidth: 2,
                             ),
                           ),
@@ -1176,7 +1391,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
+                        color: const Color(0xFF1A1A1A),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -1186,7 +1401,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                             children: [
                               Icon(
                                 Icons.how_to_reg,
-                                color: Colors.orangeAccent,
+                                color: const Color(0xFFFF6A00),
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -1228,12 +1443,12 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                               return Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF2A2A2A),
+                                  color: const Color(0xFF1A1A1A),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Center(
                                   child: CircularProgressIndicator(
-                                    color: Colors.orangeAccent,
+                                    color: const Color(0xFFFF6A00),
                                   ),
                                 ),
                               );
@@ -1243,7 +1458,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                               return Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF2A2A2A),
+                                  color: const Color(0xFF1A1A1A),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -1257,7 +1472,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                               return Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF2A2A2A),
+                                  color: const Color(0xFF1A1A1A),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Text(
@@ -1287,15 +1502,15 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                               decoration: InputDecoration(
                                 hintText: 'Seleccionar Plan',
                                 hintStyle: const TextStyle(color: Colors.white60),
-                                prefixIcon: const Icon(Icons.card_membership, color: Colors.orangeAccent),
+                                prefixIcon: const Icon(Icons.card_membership, color: const Color(0xFFFF6A00)),
                                 filled: true,
-                                fillColor: const Color(0xFF2A2A2A),
+                                fillColor: const Color(0xFF1A1A1A),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
                                 ),
                               ),
-                              dropdownColor: const Color(0xFF2A2A2A),
+                              dropdownColor: const Color(0xFF1A1A1A),
                               style: const TextStyle(color: Colors.white),
                               items: plans.map((plan) {
                                 return DropdownMenuItem<Plan>(
@@ -1341,10 +1556,10 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.orangeAccent.withOpacity(0.1),
+                          color: const Color(0xFFFF6A00).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.orangeAccent.withOpacity(0.3),
+                            color: const Color(0xFFFF6A00).withOpacity(0.3),
                             width: 2,
                           ),
                         ),
@@ -1405,7 +1620,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                                 Text(
                                   '\$${(_registrationPrice! + _selectedPlan!.price).toStringAsFixed(0)}',
                                   style: const TextStyle(
-                                    color: Colors.orangeAccent,
+                                    color: const Color(0xFFFF6A00),
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1459,12 +1674,12 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                             return Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2A2A2A),
+                                color: const Color(0xFF1A1A1A),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Center(
                                 child: CircularProgressIndicator(
-                                  color: Colors.orangeAccent,
+                                  color: const Color(0xFFFF6A00),
                                 ),
                               ),
                             );
@@ -1475,7 +1690,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                             return Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2A2A2A),
+                                color: const Color(0xFF1A1A1A),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -1490,7 +1705,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                             return Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2A2A2A),
+                                color: const Color(0xFF1A1A1A),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(
@@ -1526,15 +1741,15 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                                 decoration: InputDecoration(
                                   hintText: 'Seleccionar Plan',
                                   hintStyle: const TextStyle(color: Colors.white60),
-                                  prefixIcon: const Icon(Icons.card_membership, color: Colors.orangeAccent),
+                                  prefixIcon: const Icon(Icons.card_membership, color: const Color(0xFFFF6A00)),
                                   filled: true,
-                                  fillColor: const Color(0xFF2A2A2A),
+                                  fillColor: const Color(0xFF1A1A1A),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide.none,
                                   ),
                                 ),
-                                dropdownColor: const Color(0xFF2A2A2A),
+                                dropdownColor: const Color(0xFF1A1A1A),
                                 style: const TextStyle(color: Colors.white),
                                 items: plans.map((plan) {
                                   return DropdownMenuItem<Plan>(
@@ -1570,10 +1785,10 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: Colors.orangeAccent.withOpacity(0.1),
+                                    color: const Color(0xFFFF6A00).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: Colors.orangeAccent.withOpacity(0.3),
+                                      color: const Color(0xFFFF6A00).withOpacity(0.3),
                                     ),
                                   ),
                                   child: Row(
@@ -1590,7 +1805,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                                       Text(
                                         '\$${_selectedPlan!.price.toStringAsFixed(0)}',
                                         style: const TextStyle(
-                                          color: Colors.orangeAccent,
+                                          color: const Color(0xFFFF6A00),
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -1620,7 +1835,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                         return Theme(
                           data: ThemeData.dark().copyWith(
                             colorScheme: const ColorScheme.dark(
-                              primary: Colors.orangeAccent,
+                              primary: const Color(0xFFFF6A00),
                               onPrimary: Colors.black,
                               surface: Color(0xFF2A2A2A),
                               onSurface: Colors.white,
@@ -1639,12 +1854,12 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2A2A2A),
+                      color: const Color(0xFF1A1A1A),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_today, color: Colors.orangeAccent),
+                        const Icon(Icons.calendar_today, color: const Color(0xFFFF6A00)),
                         const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1694,8 +1909,8 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                             child: OutlinedButton.icon(
                               onPressed: _pickImage,
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.orangeAccent,
-                                side: const BorderSide(color: Colors.orangeAccent),
+                                foregroundColor: const Color(0xFFFF6A00),
+                                side: const BorderSide(color: const Color(0xFFFF6A00)),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -1710,8 +1925,8 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                             child: OutlinedButton.icon(
                               onPressed: _pickDocument,
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.orangeAccent,
-                                side: const BorderSide(color: Colors.orangeAccent),
+                                foregroundColor: const Color(0xFFFF6A00),
+                                side: const BorderSide(color: const Color(0xFFFF6A00)),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -1729,8 +1944,8 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                         child: OutlinedButton.icon(
                           onPressed: _takePhoto,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.orangeAccent,
-                            side: const BorderSide(color: Colors.orangeAccent),
+                            foregroundColor: const Color(0xFFFF6A00),
+                            side: const BorderSide(color: const Color(0xFFFF6A00)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -1768,22 +1983,47 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _submit,
+                    onPressed: _isSubmitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orangeAccent,
+                      backgroundColor: _isSubmitting ? Colors.grey : const Color(0xFFFF6A00),
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      disabledBackgroundColor: Colors.grey.shade700,
+                      disabledForegroundColor: Colors.white54,
                     ),
-                    child: const Text(
-                      'Enviar Comprobante',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isSubmitting
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Enviando...',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Text(
+                            'Enviar Comprobante',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
                 ],

@@ -11,10 +11,10 @@ class AdminPerfilPage extends StatelessWidget {
     final user = authVM.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
         title: const Text('Perfil'),
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
       ),
       body: Center(
@@ -26,7 +26,7 @@ class AdminPerfilPage extends StatelessWidget {
               // Avatar
               CircleAvatar(
                 radius: 50,
-                backgroundColor: Colors.orangeAccent,
+                backgroundColor: const Color(0xFFFF6A00),
                 child: Text(
                   user?.email?.substring(0, 1).toUpperCase() ?? 'A',
                   style: const TextStyle(
@@ -61,14 +61,14 @@ class AdminPerfilPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.2),
+                  color: const Color(0xFFFF6A00).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.orangeAccent),
+                  border: Border.all(color: const Color(0xFFFF6A00)),
                 ),
                 child: const Text(
                   'ADMINISTRADOR',
                   style: TextStyle(
-                    color: Colors.orangeAccent,
+                    color: const Color(0xFFFF6A00),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),

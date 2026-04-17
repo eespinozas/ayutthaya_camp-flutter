@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Script para limpiar todos los usuarios no-admin de Firestore
-Elimina usuarios y todas sus reservas (bookings)
+Elimina usuarios, reservas (bookings) y pagos (payments)
 
 Uso:
   python scripts/clean_non_admin_users.py [--confirm] [ruta_al_service_account.json]
@@ -25,6 +25,7 @@ def main():
     print("\n⚠️  ADVERTENCIA: Este script eliminará PERMANENTEMENTE:")
     print("  - Todos los usuarios que NO tengan role='admin'")
     print("  - Todas las reservas (bookings) de esos usuarios")
+    print("  - Todos los pagos (payments) de esos usuarios")
     print("  - Los usuarios de Firebase Authentication")
     print()
 
@@ -118,7 +119,7 @@ def main():
             print("\n❌ Operación cancelada")
             sys.exit(0)
 
-    print("\n[3/4] Eliminando bookings de usuarios no-admin...")
+    print("\n[3/5] Eliminando bookings de usuarios no-admin...")
     total_bookings_deleted = 0
 
     for user in non_admin_users:
@@ -138,8 +139,29 @@ def main():
 
     print(f"\n✅ Total de bookings eliminadas: {total_bookings_deleted}\n")
 
+    # Eliminar pagos de usuarios no-admin
+    print("[4/5] Eliminando pagos de usuarios no-admin...")
+    total_payments_deleted = 0
+
+    for user in non_admin_users:
+        user_id = user['id']
+        user_email = user['email']
+
+        # Buscar todos los pagos del usuario
+        payments = db.collection('payments').where('userId', '==', user_id).get()
+
+        if len(payments) > 0:
+            print(f"  🗑️  {user_email}: {len(payments)} pago(s)")
+
+            # Eliminar cada pago
+            for payment_doc in payments:
+                payment_doc.reference.delete()
+                total_payments_deleted += 1
+
+    print(f"\n✅ Total de pagos eliminados: {total_payments_deleted}\n")
+
     # Eliminar usuarios de Firestore y Authentication
-    print("[4/4] Eliminando usuarios...")
+    print("[5/5] Eliminando usuarios...")
     users_deleted_firestore = 0
     users_deleted_auth = 0
 
@@ -172,6 +194,7 @@ def main():
     print(f"Usuarios eliminados de Firestore: {users_deleted_firestore}/{len(non_admin_users)}")
     print(f"Usuarios eliminados de Auth: {users_deleted_auth}/{len(non_admin_users)}")
     print(f"Bookings eliminadas: {total_bookings_deleted}")
+    print(f"Pagos eliminados: {total_payments_deleted}")
     print(f"Usuarios ADMIN preservados: {len(admin_users)}")
     print()
 

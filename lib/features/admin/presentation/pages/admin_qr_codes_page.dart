@@ -22,7 +22,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
         title: const Text(
           'Código QR del Gimnasio',
@@ -32,7 +32,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
@@ -47,15 +47,15 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.orangeAccent.withOpacity(0.2),
-                    Colors.orangeAccent.withOpacity(0.05),
+                    const Color(0xFFFF6A00).withOpacity(0.2),
+                    const Color(0xFFFF6A00).withOpacity(0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.orangeAccent.withOpacity(0.3),
+                  color: const Color(0xFFFF6A00).withOpacity(0.3),
                   width: 2,
                 ),
               ),
@@ -64,7 +64,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.orangeAccent,
+                      color: const Color(0xFFFF6A00),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -105,7 +105,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
 
             // Código QR único del gimnasio
             Card(
-              color: const Color(0xFF2A2A2A),
+              color: const Color(0xFF1A1A1A),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -141,7 +141,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.orangeAccent.withOpacity(0.3),
+                              color: const Color(0xFFFF6A00).withOpacity(0.3),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),
@@ -172,7 +172,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orangeAccent,
+                              backgroundColor: const Color(0xFFFF6A00),
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
@@ -194,10 +194,10 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.orangeAccent,
+                              foregroundColor: const Color(0xFFFF6A00),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               side: const BorderSide(
-                                color: Colors.orangeAccent,
+                                color: const Color(0xFFFF6A00),
                                 width: 2,
                               ),
                               shape: RoundedRectangleBorder(
@@ -219,10 +219,10 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.orangeAccent.withOpacity(0.1),
+                color: const Color(0xFFFF6A00).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.orangeAccent.withOpacity(0.3),
+                  color: const Color(0xFFFF6A00).withOpacity(0.3),
                   width: 2,
                 ),
               ),
@@ -233,14 +233,14 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                     children: const [
                       Icon(
                         Icons.info_outline,
-                        color: Colors.orangeAccent,
+                        color: const Color(0xFFFF6A00),
                         size: 24,
                       ),
                       SizedBox(width: 12),
                       Text(
                         'Cómo funciona',
                         style: TextStyle(
-                          color: Colors.orangeAccent,
+                          color: const Color(0xFFFF6A00),
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -282,7 +282,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(
-                      color: Colors.orangeAccent,
+                      color: const Color(0xFFFF6A00),
                     ),
                   );
                 }
@@ -342,7 +342,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
 
   Widget _buildClassInfoCard(ClassSchedule schedule) {
     return Card(
-      color: const Color(0xFF2A2A2A),
+      color: const Color(0xFF1A1A1A),
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
@@ -357,7 +357,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                 vertical: 6,
               ),
               decoration: BoxDecoration(
-                color: Colors.orangeAccent,
+                color: const Color(0xFFFF6A00),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -406,7 +406,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: Colors.orangeAccent,
+            color: const Color(0xFFFF6A00),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Center(
@@ -472,7 +472,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.orangeAccent,
+                  color: const Color(0xFFFF6A00),
                   letterSpacing: 4,
                 ),
               ),
@@ -510,13 +510,13 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         title: Row(
           children: const [
-            Icon(Icons.print, color: Colors.orangeAccent),
+            Icon(Icons.print, color: const Color(0xFFFF6A00)),
             SizedBox(width: 12),
             Text(
               'Instrucciones de Impresión',
@@ -584,7 +584,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
             child: const Text(
               'Entendido',
               style: TextStyle(
-                color: Colors.orangeAccent,
+                color: const Color(0xFFFF6A00),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -603,7 +603,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: Colors.orangeAccent,
+            color: const Color(0xFFFF6A00),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(

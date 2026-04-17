@@ -28,7 +28,7 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
   final _nombreCtrl = TextEditingController();
@@ -40,15 +40,29 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _loading = false;
   bool _loadingSchools = true;
+  bool _obscurePassword = true;
+  bool _obscureRepeatPassword = true;
   List<School> _schools = [];
   School? _selectedSchool;
   String? _errorSchools;
+
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _setupAuthPersistence();
     _cargarSchools();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
+    _animationController.forward();
   }
 
   Future<void> _setupAuthPersistence() async {
@@ -70,6 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _repeatEmailCtrl.dispose();
     _passCtrl.dispose();
     _repeatPassCtrl.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -131,7 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Escuelas creadas exitosamente'),
-            backgroundColor: Colors.green,
+            backgroundColor: Color(0xFF10B981),
           ),
         );
       }
@@ -141,7 +156,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error creando escuelas: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFEF4444),
           ),
         );
       }
@@ -154,7 +169,10 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedSchool == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona una escuela')),
+        const SnackBar(
+          content: Text('Selecciona una escuela'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
       );
       return;
     }
@@ -176,18 +194,49 @@ class _RegisterPageState extends State<RegisterPage> {
       await user.updateDisplayName('$nombre $apellido');
 
       // 2) Crear documento del usuario en Firestore PRIMERO
-      //    (antes del email para que siempre quede registrado)
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'email': email,
-        'name': '$nombre $apellido',
-        'role': 'student',
-        'membershipStatus': 'none', // none, pending, active, expired, frozen
-        'schoolId': schoolId,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      debugPrint('📝 Creando documento de usuario en Firestore...');
+      debugPrint('   UID: ${user.uid}');
+      debugPrint('   Email: $email');
+      debugPrint('   Nombre: $nombre $apellido');
+      debugPrint('   School: $schoolId');
 
-      // 3) Enviar verificación profesional con SendGrid
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'email': email,
+          'searchKey': email.toLowerCase(),
+          'name': '$nombre $apellido',
+          'role': 'student',
+          'membershipStatus': 'none',
+          'schoolId': schoolId,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        debugPrint('✅ Documento de usuario creado exitosamente');
+
+        // Verificar que el documento se creó correctamente
+        final verifyDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (!verifyDoc.exists) {
+          throw Exception('El documento del usuario no se pudo crear en Firestore');
+        }
+
+        debugPrint('✅ Documento verificado en Firestore');
+      } catch (firestoreError) {
+        debugPrint('❌ Error crítico al crear documento en Firestore: $firestoreError');
+        try {
+          await user.delete();
+          debugPrint('🗑️ Usuario eliminado de Auth debido a error en Firestore');
+        } catch (deleteError) {
+          debugPrint('⚠️ No se pudo eliminar usuario de Auth: $deleteError');
+        }
+        throw Exception('Error al crear perfil de usuario: $firestoreError');
+      }
+
+      // 3) Enviar verificación profesional con Cloud Function + Resend
       //    (en try-catch para que no rompa el registro si falla)
       bool emailSent = false;
       try {
@@ -199,15 +248,13 @@ class _RegisterPageState extends State<RegisterPage> {
         // Continuamos aunque falle el email
       }
 
-      // 4) Cerrar sesión SIEMPRE para forzar el flujo de verificación antes del acceso
+      // 4) Cerrar sesión SIEMPRE
       await FirebaseAuth.instance.signOut();
-
-      // Pequeño respiro para que cualquier listener de auth se entere del signOut
       await Future.delayed(const Duration(milliseconds: 150));
 
       if (!mounted) return;
 
-      // 5) Notificar y enviar al login limpiando el stack
+      // 5) Notificar y enviar al login
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -215,7 +262,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ? 'Te enviamos un correo de verificación. Valídalo y luego inicia sesión.'
                 : 'Cuenta creada. Te enviamos el correo de verificación a tu email.',
           ),
-          backgroundColor: emailSent ? null : Colors.orange,
+          backgroundColor: emailSent ? const Color(0xFF10B981) : const Color(0xFFFF8534),
         ),
       );
 
@@ -225,10 +272,19 @@ class _RegisterPageState extends State<RegisterPage> {
       if (e.code == 'email-already-in-use') msg = "Ese email ya está en uso";
       if (e.code == 'weak-password') msg = "Contraseña muy débil";
       if (e.code == 'invalid-email') msg = "Email inválido";
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: const Color(0xFFEF4444),
+        ),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: $e"),
+          backgroundColor: const Color(0xFFEF4444),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -241,418 +297,727 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 600;
     final isFormBusy = _loading || _loadingSchools;
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              Theme.of(context).primaryColor.withOpacity(0.1),
-              Colors.white,
+              Color(0xFF0F0F0F),
+              Color(0xFF1A1A1A),
+              Color(0xFF0F0F0F),
             ],
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: Card(
-                  elevation: 8,
-                  shadowColor: Colors.black.withOpacity(0.2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Center(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 24 : 32,
+                    vertical: 32,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(40),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Logo circular
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Theme.of(context).primaryColor.withOpacity(0.3),
-                                  blurRadius: 20,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: ClipOval(
-                              child: kIsWeb
-                                  ? Image.network(
-                                      'images/canvas.jpeg',
-                                      height: 100,
-                                      width: 100,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Container(
-                                          height: 100,
-                                          width: 100,
-                                          color: Theme.of(context).primaryColor,
-                                          child: const Icon(
-                                            Icons.fitness_center,
-                                            size: 50,
-                                            color: Colors.white,
-                                          ),
-                                        );
-                                      },
-                                    )
-                                  : Image.asset(
-                                      'assets/images/canvas.jpeg',
-                                      height: 100,
-                                      width: 100,
-                                      fit: BoxFit.cover,
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Título
-                          Text(
-                            'Crea tu cuenta',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'en Ayutthaya',
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Nombre y Apellido
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _nombreCtrl,
-                                  decoration: InputDecoration(
-                                    labelText: 'Nombre',
-                                    prefixIcon: const Icon(Icons.person_outline),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.grey[50],
-                                  ),
-                                  validator: _required,
-                                  textInputAction: TextInputAction.next,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _apellidoCtrl,
-                                  decoration: InputDecoration(
-                                    labelText: 'Apellido',
-                                    prefixIcon: const Icon(Icons.badge_outlined),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.grey[50],
-                                  ),
-                                  validator: _required,
-                                  textInputAction: TextInputAction.next,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Email
-                          TextFormField(
-                            controller: _emailCtrl,
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              hintText: 'tu@email.com',
-                              prefixIcon: const Icon(Icons.email_outlined),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (v) {
-                              if (_required(v) != null) return 'Ingresa tu email';
-                              final email = v!.trim();
-                              final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                              if (!regex.hasMatch(email)) return 'Email no válido';
-                              return null;
-                            },
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Repetir Email
-                          TextFormField(
-                            controller: _repeatEmailCtrl,
-                            decoration: InputDecoration(
-                              labelText: 'Confirmar email',
-                              hintText: 'tu@email.com',
-                              prefixIcon: const Icon(Icons.email_outlined),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (v) {
-                              if (_required(v) != null) return 'Repite tu email';
-                              if (v!.trim() != _emailCtrl.text.trim()) {
-                                return 'Los emails no coinciden';
-                              }
-                              return null;
-                            },
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Contraseña
-                          TextFormField(
-                            controller: _passCtrl,
-                            decoration: InputDecoration(
-                              labelText: 'Contraseña',
-                              hintText: '••••••••',
-                              prefixIcon: const Icon(Icons.lock_outlined),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                            obscureText: true,
-                            validator: (v) {
-                              if (_required(v) != null) return 'Ingresa tu contraseña';
-                              if ((v ?? '').length < 6) {
-                                return 'Mínimo 6 caracteres';
-                              }
-                              return null;
-                            },
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Repetir Contraseña
-                          TextFormField(
-                            controller: _repeatPassCtrl,
-                            decoration: InputDecoration(
-                              labelText: 'Confirmar contraseña',
-                              hintText: '••••••••',
-                              prefixIcon: const Icon(Icons.lock_outlined),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                            obscureText: true,
-                            validator: (v) {
-                              if (_required(v) != null) return 'Repite tu contraseña';
-                              if (v!.trim() != _passCtrl.text.trim()) {
-                                return 'Las contraseñas no coinciden';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Selector de Escuela
-                          if (_loadingSchools)
-                            const Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                child: CircularProgressIndicator(color: Colors.orange),
-                              ),
-                            )
-                          else if (_errorSchools != null)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _errorSchools!,
-                                  style: const TextStyle(color: Colors.red),
-                                ),
-                                const SizedBox(height: 8),
-                                OutlinedButton.icon(
-                                  onPressed: _cargarSchools,
-                                  icon: const Icon(Icons.refresh),
-                                  label: const Text('Reintentar'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.orange,
-                                    side: const BorderSide(color: Colors.orange),
-                                  ),
-                                ),
-                              ],
-                            )
-                          else if (_schools.isEmpty)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.orange),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Row(
-                                        children: [
-                                          Icon(Icons.warning, color: Colors.orange, size: 20),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'No hay escuelas disponibles',
-                                            style: TextStyle(
-                                              color: Colors.orange,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      const Text(
-                                        'Necesitas crear escuelas en Firestore primero.',
-                                        style: TextStyle(fontSize: 13),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: ElevatedButton.icon(
-                                          onPressed: _createDemoSchools,
-                                          icon: const Icon(Icons.add),
-                                          label: const Text('Crear escuelas de ejemplo'),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.orange,
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            )
-                          else
-                            DropdownButtonFormField<School>(
-                              value: _selectedSchool,
-                              items: _schools
-                                  .map(
-                                    (e) => DropdownMenuItem<School>(
-                                      value: e,
-                                      child: Text(e.name.isEmpty ? e.id : e.name),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (v) => setState(() {
-                                _selectedSchool = v;
-                              }),
-                              decoration: InputDecoration(
-                                labelText: 'Escuela',
-                                prefixIcon: const Icon(Icons.school_outlined),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey[50],
-                              ),
-                              validator: (v) =>
-                                  v == null ? 'Selecciona una escuela' : null,
-                            ),
-
-                          const SizedBox(height: 24),
-
-                          // Botón Crear Cuenta
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: FilledButton(
-                              onPressed: isFormBusy ? null : _onRegister,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: isFormBusy
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Crear cuenta',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Divider
-                          Row(
-                            children: [
-                              const Expanded(child: Divider()),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text(
-                                  'o',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                              ),
-                              const Expanded(child: Divider()),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Ya tienes cuenta
-                          TextButton(
-                            onPressed: isFormBusy
-                                ? null
-                                : () => Navigator.of(context)
-                                    .pushNamedAndRemoveUntil('/login', (r) => false),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.orange,
-                            ),
-                            child: const Text('¿Ya tienes cuenta? Inicia sesión'),
-                          ),
-                        ],
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isSmallScreen ? double.infinity : 500,
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildHeader(context, isSmallScreen),
+                            SizedBox(height: isSmallScreen ? 32 : 40),
+                            _buildRegisterCard(context, isSmallScreen, isFormBusy),
+                            SizedBox(height: isSmallScreen ? 24 : 32),
+                            _buildFooter(context, isFormBusy),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, bool isSmallScreen) {
+    return Column(
+      children: [
+        Container(
+          width: isSmallScreen ? 100 : 120,
+          height: isSmallScreen ? 100 : 120,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFFFF6A00),
+              width: 3,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF6A00).withValues(alpha: 0.5),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: kIsWeb
+                ? Image.network(
+                    'images/canvas.jpeg',
+                    width: isSmallScreen ? 100 : 120,
+                    height: isSmallScreen ? 100 : 120,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.fitness_center,
+                          size: 60,
+                          color: Colors.white,
+                        ),
+                      );
+                    },
+                  )
+                : Image.asset(
+                    'assets/images/canvas.jpeg',
+                    width: isSmallScreen ? 100 : 120,
+                    height: isSmallScreen ? 100 : 120,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.fitness_center,
+                          size: 60,
+                          color: Colors.white,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+        SizedBox(height: isSmallScreen ? 20 : 24),
+        Text(
+          'ÚNETE A AYUTTHAYA',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: isSmallScreen ? 24 : 28,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            color: const Color(0xFFFF6A00),
+            shadows: const [
+              Shadow(
+                color: Color(0xFFFF6A00),
+                blurRadius: 20,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Crea tu cuenta de atleta',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1,
+            color: Colors.white.withValues(alpha: 0.7),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRegisterCard(BuildContext context, bool isSmallScreen, bool isFormBusy) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A).withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6A00).withValues(alpha: 0.1),
+            blurRadius: 40,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(isSmallScreen ? 20 : 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Nombre y Apellido en fila
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Nombre',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFFF6A00),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      controller: _nombreCtrl,
+                      hint: 'Juan',
+                      icon: Icons.person_outline,
+                      validator: _required,
+                      textInputAction: TextInputAction.next,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Apellido',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFFF6A00),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      controller: _apellidoCtrl,
+                      hint: 'Pérez',
+                      icon: Icons.badge_outlined,
+                      validator: _required,
+                      textInputAction: TextInputAction.next,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Email
+          _buildFieldLabel('Email'),
+          const SizedBox(height: 6),
+          _buildTextField(
+            controller: _emailCtrl,
+            hint: 'tu@email.com',
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            validator: (v) {
+              if (_required(v) != null) return 'Ingresa tu email';
+              final email = v!.trim();
+              final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+              if (!regex.hasMatch(email)) return 'Email no válido';
+              return null;
+            },
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
+
+          // Confirmar Email
+          _buildFieldLabel('Confirmar Email'),
+          const SizedBox(height: 6),
+          _buildTextField(
+            controller: _repeatEmailCtrl,
+            hint: 'tu@email.com',
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            validator: (v) {
+              if (_required(v) != null) return 'Repite tu email';
+              if (v!.trim() != _emailCtrl.text.trim()) {
+                return 'Los emails no coinciden';
+              }
+              return null;
+            },
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
+
+          // Contraseña
+          _buildFieldLabel('Contraseña'),
+          const SizedBox(height: 6),
+          _buildTextField(
+            controller: _passCtrl,
+            hint: '••••••••',
+            icon: Icons.lock_outlined,
+            obscureText: _obscurePassword,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                color: Colors.white.withValues(alpha: 0.5),
+                size: 20,
+              ),
+              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            ),
+            validator: (v) {
+              if (_required(v) != null) return 'Ingresa tu contraseña';
+              if ((v ?? '').length < 6) return 'Mínimo 6 caracteres';
+              return null;
+            },
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
+
+          // Confirmar Contraseña
+          _buildFieldLabel('Confirmar Contraseña'),
+          const SizedBox(height: 6),
+          _buildTextField(
+            controller: _repeatPassCtrl,
+            hint: '••••••••',
+            icon: Icons.lock_outlined,
+            obscureText: _obscureRepeatPassword,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureRepeatPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                color: Colors.white.withValues(alpha: 0.5),
+                size: 20,
+              ),
+              onPressed: () => setState(() => _obscureRepeatPassword = !_obscureRepeatPassword),
+            ),
+            validator: (v) {
+              if (_required(v) != null) return 'Repite tu contraseña';
+              if (v!.trim() != _passCtrl.text.trim()) {
+                return 'Las contraseñas no coinciden';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Selector de Escuela
+          _buildSchoolSelector(isFormBusy),
+
+          SizedBox(height: isSmallScreen ? 24 : 28),
+
+          // Botón Crear Cuenta
+          SizedBox(
+            height: 56,
+            child: ElevatedButton(
+              onPressed: isFormBusy ? null : _onRegister,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6A00),
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: const Color(0xFFFF6A00).withValues(alpha: 0.5),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: isFormBusy
+                  ? const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'CREAR CUENTA',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFFFF6A00),
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    TextInputAction? textInputAction,
+    Widget? suffixIcon,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(
+          color: Colors.white.withValues(alpha: 0.3),
+          fontWeight: FontWeight.w400,
+          fontSize: 15,
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: const Color(0xFFFF6A00),
+          size: 20,
+        ),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: const Color(0xFF0F0F0F),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+            color: Color(0xFFFF6A00),
+            width: 2,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+            color: Color(0xFFEF4444),
+            width: 1,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+            color: Color(0xFFEF4444),
+            width: 2,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
+        errorStyle: const TextStyle(fontSize: 12, height: 0.8),
+      ),
+      validator: validator,
+    );
+  }
+
+  Widget _buildSchoolSelector(bool isFormBusy) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFieldLabel('Escuela'),
+        const SizedBox(height: 6),
+        if (_loadingSchools)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F0F0F),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFFF6A00),
+                    strokeWidth: 2,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Cargando escuelas...',
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ],
+            ),
+          )
+        else if (_errorSchools != null)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFEF4444)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorSchools!,
+                        style: const TextStyle(color: Color(0xFFEF4444), fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _cargarSchools,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('Reintentar'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFEF4444),
+                      side: const BorderSide(color: Color(0xFFEF4444)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else if (_schools.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF8534).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFFF8534)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Color(0xFFFF8534), size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'No hay escuelas disponibles',
+                      style: TextStyle(
+                        color: Color(0xFFFF8534),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Necesitas crear escuelas en Firestore primero.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _createDemoSchools,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Crear escuelas de ejemplo'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF8534),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          DropdownButtonFormField<School>(
+            initialValue: _selectedSchool,
+            dropdownColor: const Color(0xFF1A1A1A),
+            items: _schools
+                .map(
+                  (e) => DropdownMenuItem<School>(
+                    value: e,
+                    child: Text(
+                      e.name.isEmpty ? e.id : e.name,
+                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: isFormBusy ? null : (v) => setState(() => _selectedSchool = v),
+            decoration: InputDecoration(
+              hintText: 'Selecciona tu escuela',
+              hintStyle: TextStyle(
+                color: Colors.white.withValues(alpha: 0.3),
+                fontSize: 15,
+              ),
+              prefixIcon: const Icon(
+                Icons.school_outlined,
+                color: Color(0xFFFF6A00),
+                size: 20,
+              ),
+              filled: true,
+              fillColor: const Color(0xFF0F0F0F),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF6A00),
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: Color(0xFFEF4444),
+                  width: 1,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: Color(0xFFEF4444),
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 14,
+              ),
+              errorStyle: const TextStyle(fontSize: 12, height: 0.8),
+            ),
+            validator: (v) => v == null ? 'Selecciona una escuela' : null,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildFooter(BuildContext context, bool isFormBusy) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Divider(
+                color: Colors.white.withValues(alpha: 0.2),
+                thickness: 1,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                '¿Ya tienes cuenta?',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Divider(
+                color: Colors.white.withValues(alpha: 0.2),
+                thickness: 1,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 52,
+          child: OutlinedButton(
+            onPressed: isFormBusy
+                ? null
+                : () => Navigator.of(context).pushNamedAndRemoveUntil('/login', (r) => false),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFFF6A00),
+              side: const BorderSide(
+                color: Color(0xFFFF6A00),
+                width: 2,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: const Text(
+              'INICIAR SESIÓN',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
               ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

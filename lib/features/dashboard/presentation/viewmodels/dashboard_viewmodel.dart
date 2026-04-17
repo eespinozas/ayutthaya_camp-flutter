@@ -102,13 +102,46 @@ class DashboardViewModel extends ChangeNotifier {
       }
 
       if (!userDoc.exists) {
-        debugPrint('❌ DashboardViewModel._cargarDashboard - Usuario no existe en Firestore');
+        debugPrint('⚠️ DashboardViewModel._cargarDashboard - Usuario no existe en Firestore');
         debugPrint('   UID buscado: ${user.uid}');
-        debugPrint('   Por favor verifica en Firebase Console que el documento existe en: users/${user.uid}');
-        loading = false;
-        errorMsg = 'Usuario no encontrado en la base de datos';
-        notifyListeners();
-        return;
+        debugPrint('   Email: ${user.email}');
+        debugPrint('   Creando documento de usuario...');
+
+        // Crear el documento del usuario si no existe
+        try {
+          final userEmail = user.email ?? '';
+          final userName = user.displayName ?? '';
+          final isAdmin = userEmail.startsWith('admin');
+
+          await _firestore.collection('users').doc(user.uid).set({
+            'email': userEmail,
+            'searchKey': userEmail.toLowerCase(), // Para búsquedas fáciles en Firebase Console
+            'name': userName,
+            'role': isAdmin ? 'admin' : 'student',
+            'membershipStatus': isAdmin ? 'active' : 'none',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+          debugPrint('✅ Documento de usuario creado exitosamente');
+
+          // Volver a leer el documento recién creado
+          userDoc = await _firestore.collection('users').doc(user.uid).get();
+
+          if (!userDoc.exists) {
+            debugPrint('❌ Error: No se pudo crear el documento del usuario');
+            loading = false;
+            errorMsg = 'Error al crear perfil de usuario';
+            notifyListeners();
+            return;
+          }
+        } catch (createError) {
+          debugPrint('❌ Error al crear documento de usuario: $createError');
+          loading = false;
+          errorMsg = 'Error al crear perfil de usuario: $createError';
+          notifyListeners();
+          return;
+        }
       }
 
       final userData = userDoc.data() as Map<String, dynamic>;

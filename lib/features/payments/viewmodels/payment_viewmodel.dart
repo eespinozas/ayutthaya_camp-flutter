@@ -119,6 +119,36 @@ class PaymentViewModel extends ChangeNotifier {
     }
   }
 
+  /// Eliminar pago fallido (para permitir reintento)
+  Future<bool> deleteFailedPayment(String paymentId) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _service.deleteFailedPayment(paymentId);
+      _loading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _loading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Obtener pagos fallidos del usuario
+  Future<List<Payment>> getFailedPayments(String userId) async {
+    try {
+      return await _service.getFailedPayments(userId);
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return [];
+    }
+  }
+
   void clearError() {
     _error = null;
     notifyListeners();

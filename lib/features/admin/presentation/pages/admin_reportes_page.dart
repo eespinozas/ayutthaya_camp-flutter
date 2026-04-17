@@ -45,10 +45,10 @@ class _AdminReportesPageState extends State<AdminReportesPage>
   Widget build(BuildContext context) {
     if (!_localeInitialized) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
           child: CircularProgressIndicator(
-            color: Colors.orangeAccent,
+            color: const Color(0xFFFF6A00),
           ),
         ),
       );
@@ -57,18 +57,40 @@ class _AdminReportesPageState extends State<AdminReportesPage>
     return ChangeNotifierProvider.value(
       value: _viewModel,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0F0F0F),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2A2A2A),
-          title: const Text(
-            'Reportes y Analytics',
-            style: TextStyle(fontWeight: FontWeight.w600),
+          backgroundColor: const Color(0xFF1A1A1A),
+          elevation: 0,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Reportes y Analytics',
+                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ],
           ),
           centerTitle: false,
           bottom: TabBar(
             controller: _tabController,
-            indicatorColor: Colors.orangeAccent,
-            labelColor: Colors.orangeAccent,
+            indicatorColor: const Color(0xFFFF6A00),
+            labelColor: const Color(0xFFFF6A00),
             unselectedLabelColor: Colors.white60,
             tabs: const [
               Tab(text: 'Diario'),
@@ -129,7 +151,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.orangeAccent),
+            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
           );
         }
 
@@ -213,8 +235,8 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                     icon: const Icon(Icons.today, size: 18),
                     label: const Text('Ir a Hoy'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.orangeAccent,
-                      side: const BorderSide(color: Colors.orangeAccent),
+                      foregroundColor: const Color(0xFFFF6A00),
+                      side: const BorderSide(color: const Color(0xFFFF6A00)),
                     ),
                   ),
                 ],
@@ -292,7 +314,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
+                    color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -316,14 +338,14 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.orangeAccent.withOpacity(0.2),
+                                    color: const Color(0xFFFF6A00).withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     clase['hora'],
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
-                                      color: Colors.orangeAccent,
+                                      color: const Color(0xFFFF6A00),
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -506,7 +528,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.orangeAccent),
+            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
           );
         }
 
@@ -584,8 +606,8 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                     icon: const Icon(Icons.today, size: 18),
                     label: const Text('Mes Actual'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.orangeAccent,
-                      side: const BorderSide(color: Colors.orangeAccent),
+                      foregroundColor: const Color(0xFFFF6A00),
+                      side: const BorderSide(color: const Color(0xFFFF6A00)),
                     ),
                   ),
                 ],
@@ -664,7 +686,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
+                    color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -699,7 +721,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                             Text(
                               '\$${NumberFormat('#,###', 'es_ES').format(data['ingresosTotal'])}',
                               style: const TextStyle(
-                                color: Colors.orangeAccent,
+                                color: const Color(0xFFFF6A00),
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -727,7 +749,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
+                    color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -823,7 +845,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
+                    color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -860,13 +882,13 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orangeAccent.withOpacity(0.2),
+                                color: const Color(0xFFFF6A00).withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 '${dia['asistencias']} asistencias',
                                 style: const TextStyle(
-                                  color: Colors.orangeAccent,
+                                  color: const Color(0xFFFF6A00),
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -1075,7 +1097,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.orangeAccent),
+            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
           );
         }
 
@@ -1163,8 +1185,8 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                     icon: const Icon(Icons.today, size: 18),
                     label: const Text('Semana Actual'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.orangeAccent,
-                      side: const BorderSide(color: Colors.orangeAccent),
+                      foregroundColor: const Color(0xFFFF6A00),
+                      side: const BorderSide(color: const Color(0xFFFF6A00)),
                     ),
                   ),
                 ],
@@ -1253,7 +1275,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
+                    color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -1282,7 +1304,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                                       '$asistencias',
                                       style: TextStyle(
                                         color: isToday
-                                            ? Colors.orangeAccent
+                                            ? const Color(0xFFFF6A00)
                                             : Colors.white70,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -1300,8 +1322,8 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                                               end: Alignment.topCenter,
                                               colors: isToday
                                                   ? [
-                                                      Colors.orangeAccent,
-                                                      Colors.orangeAccent.shade700,
+                                                      const Color(0xFFFF6A00),
+                                                      const Color(0xFFCC5500),
                                                     ]
                                                   : [
                                                       Colors.blue,
@@ -1320,7 +1342,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                                       dia['dia'],
                                       style: TextStyle(
                                         color: isToday
-                                            ? Colors.orangeAccent
+                                            ? const Color(0xFFFF6A00)
                                             : Colors.white60,
                                         fontSize: 12,
                                         fontWeight:
@@ -1331,7 +1353,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                                       dia['fecha'],
                                       style: TextStyle(
                                         color: isToday
-                                            ? Colors.orangeAccent
+                                            ? const Color(0xFFFF6A00)
                                             : Colors.white38,
                                         fontSize: 10,
                                       ),
@@ -1370,7 +1392,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                             width: 12,
                             height: 12,
                             decoration: const BoxDecoration(
-                              color: Colors.orangeAccent,
+                              color: const Color(0xFFFF6A00),
                               shape: BoxShape.circle,
                             ),
                           ),

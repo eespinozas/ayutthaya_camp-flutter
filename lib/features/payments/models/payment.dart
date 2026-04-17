@@ -9,6 +9,7 @@ enum PaymentStatus {
   pending, // Pendiente de aprobación
   approved, // Aprobado
   rejected, // Rechazado
+  failed, // Fallido (error al procesar)
 }
 
 class Payment {

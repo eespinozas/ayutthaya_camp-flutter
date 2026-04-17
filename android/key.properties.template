@@ -1,0 +1,15 @@
+# Android Signing Configuration Template
+# ⚠️  DO NOT COMMIT THIS FILE TO GIT
+#
+# Copy this file to key.properties and fill in your actual values
+# Or run: ./scripts/setup_android_signing.sh to generate it automatically
+#
+# To create a keystore, run:
+#   keytool -genkey -v -keystore upload-keystore.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 \
+#     -alias upload -storetype JKS
+
+storePassword=YOUR_KEYSTORE_PASSWORD_HERE
+keyPassword=YOUR_KEY_PASSWORD_HERE
+keyAlias=upload
+storeFile=upload-keystore.jks

@@ -8,6 +8,7 @@ import {generateEmailBase, EmailBaseParams} from "../emailBase";
 export interface ResetPasswordParams {
   resetLink: string;
   userEmail: string;
+  userName?: string; // Nombre del usuario para personalización
   logoUrl: string;
   appName: string;
   supportEmail: string;
@@ -18,6 +19,7 @@ export function generateResetPasswordTemplate(params: ResetPasswordParams): stri
   const {
     resetLink,
     userEmail,
+    userName,
     logoUrl,
     appName,
     supportEmail,
@@ -29,13 +31,15 @@ export function generateResetPasswordTemplate(params: ResetPasswordParams): stri
     preheader: "Recupera el acceso a tu cuenta de forma segura",
     logoUrl,
     appName,
-    mainHeading: "Restablece tu contraseña",
-    bodyText: `Recibimos una solicitud para restablecer la contraseña de tu cuenta en ${appName}. Haz clic en el botón de abajo para crear una nueva contraseña. Este enlace expirará en 1 hora por seguridad.`,
+    userName,
+    mainHeading: "Restablece tu contraseña 🔐",
+    bodyText: `Recibimos una solicitud para restablecer la contraseña de tu cuenta en ${appName}. Haz clic en el botón de abajo para crear una nueva contraseña segura. Este enlace expirará en 1 hora por tu seguridad.`,
     buttonText: "Restablecer contraseña",
     buttonUrl: resetLink,
     footerText: `Solicitud de restablecimiento para: ${userEmail}`,
     supportEmail,
     companyAddress,
+    darkModeSupport: true,
   };
 
   return generateEmailBase(baseParams);
