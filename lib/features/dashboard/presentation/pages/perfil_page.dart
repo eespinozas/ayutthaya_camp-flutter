@@ -9,6 +9,8 @@ import 'dart:io' show File;
 
 import 'package:ayutthaya_camp/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:ayutthaya_camp/features/auth/presentation/pages/login_page.dart';
+// import 'package:ayutthaya_camp/features/gamification/presentation/widgets/avatar_progress_widget.dart';
+import 'package:ayutthaya_camp/features/gamification/presentation/widgets/pixel_avatar_widget.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
@@ -33,6 +35,7 @@ class _PerfilPageState extends State<PerfilPage> {
   bool _isRefreshing = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  int _totalAttendedClasses = 0;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -112,6 +115,9 @@ class _PerfilPageState extends State<PerfilPage> {
           _isLoading = false;
         });
       }
+
+      // Cargar número de clases asistidas
+      await _loadAttendedClasses();
     } catch (e) {
       debugPrint('Error cargando datos del usuario: $e');
       if (mounted) {
@@ -119,6 +125,31 @@ class _PerfilPageState extends State<PerfilPage> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _loadAttendedClasses() async {
+    final auth = context.read<AuthViewModel>();
+    final userId = auth.currentUser?.uid;
+
+    if (userId == null) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: 'attended')
+          .get();
+
+      if (mounted) {
+        setState(() {
+          _totalAttendedClasses = snapshot.docs.length;
+        });
+      }
+
+      debugPrint('📊 Total de clases asistidas: $_totalAttendedClasses');
+    } catch (e) {
+      debugPrint('Error cargando clases asistidas: $e');
     }
   }
 
@@ -194,6 +225,76 @@ class _PerfilPageState extends State<PerfilPage> {
         });
       }
     }
+  }
+
+  Color _getProgressColor() {
+    if (_totalAttendedClasses <= 2) return Colors.grey;
+    if (_totalAttendedClasses <= 5) return Colors.blue;
+    if (_totalAttendedClasses <= 8) return Colors.orange;
+    return Colors.red;
+  }
+
+  String _getProgressMessage() {
+    if (_totalAttendedClasses == 0) {
+      return '¡Comienza tu viaje! 🥊';
+    } else if (_totalAttendedClasses <= 2) {
+      return 'Descansando 🪑';
+    } else if (_totalAttendedClasses <= 5) {
+      return 'Calentando 🚶';
+    } else if (_totalAttendedClasses <= 8) {
+      return 'En Movimiento 🏃';
+    } else {
+      return '¡Imparable! 🥊';
+    }
+  }
+
+  Widget _buildProgressMilestones() {
+    final milestones = [
+      {'classes': 3, 'label': 'Calentando', 'icon': Icons.directions_walk},
+      {'classes': 6, 'label': 'Corriendo', 'icon': Icons.directions_run},
+      {'classes': 9, 'label': 'Imparable', 'icon': Icons.sports_martial_arts},
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: milestones.map((milestone) {
+        final classCount = milestone['classes'] as int;
+        final achieved = _totalAttendedClasses >= classCount;
+        final color = achieved ? _getProgressColor() : Colors.grey.shade700;
+
+        return Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: achieved
+                    ? color.withValues(alpha: 0.2)
+                    : Colors.grey.shade900,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: achieved ? color : Colors.grey.shade800,
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                milestone['icon'] as IconData,
+                color: achieved ? color : Colors.grey.shade700,
+                size: 20,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$classCount',
+              style: TextStyle(
+                color: achieved ? color : Colors.grey.shade700,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        );
+      }).toList(),
+    );
   }
 
   Future<void> _selectBirthDate() async {
@@ -480,6 +581,205 @@ class _PerfilPageState extends State<PerfilPage> {
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // COMMENTED OUT: Rive Avatar de progreso
+                    /*
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // Título de la sección
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.emoji_events,
+                                color: Color(0xFFFF6A00),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Tu Progreso',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Avatar animado
+                          AvatarProgressWidget(
+                            totalClasses: _totalAttendedClasses,
+                            size: 200,
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Contador de clases
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F0F0F),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _getProgressColor().withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '$_totalAttendedClasses',
+                                  style: TextStyle(
+                                    color: _getProgressColor(),
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    height: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _totalAttendedClasses == 1
+                                      ? 'Clase Completada'
+                                      : 'Clases Completadas',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _getProgressMessage(),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: _getProgressColor(),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    */
+
+                    // NEW: Pixel Art Fighter Avatar
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // Título de la sección
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.sports_martial_arts,
+                                color: Color(0xFFFF6A00),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Tu Luchador',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Pixel Art Avatar
+                          PixelAvatarWidget(
+                            totalClasses: _totalAttendedClasses,
+                            scale: 4.0,
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Contador de clases
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F0F0F),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _getProgressColor().withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '$_totalAttendedClasses',
+                                  style: TextStyle(
+                                    color: _getProgressColor(),
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    height: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _totalAttendedClasses == 1
+                                      ? 'Clase Completada'
+                                      : 'Clases Completadas',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _getProgressMessage(),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: _getProgressColor(),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Progress milestones
+                          _buildProgressMilestones(),
                         ],
                       ),
                     ),

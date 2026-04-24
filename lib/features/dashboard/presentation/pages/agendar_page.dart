@@ -94,8 +94,7 @@ class _AgendarPageState extends State<AgendarPage> {
   }
 
   Widget _buildClassCounter() {
-    final authVM = context.watch<AuthViewModel>();
-    final bookingVM = context.watch<BookingViewModel>();
+    final authVM = context.read<AuthViewModel>();
     final userId = authVM.currentUser?.uid;
 
     if (userId == null) {
@@ -103,6 +102,7 @@ class _AgendarPageState extends State<AgendarPage> {
     }
 
     return FutureBuilder<Map<String, dynamic>>(
+      key: ValueKey('class_counter_$userId'),
       future: _getClassLimitInfo(userId),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -413,7 +413,7 @@ class _AgendarPageState extends State<AgendarPage> {
       );
     }
 
-    final scheduleVM = context.watch<ClassScheduleViewModel>();
+    final scheduleVM = context.read<ClassScheduleViewModel>();
 
     return MembershipGuard(
       pageName: 'Agendar',
