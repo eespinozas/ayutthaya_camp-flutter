@@ -8,6 +8,15 @@ class DashboardViewModel extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   StreamSubscription<QuerySnapshot>? _bookingsSubscription;
+  StreamSubscription<User?>? _authSubscription;
+
+  // uid del usuario actualmente cargado. Si cambia (logout o login con otra
+  // cuenta), reseteamos el estado y recargamos. Sin esto, el ViewModel —que
+  // vive todo el ciclo de la app vía MultiProvider— se quedaba con los datos
+  // del usuario anterior y un listener de bookings apuntando a su uid viejo,
+  // así que al loguearse otra persona veía la membresía y las clases del
+  // primero.
+  String? _currentUid;
 
   // -------------------------
   // Estado principal del plan
@@ -41,13 +50,54 @@ class DashboardViewModel extends ChangeNotifier {
   String? errorMsg;
 
   DashboardViewModel() {
-    _cargarDashboard();
+    // En vez de llamar _cargarDashboard() directo, escuchamos authStateChanges.
+    // authStateChanges emite el estado actual al suscribirse, así que cubre
+    // tanto el primer arranque como cualquier cambio posterior (login,
+    // logout, cambio de cuenta).
+    _authSubscription = _auth.authStateChanges().listen(_onAuthChanged);
   }
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _bookingsSubscription?.cancel();
     super.dispose();
+  }
+
+  void _onAuthChanged(User? user) {
+    final newUid = user?.uid;
+    if (newUid == _currentUid) return;
+
+    debugPrint('🔁 DashboardViewModel: usuario cambió ($_currentUid → $newUid)');
+    _currentUid = newUid;
+    _resetState();
+
+    if (newUid != null) {
+      _cargarDashboard();
+    } else {
+      loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Limpia todo el estado por-usuario. Se llama cuando cambia el uid para
+  /// evitar mostrar datos del usuario anterior mientras carga el nuevo.
+  void _resetState() {
+    _bookingsSubscription?.cancel();
+    _bookingsSubscription = null;
+
+    planNombre = null;
+    clasesRestantes = null;
+    vigenciaHastaStr = null;
+    resumenAgendadas = null;
+    resumenAsistidas = null;
+    resumenNoAsistidas = null;
+    ultimos3Pagos = [];
+    membershipStatus = null;
+    expirationDate = null;
+    errorMsg = null;
+    loading = true;
+    notifyListeners();
   }
 
   // ---------------------------------------------------------------------------
@@ -182,8 +232,14 @@ class DashboardViewModel extends ChangeNotifier {
         vigenciaHastaStr = '—';
       }
 
-      planNombre = userData['planName'] ??
-                   (membershipStatus == 'active' ? 'Membresía Activa' : 'Sin plan');
+      // Antes había un fallback a 'Membresía Activa' cuando membershipStatus
+      // era 'active' pero no había planName (caso típico tras pagar sólo
+      // matrícula). Eso terminaba pintándose como si fuera el nombre del
+      // plan. Ahora usamos planDisplayName (snapshot al aprobar mensualidad)
+      // y caemos a planName por compat con usuarios viejos. Si tampoco hay
+      // planName, dejamos null y la UI mostrará "Sin plan".
+      planNombre = (userData['planDisplayName'] as String?) ??
+          (userData['planName'] as String?);
 
       // Leer las bookings del usuario para calcular métricas (primera vez)
       await _calcularMetricas(user.uid, userData);
@@ -271,11 +327,15 @@ class DashboardViewModel extends ChangeNotifier {
       resumenAsistidas = asistidas;
       resumenNoAsistidas = noAsistidas;
 
-      // Calcular clases restantes
-      // Usar classesPerMonth del plan del usuario (null = ilimitado)
-      final clasesTotales = userData['classesPerMonth'] ?? 999; // null = ilimitado, usar 999
+      // Calcular clases restantes.
+      // Si classesPerMonth está seteado -> plan limitado, calculamos restantes.
+      // Si es null -> plan ilimitado o sin plan; dejamos clasesRestantes en
+      // null y la UI lo muestra como ∞ (con plan) o "—" (sin plan). Antes
+      // se defaulteaba a 999 y se restaban las usadas, dando "998" en pantalla.
+      final classesPerMonthRaw = userData['classesPerMonth'];
 
       debugPrint('📊 Calculando clases restantes:');
+      debugPrint('   - classesPerMonth en doc: $classesPerMonthRaw');
       debugPrint('   - Total de bookings en DB: ${bookingsSnapshot.docs.length}');
 
       int clasesUsadas = 0;
@@ -287,13 +347,17 @@ class DashboardViewModel extends ChangeNotifier {
         }
       }
 
-      clasesRestantes = clasesTotales - clasesUsadas;
-      if (clasesRestantes! < 0) clasesRestantes = 0;
+      if (classesPerMonthRaw is int) {
+        final remaining = classesPerMonthRaw - clasesUsadas;
+        clasesRestantes = remaining < 0 ? 0 : remaining;
+      } else {
+        clasesRestantes = null; // null = ilimitado / sin plan
+      }
 
       debugPrint('📊 Métricas calculadas:');
-      debugPrint('   - Clases Totales (limit): $clasesTotales');
+      debugPrint('   - Clases Totales (limit): ${classesPerMonthRaw ?? "ilimitado"}');
       debugPrint('   - Clases Usadas: $clasesUsadas');
-      debugPrint('   - Clases Restantes: $clasesRestantes');
+      debugPrint('   - Clases Restantes: ${clasesRestantes ?? "∞"}');
       debugPrint('   - Agendadas: $agendadas');
       debugPrint('   - Asistidas: $asistidas');
       debugPrint('   - No Asistidas: $noAsistidas');
@@ -429,14 +493,21 @@ class DashboardViewModel extends ChangeNotifier {
       resumenAsistidas = asistidas;
       resumenNoAsistidas = noAsistidas;
 
-      final clasesTotales = userData['classesPerMonth'] ?? 999; // null = ilimitado
-      clasesRestantes = clasesTotales - clasesUsadas;
-      if (clasesRestantes! < 0) clasesRestantes = 0;
+      // Mismo patrón que en _calcularMetricas: classesPerMonth null no debe
+      // defaultearse a 999 (eso producía "998" en pantalla). Dejamos null
+      // para que la UI lo interprete como ∞ (con plan) o "—" (sin plan).
+      final classesPerMonthRaw = userData['classesPerMonth'];
+      if (classesPerMonthRaw is int) {
+        final remaining = classesPerMonthRaw - clasesUsadas;
+        clasesRestantes = remaining < 0 ? 0 : remaining;
+      } else {
+        clasesRestantes = null;
+      }
 
       debugPrint('📊 Métricas actualizadas:');
-      debugPrint('   - Clases Totales (limit): $clasesTotales');
+      debugPrint('   - Clases Totales (limit): ${classesPerMonthRaw ?? "ilimitado"}');
       debugPrint('   - Clases Usadas: $clasesUsadas');
-      debugPrint('   - Clases Restantes: $clasesRestantes');
+      debugPrint('   - Clases Restantes: ${clasesRestantes ?? "∞"}');
       debugPrint('   - Agendadas: $agendadas');
       debugPrint('   - Asistidas: $asistidas');
       debugPrint('   - No Asistidas: $noAsistidas');
