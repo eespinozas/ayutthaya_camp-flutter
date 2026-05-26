@@ -47,3 +47,5 @@ app.*.map.json
 # Firebase credentials (NEVER commit these!)
 firebase-service-account.json
 **/firebase-service-account*.json
+*-firebase-adminsdk-*.json
+**/*-firebase-adminsdk-*.json
