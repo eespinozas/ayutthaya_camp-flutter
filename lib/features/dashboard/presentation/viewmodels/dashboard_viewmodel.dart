@@ -9,6 +9,15 @@ class DashboardViewModel extends ChangeNotifier {
 
   StreamSubscription<QuerySnapshot>? _bookingsSubscription;
   StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<DocumentSnapshot>? _userDocSubscription;
+
+  // Snapshot del último userData y bookings vistos por los listeners. Ambos
+  // listeners (user doc y bookings) recalculan métricas usando estos
+  // snapshots compartidos: si solo cambia el user doc (ej: admin aprueba un
+  // pago y aparece classesPerMonth), reusamos los bookings; si solo cambian
+  // los bookings, reusamos el último userData.
+  Map<String, dynamic>? _lastUserData;
+  List<QueryDocumentSnapshot>? _lastBookingsDocs;
 
   // uid del usuario actualmente cargado. Si cambia (logout o login con otra
   // cuenta), reseteamos el estado y recargamos. Sin esto, el ViewModel —que
@@ -61,6 +70,7 @@ class DashboardViewModel extends ChangeNotifier {
   void dispose() {
     _authSubscription?.cancel();
     _bookingsSubscription?.cancel();
+    _userDocSubscription?.cancel();
     super.dispose();
   }
 
@@ -85,6 +95,10 @@ class DashboardViewModel extends ChangeNotifier {
   void _resetState() {
     _bookingsSubscription?.cancel();
     _bookingsSubscription = null;
+    _userDocSubscription?.cancel();
+    _userDocSubscription = null;
+    _lastUserData = null;
+    _lastBookingsDocs = null;
 
     planNombre = null;
     clasesRestantes = null;
@@ -197,49 +211,24 @@ class DashboardViewModel extends ChangeNotifier {
       final userData = userDoc.data() as Map<String, dynamic>;
       debugPrint('📊 DashboardViewModel._cargarDashboard - userData: $userData');
 
-      // Extraer datos del usuario
-      membershipStatus = userData['membershipStatus'] ?? 'none';
-      debugPrint('✅ DashboardViewModel._cargarDashboard - membershipStatus: $membershipStatus');
-
-      // Verificar si el plan está vencido y actualizar a "inactive" si es necesario
+      // Si el plan ya venció y todavía figura como active, actualizar a
+      // inactive. Lo hacemos antes de pintar para que el listener del user
+      // doc, configurado abajo, reciba el nuevo estado y no muestre "Activa"
+      // por un instante.
       if (userData['expirationDate'] != null) {
         final expirationDateTime = (userData['expirationDate'] as Timestamp).toDate();
-        final now = DateTime.now();
-
-        debugPrint('📅 Verificando vencimiento:');
-        debugPrint('   - Fecha de expiración: $expirationDateTime');
-        debugPrint('   - Fecha actual: $now');
-        debugPrint('   - Estado actual: $membershipStatus');
-
-        // Si el plan está vencido y el usuario está activo, marcarlo como inactive
-        if (now.isAfter(expirationDateTime) && membershipStatus == 'active') {
-          debugPrint('⚠️ Plan vencido! Actualizando a "inactive"');
-
+        final currentStatus = userData['membershipStatus'] ?? 'none';
+        if (DateTime.now().isAfter(expirationDateTime) && currentStatus == 'active') {
+          debugPrint('⚠️ Plan vencido — marcando inactive');
           await _firestore.collection('users').doc(user.uid).update({
             'membershipStatus': 'inactive',
             'updatedAt': FieldValue.serverTimestamp(),
           });
-
-          membershipStatus = 'inactive';
-          debugPrint('✅ Usuario actualizado a "inactive"');
+          userData['membershipStatus'] = 'inactive';
         }
       }
 
-      if (userData['expirationDate'] != null) {
-        expirationDate = (userData['expirationDate'] as Timestamp).toDate();
-        vigenciaHastaStr = '${expirationDate!.day}/${expirationDate!.month}/${expirationDate!.year}';
-      } else {
-        vigenciaHastaStr = '—';
-      }
-
-      // Antes había un fallback a 'Membresía Activa' cuando membershipStatus
-      // era 'active' pero no había planName (caso típico tras pagar sólo
-      // matrícula). Eso terminaba pintándose como si fuera el nombre del
-      // plan. Ahora usamos planDisplayName (snapshot al aprobar mensualidad)
-      // y caemos a planName por compat con usuarios viejos. Si tampoco hay
-      // planName, dejamos null y la UI mostrará "Sin plan".
-      planNombre = (userData['planDisplayName'] as String?) ??
-          (userData['planName'] as String?);
+      _applyUserData(userData);
 
       // Leer las bookings del usuario para calcular métricas (primera vez)
       await _calcularMetricas(user.uid, userData);
@@ -247,8 +236,12 @@ class DashboardViewModel extends ChangeNotifier {
       // Leer últimos 3 pagos
       await _cargarUltimosPagos(user.uid);
 
-      // Configurar listener para actualizaciones en tiempo real de bookings
-      _setupBookingsListener(user.uid, userData);
+      // Listeners en tiempo real: bookings (clases) y user doc (membresía,
+      // plan, classesPerMonth). El listener del user doc es lo que permite
+      // que el dashboard se actualice automáticamente cuando un admin
+      // aprueba un pago, sin que el usuario tenga que pull-to-refresh.
+      _setupBookingsListener(user.uid);
+      _setupUserDocListener(user.uid);
 
       loading = false;
       errorMsg = null;
@@ -420,16 +413,75 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
-  // Configurar listener para actualizaciones en tiempo real
+  // Listeners en tiempo real
   // ---------------------------------------------------------------------------
-  void _setupBookingsListener(String userId, Map<String, dynamic> userData) {
+
+  /// Extrae los campos de presentación del user doc y los publica. No toca
+  /// los listeners — sólo actualiza estado y recalcula métricas si ya hay
+  /// bookings cacheados.
+  void _applyUserData(Map<String, dynamic> userData) {
+    _lastUserData = userData;
+
+    membershipStatus = userData['membershipStatus'] ?? 'none';
+
+    if (userData['expirationDate'] != null) {
+      expirationDate = (userData['expirationDate'] as Timestamp).toDate();
+      vigenciaHastaStr =
+          '${expirationDate!.day}/${expirationDate!.month}/${expirationDate!.year}';
+    } else {
+      expirationDate = null;
+      vigenciaHastaStr = '—';
+    }
+
+    // planDisplayName es el snapshot que setea PaymentService al aprobar una
+    // mensualidad. planName es el fallback para usuarios viejos. Si no hay
+    // ninguno (típico tras pagar sólo matrícula), dejamos null y la UI
+    // pinta "Sin plan".
+    planNombre = (userData['planDisplayName'] as String?) ??
+        (userData['planName'] as String?);
+
+    final docs = _lastBookingsDocs;
+    if (docs != null) {
+      _calcularMetricasSync(docs, userData);
+    } else {
+      notifyListeners();
+    }
+  }
+
+  void _setupBookingsListener(String userId) {
+    _bookingsSubscription?.cancel();
     _bookingsSubscription = _firestore
         .collection('bookings')
         .where('userId', isEqualTo: userId)
         .snapshots()
         .listen((snapshot) {
-      debugPrint('🔄 Bookings actualizadas - recalculando métricas...');
-      _calcularMetricasSync(snapshot.docs, userData);
+      debugPrint('🔄 Bookings actualizadas (${snapshot.docs.length}) — recalculando');
+      _lastBookingsDocs = snapshot.docs;
+      final userData = _lastUserData;
+      if (userData != null) {
+        _calcularMetricasSync(snapshot.docs, userData);
+      }
+    });
+  }
+
+  /// Escucha cambios del documento del usuario. Se dispara cuando un admin
+  /// aprueba un pago (cambian membershipStatus, planName, classesPerMonth,
+  /// expirationDate), permitiendo que el dashboard refleje el nuevo plan
+  /// sin pull-to-refresh ni re-login. También refresca los últimos pagos
+  /// para que el chip "Pendiente → Aprobado" se actualice junto con todo
+  /// lo demás.
+  void _setupUserDocListener(String userId) {
+    _userDocSubscription?.cancel();
+    _userDocSubscription = _firestore
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .listen((snapshot) {
+      if (!snapshot.exists) return;
+      final data = snapshot.data() as Map<String, dynamic>;
+      debugPrint('🔄 User doc actualizado — refrescando estado');
+      _applyUserData(data);
+      _cargarUltimosPagos(userId).then((_) => notifyListeners());
     });
   }
 
