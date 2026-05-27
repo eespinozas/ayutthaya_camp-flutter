@@ -1,0 +1,10 @@
+git_url("https://github.com/eespinozas/ayutthaya-certificates.git")
+storage_mode("git")
+
+type("appstore") # The default type, can be: appstore, adhoc, enterprise or development
+
+app_identifier(["com.ayutthaya.ayutthayacamp"])
+username("eespinozasanmartin@gmail.com") # Apple Developer Program account
+
+# The encryption passphrase for the certificates repo is read from
+# MATCH_PASSWORD in ios/fastlane/.env (never commit that file).

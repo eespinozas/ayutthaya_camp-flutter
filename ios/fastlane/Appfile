@@ -1,0 +1,5 @@
+app_identifier("com.ayutthaya.ayutthayacamp") # The bundle identifier of the ACMApp
+apple_id("eespinozasanmartin@gmail.com")      # Apple Developer Program account
+
+# Apple Developer Team ID — discovered during `fastlane setup`.
+team_id("2S96B83U6W") # Exequiel Espinoza

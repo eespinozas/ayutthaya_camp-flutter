@@ -1,0 +1,256 @@
+# ACMApp (Ayutthaya Camp) — iOS Fastlane configuration
+#
+# Auth: App Store Connect API key (.p8) — fully non-interactive, no 2FA.
+#       Credentials are read from ios/fastlane/.env (gitignored).
+#
+# This is a FLUTTER project, so the standard fastlane template is adapted:
+#  - The build number lives in `pubspec.yaml` (Flutter writes it into
+#    ios/Flutter/Generated.xcconfig as FLUTTER_BUILD_NUMBER), NOT in the
+#    xcodeproj — so we never use `increment_build_number(xcodeproj:)`.
+#  - The next build number is derived from TestFlight (source of truth):
+#    first build => 1, then always latest+1. pubspec.yaml is kept in sync.
+#  - `ensure_git_status_clean` is intentionally NOT enforced: this is an
+#    active working repo; only pubspec.yaml is committed by the release lane.
+#  - `flutter build ios` runs before `build_app` so Generated.xcconfig is
+#    populated with the build number before xcodebuild archives.
+#  - Code signing uses a DEDICATED keychain (not the macOS login keychain),
+#    so the build never prompts for the login keychain password.
+
+default_platform(:ios)
+
+# ios/fastlane -> ios -> repo root
+FLUTTER_ROOT_DIR = File.expand_path("../..", __dir__)
+BUNDLE_ID        = "com.ayutthaya.ayutthayacamp"
+MATCH_PROFILE    = "match AppStore #{BUNDLE_ID}"
+SIGNING_KEYCHAIN = "fastlane_acmapp.keychain-db"
+DIST_CERT_NAME   = "Apple Distribution: Exequiel Espinoza (2S96B83U6W)"
+TEAM_ID          = "2S96B83U6W"
+
+# Builds the App Store Connect API key token used by every Apple-facing action.
+def asc_api_key
+  app_store_connect_api_key(
+    key_id: ENV.fetch("ASC_KEY_ID"),
+    issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+    key_filepath: ENV.fetch("ASC_KEY_FILEPATH"),
+    duration: 1200,
+    in_house: false
+  )
+end
+
+# Recreates a dedicated, unlocked keychain used ONLY for code signing. Because
+# match knows this keychain's password it can set the key partition list,
+# which is what suppresses the macOS "codesign wants to use key" popup. The
+# stale identity is also removed from the login keychain so codesign can only
+# ever pick the copy in this dedicated keychain.
+def prepare_signing_keychain
+  pw = ENV.fetch("KEYCHAIN_PASSWORD")
+  sh(%(security delete-certificate -c "#{DIST_CERT_NAME}" login.keychain-db 2>/dev/null; true), log: false)
+  sh("security delete-keychain #{SIGNING_KEYCHAIN} 2>/dev/null; true", log: false)
+  sh("security create-keychain -p '#{pw}' #{SIGNING_KEYCHAIN}", log: false)
+  sh("security set-keychain-settings -t 21600 #{SIGNING_KEYCHAIN}", log: false)
+  sh("security unlock-keychain -p '#{pw}' #{SIGNING_KEYCHAIN}", log: false)
+  sh("security list-keychains -d user -s #{SIGNING_KEYCHAIN} login.keychain-db", log: false)
+  UI.success("Dedicated signing keychain ready: #{SIGNING_KEYCHAIN}")
+  SIGNING_KEYCHAIN
+end
+
+# Reads `version:` from pubspec.yaml -> { line:, name:, build: }
+def current_pubspec_version
+  content = File.read(File.join(FLUTTER_ROOT_DIR, "pubspec.yaml"))
+  line = content[/^version:\s*(.+)$/, 1].strip # e.g. "1.0.0+1"
+  name, build = line.split("+")
+  { line: line, name: name, build: build.to_i }
+end
+
+# Writes `version: <name>+<build>` back into pubspec.yaml.
+def set_pubspec_build(name, build)
+  path = File.join(FLUTTER_ROOT_DIR, "pubspec.yaml")
+  content = File.read(path)
+  File.write(path, content.sub(/^version:\s*.+$/, "version: #{name}+#{build}"))
+  UI.success("pubspec.yaml version set to #{name}+#{build}")
+end
+
+platform :ios do
+  desc "ONE-TIME setup: register the App ID, create the App Store Connect app record, and generate signing assets."
+  lane :setup do
+    require "spaceship"
+
+    key = asc_api_key # sets the global Spaceship::ConnectAPI token
+
+    # 1. Register the App ID (bundle identifier) on the Developer Portal.
+    #    `produce` can't do this with an API key (its Developer Center step
+    #    still needs an interactive password), so we call the App Store
+    #    Connect API directly — which fully supports API-key auth.
+    existing_bundle = Spaceship::ConnectAPI::BundleId.all(
+      filter: { identifier: BUNDLE_ID }
+    ).find { |b| b.identifier == BUNDLE_ID }
+
+    if existing_bundle
+      UI.success("App ID already registered: #{BUNDLE_ID}")
+    else
+      Spaceship::ConnectAPI::BundleId.create(
+        name: "ACMApp",
+        identifier: BUNDLE_ID,
+        platform: "IOS"
+      )
+      UI.success("Registered App ID: #{BUNDLE_ID}")
+    end
+
+    # 2. The App Store Connect app record CANNOT be created via an API key —
+    #    Apple's App Store Connect API does not allow POST /v1/apps. It must
+    #    be created once in the App Store Connect web UI. match (step 3) does
+    #    NOT need it; only upload_to_testflight (the `beta` lane) does.
+    if Spaceship::ConnectAPI::App.find(BUNDLE_ID)
+      UI.success("App Store Connect record exists for #{BUNDLE_ID}")
+    else
+      UI.important("No App Store Connect app record yet for #{BUNDLE_ID}.")
+      UI.important("Create it once at https://appstoreconnect.apple.com (My Apps -> +):")
+      UI.important("  Platform: iOS  |  Name: ACMApp  |  Primary Language: English")
+      UI.important("  Bundle ID: #{BUNDLE_ID}  |  SKU: ACMAPP-IOS-001")
+      UI.important("It must exist before `fastlane beta` uploads to TestFlight.")
+    end
+
+    # 3. Generate the Apple Distribution cert + App Store profile and push
+    #    them (encrypted) to the private certificates repo.
+    keychain = prepare_signing_keychain
+    match(
+      api_key: key,
+      type: "appstore",
+      keychain_name: keychain,
+      keychain_password: ENV.fetch("KEYCHAIN_PASSWORD")
+    )
+  end
+
+  desc "Download signing certificates & provisioning profiles (read-only)."
+  lane :certificates do
+    keychain = prepare_signing_keychain
+    match(
+      api_key: asc_api_key,
+      type: "appstore",
+      readonly: true,
+      keychain_name: keychain,
+      keychain_password: ENV.fetch("KEYCHAIN_PASSWORD")
+    )
+  end
+
+  desc "Build and upload a new beta to TestFlight"
+  lane :beta do
+    key = asc_api_key
+
+    # 0. Recreate the dedicated signing keychain (no login-keychain prompts).
+    keychain = prepare_signing_keychain
+
+    # 1. Sync App Store certs/profile from the private match repo (read-only)
+    #    into the dedicated keychain.
+    match(
+      api_key: key,
+      type: "appstore",
+      readonly: true,
+      keychain_name: keychain,
+      keychain_password: ENV.fetch("KEYCHAIN_PASSWORD")
+    )
+
+    # 2. Derive the next build number from TestFlight (source of truth):
+    #    first ever build => 1, otherwise latest + 1. Keep pubspec.yaml in sync.
+    v = current_pubspec_version
+    latest = latest_testflight_build_number(
+      api_key: key,
+      app_identifier: BUNDLE_ID,
+      version: v[:name],
+      initial_build_number: 0
+    )
+    build = latest.to_i + 1
+    set_pubspec_build(v[:name], build)
+    UI.success("Building #{v[:name]} (#{build}) — latest on TestFlight was #{latest}")
+
+    # 3. Flutter build — compiles Dart and writes the version into
+    #    ios/Flutter/Generated.xcconfig so xcodebuild picks it up.
+    #    Homebrew's fastlane wrapper sets GEM_HOME/GEM_PATH to fastlane's gem
+    #    dirs. The Homebrew `pod` wrapper overrides GEM_HOME but NOT GEM_PATH,
+    #    so the inherited fastlane GEM_PATH makes Ruby unable to locate the
+    #    cocoapods gem -> Flutter reports "CocoaPods is installed but broken"
+    #    and the IPA build aborts. We unset the Ruby env vars only around the
+    #    flutter calls so pod works, and restore them after so the rest of
+    #    the lane (match, build_app, upload_to_testflight) still finds
+    #    fastlane's gems.
+    Dir.chdir(FLUTTER_ROOT_DIR) do
+      saved_env = %w[GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_BIN_PATH RUBYLIB RUBYOPT].each_with_object({}) do |k, h|
+        h[k] = ENV.delete(k)
+      end
+      begin
+        sh("flutter pub get")
+        sh("flutter build ios --release --no-codesign --build-number=#{build} --build-name=#{v[:name]}")
+      ensure
+        saved_env.each { |k, v| ENV[k] = v if v }
+      end
+    end
+
+    # 4. Patch the Runner target's pbxproj in-place so xcodebuild archive
+    #    finds the team + match profile. The committed pbxproj has
+    #    CODE_SIGN_STYLE = Automatic and no DEVELOPMENT_TEAM, which under
+    #    Xcode 26 fails archive with "Signing for Runner requires a
+    #    development team". We can't pass these via xcargs because that
+    #    applies to ALL targets in the workspace and the Pods targets
+    #    (FirebaseCore, nanopb, etc.) don't support provisioning profiles.
+    #    Scoping via `targets: ["Runner"]` only touches Runner.xcodeproj.
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "Runner.xcodeproj",
+      team_id: TEAM_ID,
+      profile_name: MATCH_PROFILE,
+      code_sign_identity: DIST_CERT_NAME,
+      bundle_identifier: BUNDLE_ID,
+      targets: ["Runner"]
+    )
+
+    # 5. Archive + export a signed IPA using the match App Store profile.
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      configuration: "Release",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: { BUNDLE_ID => MATCH_PROFILE }
+      }
+    )
+
+    # 5. Upload to TestFlight (API key — no 2FA, no app-specific password).
+    upload_to_testflight(
+      api_key: key,
+      skip_waiting_for_build_processing: true
+    )
+
+    # 6. Commit ONLY the version bump, then tag the release.
+    Dir.chdir(FLUTTER_ROOT_DIR) do
+      sh("git add pubspec.yaml")
+      sh("git commit -m 'chore(ios): release #{v[:name]}+#{build} [skip ci]' || true")
+      sh("git tag ios/v#{v[:name]}-#{build} || true")
+      sh("git push origin HEAD --tags || true")
+    end
+  end
+
+  desc "Diagnostic: list apps & bundle IDs visible to the API key"
+  lane :diagnose do
+    require "spaceship"
+    asc_api_key
+    apps = Spaceship::ConnectAPI::App.all
+    UI.header("App Store Connect apps visible to this API key: #{apps.count}")
+    apps.each { |a| UI.message("  name=#{a.name.inspect}  bundleId=#{a.bundle_id.inspect}  id=#{a.id}") }
+    bundles = Spaceship::ConnectAPI::BundleId.all
+    UI.header("Registered Bundle IDs: #{bundles.count}")
+    bundles.each { |b| UI.message("  #{b.identifier.inspect}  (name: #{b.name})") }
+  end
+
+  desc "List recent TestFlight builds and their processing state"
+  lane :builds do
+    require "spaceship"
+    asc_api_key
+    app = Spaceship::ConnectAPI::App.find(BUNDLE_ID)
+    UI.header("TestFlight builds for #{app.name} (#{BUNDLE_ID})")
+    list = Spaceship::ConnectAPI::Build.all(app_id: app.id, sort: "-uploadedDate", limit: 10)
+    UI.important("No builds visible yet — Apple may still be processing the upload.") if list.empty?
+    list.each do |b|
+      UI.message("  build #{b.version}  |  state: #{b.processing_state}  |  uploaded: #{b.uploaded_date}")
+    end
+  end
+end

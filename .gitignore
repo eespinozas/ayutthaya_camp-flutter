@@ -49,3 +49,16 @@ firebase-service-account.json
 **/firebase-service-account*.json
 *-firebase-adminsdk-*.json
 **/*-firebase-adminsdk-*.json
+
+# Fastlane secrets (NEVER commit these!)
+ios/fastlane/.env
+**/AuthKey_*.p8
+
+# Fastlane build artifacts / transient output
+**/fastlane/report.xml
+**/fastlane/test_output
+ios/Runner.ipa
+ios/Runner.app.dSYM.zip
+
+# Firebase Hosting deploy cache
+.firebase/
