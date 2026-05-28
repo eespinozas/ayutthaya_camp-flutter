@@ -112,11 +112,12 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
+        titleSpacing: 12,
         title: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
@@ -132,16 +133,23 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.fitness_center, color: Colors.white, size: 22),
+              child: const Icon(Icons.fitness_center, color: Colors.white, size: 20),
             ),
-            const SizedBox(width: 12),
-            const Text(
-              'AYUTTHAYA CAMP',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-                letterSpacing: 1,
+            const SizedBox(width: 10),
+            // Flexible + ellipsis evita que el texto del título se solape
+            // con el chip de membresía y el icono de perfil cuando el ancho
+            // de la AppBar no alcanza para ambos (iPhone SE / mini).
+            const Flexible(
+              child: Text(
+                'AYUTTHAYA CAMP',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  letterSpacing: 0.8,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ],
