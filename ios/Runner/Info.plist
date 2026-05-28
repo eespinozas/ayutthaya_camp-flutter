@@ -27,7 +27,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Esta aplicación necesita acceso a la cámara para escanear códigos QR y agendar clases rápidamente.</string>
+	<string>Esta aplicación necesita acceso a la cámara para escanear códigos QR y para tomar fotos del comprobante de pago.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tus fotos para que puedas elegir una foto de perfil y subir el comprobante de pago.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Esta aplicación puede guardar el código QR de tu membresía en tus fotos.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
