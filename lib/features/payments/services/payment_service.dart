@@ -139,6 +139,7 @@ class PaymentService {
     required PaymentType type,
     required double amount,
     required String plan,
+    String? enrollmentPlan,
     required DateTime paymentDate,
     File? receiptFile,
     Uint8List? receiptBytes,
@@ -182,6 +183,7 @@ class PaymentService {
         type: type,
         amount: amount,
         plan: plan,
+        enrollmentPlan: enrollmentPlan,
         paymentDate: paymentDate,
         receiptUrl: downloadUrl,
         status: PaymentStatus.pending,
@@ -317,7 +319,7 @@ class PaymentService {
       // Actualizar usuario según tipo de pago
       if (payment.type == PaymentType.enrollment) {
         debugPrint('Procesando matrícula...');
-        await _updateUserAfterEnrollment(payment.userId);
+        await _updateUserAfterEnrollment(payment.userId, payment.enrollmentPlan);
       } else {
         debugPrint('Procesando pago mensual...');
         await _updateUserAfterMonthlyPayment(payment.userId, payment.plan);
@@ -395,24 +397,78 @@ class PaymentService {
     }
   }
 
-  /// Actualizar usuario después de aprobar matrícula
-  Future<void> _updateUserAfterEnrollment(String userId) async {
+  /// Actualizar usuario después de aprobar matrícula.
+  ///
+  /// Si la matrícula viene con un plan elegido (`enrollmentPlan`, p.ej.
+  /// "Plan Iniciado"), también se asigna ese plan al user doc — copiando
+  /// planName, planId, planDisplayName y classesPerMonth, y usando los
+  /// durationDays del plan para la fecha de expiración. Eso resuelve el
+  /// "Sin plan" tras aprobar matrícula: ahora un solo pago = matrícula
+  /// activa + primer mes de plan asignado.
+  ///
+  /// Si `enrollmentPlan` viene null (matrículas viejas creadas antes de
+  /// este campo, o el flujo sin plan elegido), caemos al comportamiento
+  /// original: solo activamos la membresía por 30 días sin asignar plan.
+  Future<void> _updateUserAfterEnrollment(
+    String userId,
+    String? enrollmentPlan,
+  ) async {
     try {
       debugPrint('=== Actualizando usuario después de matrícula ===');
       debugPrint('userId: $userId');
+      debugPrint('enrollmentPlan: $enrollmentPlan');
 
       final now = DateTime.now();
-      final expirationDate = now.add(const Duration(days: 30));
-
-      debugPrint('Fecha de expiración: $expirationDate');
-
-      await _firestore.collection('users').doc(userId).update({
+      final Map<String, dynamic> updateData = {
         'membershipStatus': 'active',
         'enrollmentDate': FieldValue.serverTimestamp(),
         'lastPaymentDate': FieldValue.serverTimestamp(),
-        'expirationDate': Timestamp.fromDate(expirationDate),
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      };
+
+      // Camino con plan elegido en la matrícula: replicamos la asignación de
+      // _updateUserAfterMonthlyPayment para que el dashboard arranque ya con
+      // planName + classesPerMonth correctos en un solo pago.
+      if (enrollmentPlan != null && enrollmentPlan.isNotEmpty) {
+        final plansQuery = await _firestore
+            .collection('plans')
+            .where('name', isEqualTo: enrollmentPlan)
+            .where('active', isEqualTo: true)
+            .limit(1)
+            .get();
+
+        if (plansQuery.docs.isNotEmpty) {
+          final planDoc = plansQuery.docs.first;
+          final planData = planDoc.data();
+          final durationDays = planData['durationDays'] ?? 30;
+          final classesPerMonth = planData['classesPerMonth'];
+
+          updateData['planId'] = planDoc.id;
+          updateData['planName'] = enrollmentPlan;
+          updateData['planDisplayName'] = enrollmentPlan;
+          updateData['expirationDate'] =
+              Timestamp.fromDate(now.add(Duration(days: durationDays)));
+          if (classesPerMonth != null) {
+            updateData['classesPerMonth'] = classesPerMonth;
+          } else {
+            updateData['classesPerMonth'] = FieldValue.delete();
+          }
+          debugPrint('✅ Plan asignado en matrícula: $enrollmentPlan '
+              '(classesPerMonth: ${classesPerMonth ?? "ilimitado"}, '
+              'durationDays: $durationDays)');
+        } else {
+          debugPrint('⚠️ Plan "$enrollmentPlan" no encontrado en plans/, '
+              'fallback a matrícula sin plan');
+          updateData['expirationDate'] =
+              Timestamp.fromDate(now.add(const Duration(days: 30)));
+        }
+      } else {
+        // Matrícula sin plan: comportamiento legado (30 días, sin plan).
+        updateData['expirationDate'] =
+            Timestamp.fromDate(now.add(const Duration(days: 30)));
+      }
+
+      await _firestore.collection('users').doc(userId).update(updateData);
 
       debugPrint('✅ Usuario actualizado exitosamente con membershipStatus: active');
     } catch (e) {

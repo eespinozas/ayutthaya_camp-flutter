@@ -20,6 +20,12 @@ class Payment {
   final PaymentType type;
   final double amount;
   final String plan;
+  // Para pagos de matrícula: nombre del plan mensual elegido al momento de
+  // pagar la matrícula. Al aprobar la matrícula se usa para asignar el plan
+  // al user doc (planName, classesPerMonth, durationDays) y arrancar la
+  // mensualidad junto con la matrícula. Null para pagos mensuales o
+  // matrículas viejas creadas antes de este campo.
+  final String? enrollmentPlan;
   final DateTime paymentDate;
   final String receiptUrl;
   final PaymentStatus status;
@@ -36,6 +42,7 @@ class Payment {
     required this.type,
     required this.amount,
     required this.plan,
+    this.enrollmentPlan,
     required this.paymentDate,
     required this.receiptUrl,
     this.status = PaymentStatus.pending,
@@ -54,6 +61,7 @@ class Payment {
       'type': type.name,
       'amount': amount,
       'plan': plan,
+      'enrollmentPlan': enrollmentPlan,
       'paymentDate': Timestamp.fromDate(paymentDate),
       'receiptUrl': receiptUrl,
       'status': status.name,
@@ -79,6 +87,7 @@ class Payment {
       ),
       amount: (data['amount'] ?? 0).toDouble(),
       plan: data['plan'] ?? 'Mensual',
+      enrollmentPlan: data['enrollmentPlan'] as String?,
       paymentDate: (data['paymentDate'] as Timestamp).toDate(),
       receiptUrl: data['receiptUrl'] ?? '',
       status: PaymentStatus.values.firstWhere(

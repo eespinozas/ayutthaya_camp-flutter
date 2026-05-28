@@ -47,8 +47,9 @@ class _PagosPageState extends State<PagosPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => PaymentReceiptModal(
         paymentType: paymentType,
-        onSubmit: (amount, date, file, bytes, fileName, planId, planName) {
-          _handlePaymentSubmit(paymentType, amount, date, file, bytes, fileName, planId, planName);
+        onSubmit: (amount, date, file, bytes, fileName, planId, planName, enrollmentPlan) {
+          _handlePaymentSubmit(paymentType, amount, date, file, bytes,
+              fileName, planId, planName, enrollmentPlan);
         },
       ),
     );
@@ -62,7 +63,8 @@ class _PagosPageState extends State<PagosPage> {
       Uint8List? bytes,
       String? fileName,
       String? planId,
-      String planName) async {
+      String planName,
+      String? enrollmentPlan) async {
     if (file == null && bytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -108,6 +110,7 @@ class _PagosPageState extends State<PagosPage> {
       type: paymentType,
       amount: amount,
       plan: planName,
+      enrollmentPlan: enrollmentPlan,
       paymentDate: date,
       receiptFile: file,
       receiptBytes: bytes,
@@ -839,7 +842,19 @@ class _PagosPageState extends State<PagosPage> {
 // Modal para subir comprobante de pago
 class PaymentReceiptModal extends StatefulWidget {
   final String paymentType;
-  final Function(double amount, DateTime date, File? file, Uint8List? bytes, String? fileName, String? planId, String planName) onSubmit;
+  // enrollmentPlan: nombre del plan elegido cuando se paga matrícula
+  // (p.ej. "Plan Iniciado"). null cuando paymentType != 'Matrícula'. Se
+  // usa para que la aprobación de matrícula asigne el plan al user doc.
+  final Function(
+    double amount,
+    DateTime date,
+    File? file,
+    Uint8List? bytes,
+    String? fileName,
+    String? planId,
+    String planName,
+    String? enrollmentPlan,
+  ) onSubmit;
 
   const PaymentReceiptModal({
     super.key,
@@ -1260,7 +1275,10 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
         return;
       }
 
-      if (widget.paymentType == 'Mensualidad' && _selectedPlan == null) {
+      // Tanto Matrícula como Mensualidad requieren un plan elegido. En
+      // matrícula es lo que arranca tu plan mensual el mismo día que se
+      // aprueba; en mensualidad es lo que estás pagando.
+      if (_selectedPlan == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Por favor selecciona un plan'),
@@ -1278,13 +1296,18 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
       debugPrint('✅ Iniciando envío de comprobante');
 
       final amount = double.parse(_amountController.text);
-      final planName = widget.paymentType == 'Matrícula'
-          ? 'Matrícula'
-          : (_selectedPlan?.name ?? 'Sin plan');
-      final planId = _selectedPlan?.id;
+      final isEnrollment = widget.paymentType == 'Matrícula';
+      // Para matrícula seguimos pasando 'Matrícula' como `plan` (es el label
+      // del pago que ven los admins en la lista). El plan elegido va en el
+      // nuevo campo `enrollmentPlan` que `_updateUserAfterEnrollment` usa
+      // para asignar planName/classesPerMonth al user doc al aprobar.
+      final planName = isEnrollment ? 'Matrícula' : _selectedPlan!.name;
+      final planId = _selectedPlan!.id;
+      final enrollmentPlan = isEnrollment ? _selectedPlan!.name : null;
 
       // Pasar tanto File como bytes, dependiendo de la plataforma
-      widget.onSubmit(amount, _selectedDate, _receiptImage, _receiptBytes, _receiptFileName, planId, planName);
+      widget.onSubmit(amount, _selectedDate, _receiptImage, _receiptBytes,
+          _receiptFileName, planId, planName, enrollmentPlan);
       Navigator.pop(context);
     }
   }
