@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/config/app_constants.dart';
 import 'dashboard_page.dart';
 import 'agendar_page.dart';
 import 'mis_clases_page.dart';
@@ -175,11 +176,13 @@ class _MainNavBarState extends State<MainNavBar> {
                       label: 'Mis Clases',
                       index: 2,
                     ),
-                    _buildNavItem(
-                      icon: Icons.payments_rounded,
-                      label: 'Pagos',
-                      index: 3,
-                    ),
+                    // Fase 1 (acceso libre): sin pagos.
+                    if (!AppFlags.freeAccessPhase)
+                      _buildNavItem(
+                        icon: Icons.payments_rounded,
+                        label: 'Pagos',
+                        index: 3,
+                      ),
                   ],
                 ),
               ),

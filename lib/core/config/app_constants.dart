@@ -1,5 +1,19 @@
-/// Constantes de configuración de la aplicación
-/// Centraliza valores configurables para fácil ajuste
+// Constantes de configuración de la aplicación
+// Centraliza valores configurables para fácil ajuste
+
+/// Feature flags globales de la app.
+///
+/// [freeAccessPhase] controla la "Fase 1" de lanzamiento: acceso libre,
+/// sin membresías ni pagos. Cuando está en `true`:
+///  - No se exige membresía activa para agendar, ver clases ni hacer check-in QR.
+///  - Se oculta el tab "Pagos" y todo lo relacionado con matrícula en el dashboard.
+///
+/// Para pasar al modo de pago (Fase 2) basta con cambiarlo a `false`: todo el
+/// sistema de membresías/pagos vuelve a funcionar tal como está implementado.
+class AppFlags {
+  static const bool freeAccessPhase = true;
+}
+
 class BookingConstants {
   // Check-in con QR
   static const int checkInWindowMinutes = 20;

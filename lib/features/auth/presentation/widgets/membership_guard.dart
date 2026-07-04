@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/config/app_constants.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
 /// Widget que valida la membresía antes de mostrar contenido protegido
@@ -17,6 +18,11 @@ class MembershipGuard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fase 1 (acceso libre): sin membresías, todos pasan.
+    if (AppFlags.freeAccessPhase) {
+      return child;
+    }
+
     final authVM = context.watch<AuthViewModel>();
 
     // Si es admin, no validar membresía

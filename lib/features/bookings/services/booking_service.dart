@@ -573,7 +573,9 @@ class BookingService {
   }) async {
     try {
       // ✅ FIX #1 y #2: Validar membresía activa y límite de clases
-      if (MembershipConstants.requireActiveMembershipForQR) {
+      // Fase 1 (acceso libre): se omite la validación de membresía.
+      if (!AppFlags.freeAccessPhase &&
+          MembershipConstants.requireActiveMembershipForQR) {
         // Obtener datos del usuario
         final userDoc = await _firestore.collection('users').doc(userId).get();
 

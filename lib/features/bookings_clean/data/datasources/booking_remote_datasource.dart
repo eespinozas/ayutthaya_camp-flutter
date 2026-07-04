@@ -457,7 +457,9 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       String userId, String userName, String userEmail) async {
     try {
       // Validate active membership
-      if (MembershipConstants.requireActiveMembershipForQR) {
+      // Fase 1 (acceso libre): se omite la validación de membresía.
+      if (!AppFlags.freeAccessPhase &&
+          MembershipConstants.requireActiveMembershipForQR) {
         final userDoc = await firestore.collection('users').doc(userId).get();
 
         if (!userDoc.exists) {

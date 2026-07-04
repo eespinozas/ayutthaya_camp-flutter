@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/config/app_constants.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import 'perfil_page.dart';
 import 'qr_checkin_page.dart';
@@ -168,15 +169,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
             ),
-          // Indicador de estado de membresía
-          _MembershipStatusChip(
-            estaActivo: estaActivo,
-            membershipStatus: vm.membershipStatus,
-            onTap: () {
-              widget.onNavigateToPagos?.call();
-            },
-          ),
-          const SizedBox(width: 8),
+          // Indicador de estado de membresía (oculto en Fase 1 de acceso libre)
+          if (!AppFlags.freeAccessPhase) ...[
+            _MembershipStatusChip(
+              estaActivo: estaActivo,
+              membershipStatus: vm.membershipStatus,
+              onTap: () {
+                widget.onNavigateToPagos?.call();
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
           IconButton(
             icon: const Icon(
               Icons.person_rounded,
@@ -212,8 +215,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       // ================================
                       // BANNER DE ACTIVACIÓN DE CUENTA
+                      // (oculto en Fase 1 de acceso libre)
                       // ================================
-                      if (!estaActivo)
+                      if (!AppFlags.freeAccessPhase && !estaActivo)
                         _AccountActivationCard(
                           onActivate: () {
                             // Navega al tab de Pagos para matricularse
@@ -221,14 +225,15 @@ class _DashboardPageState extends State<DashboardPage> {
                           },
                         ),
 
-                      const SizedBox(height: 16),
-
-                      // HEADER DEL PLAN
-                      _PlanHeader(
-                        planNombre: planNombre,
-                        clasesRestantes: clasesRestantes,
-                        vigenciaHasta: vigenciaHasta,
-                      ),
+                      // HEADER DEL PLAN (oculto en Fase 1 de acceso libre)
+                      if (!AppFlags.freeAccessPhase) ...[
+                        const SizedBox(height: 16),
+                        _PlanHeader(
+                          planNombre: planNombre,
+                          clasesRestantes: clasesRestantes,
+                          vigenciaHasta: vigenciaHasta,
+                        ),
+                      ],
 
                       const SizedBox(height: 24),
 
@@ -246,19 +251,20 @@ class _DashboardPageState extends State<DashboardPage> {
 
                       const SizedBox(height: 24),
 
-                      // ÚLTIMOS 3 PAGOS
-                      Builder(
-                        builder: (context) {
-                          debugPrint('🎨 Renderizando _Ultimos3PagosCard con ${ultimos3Pagos.length} pagos');
-                          return _Ultimos3PagosCard(
-                            pagos: ultimos3Pagos,
-                            onVerTodos: () {
-                              // Navega al tab de Pagos
-                              widget.onNavigateToPagos?.call();
-                            },
-                          );
-                        },
-                      ),
+                      // ÚLTIMOS 3 PAGOS (oculto en Fase 1 de acceso libre)
+                      if (!AppFlags.freeAccessPhase)
+                        Builder(
+                          builder: (context) {
+                            debugPrint('🎨 Renderizando _Ultimos3PagosCard con ${ultimos3Pagos.length} pagos');
+                            return _Ultimos3PagosCard(
+                              pagos: ultimos3Pagos,
+                              onVerTodos: () {
+                                // Navega al tab de Pagos
+                                widget.onNavigateToPagos?.call();
+                              },
+                            );
+                          },
+                        ),
 
                       const SizedBox(height: 48),
                     ],
