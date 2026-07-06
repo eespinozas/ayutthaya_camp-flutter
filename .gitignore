@@ -62,3 +62,6 @@ ios/Runner.app.dSYM.zip
 
 # Firebase Hosting deploy cache
 .firebase/
+
+# fastlane docs autogenerados en la raíz (el real vive en ios/fastlane/)
+/fastlane/README.md
