@@ -673,10 +673,12 @@ class _ResumenBox extends StatelessWidget {
     List<Color> gradientColors;
     IconData icon;
 
-    if (label.contains('Agendadas')) {
+    // Comparación exacta: 'No Asistidas' también contiene 'Asistidas',
+    // por lo que un contains() la pintaría de verde.
+    if (label == 'Agendadas') {
       gradientColors = [const Color(0xFFFBBF24), const Color(0xFFF59E0B)];
       icon = Icons.event_available;
-    } else if (label.contains('Asistidas')) {
+    } else if (label == 'Asistidas') {
       gradientColors = [const Color(0xFF10B981), const Color(0xFF059669)];
       icon = Icons.check_circle;
     } else {
@@ -1010,8 +1012,8 @@ class _TodayClassesSection extends StatelessWidget {
                   color: const Color(0xFF2A2A2A),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
-                    width: 2,
+                    color: Colors.grey.withValues(alpha: 0.2),
+                    width: 1,
                   ),
                 ),
                 child: Center(
