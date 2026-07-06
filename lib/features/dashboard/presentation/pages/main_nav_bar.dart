@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/config/app_constants.dart';
+import '../../../../core/config/feature_flags.dart';
 import 'dashboard_page.dart';
 import 'agendar_page.dart';
 import 'mis_clases_page.dart';
 import 'pagos_page.dart';
-import 'perfil_page.dart';
 import 'qr_scanner_page.dart';
+
+class _NavTab {
+  final String id;
+  final IconData icon;
+  final String label;
+  final WidgetBuilder pageBuilder;
+
+  const _NavTab({
+    required this.id,
+    required this.icon,
+    required this.label,
+    required this.pageBuilder,
+  });
+}
 
 class MainNavBar extends StatefulWidget {
   const MainNavBar({super.key});
@@ -18,25 +31,51 @@ class MainNavBar extends StatefulWidget {
 class _MainNavBarState extends State<MainNavBar> {
   int _selectedIndex = 0;
 
-  Widget _buildPage(int index) {
-    switch (index) {
-      case 0:
-        return DashboardPage(
-          onNavigateToPagos: () {
-            setState(() {
-              _selectedIndex = 3;
-            });
-          },
-        );
-      case 1:
-        return const AgendarPage();
-      case 2:
-        return const MisClasesPage();
-      case 3:
-        return const PagosPage();
-      default:
-        return const SizedBox.shrink();
-    }
+  // Los tabs ocultos por feature flag no se eliminan del código: al poner
+  // su flag en true vuelven a aparecer y los índices se recalculan solos
+  // porque siempre se trabaja sobre la lista filtrada.
+  List<_NavTab> _visibleTabs() {
+    return [
+      if (FeatureFlags.showInicioTab)
+        _NavTab(
+          id: 'inicio',
+          icon: Icons.home_rounded,
+          label: 'Inicio',
+          pageBuilder: (_) => DashboardPage(
+            onNavigateToPagos: () => _selectTabById('pagos'),
+          ),
+        ),
+      if (FeatureFlags.showAgendarTab)
+        _NavTab(
+          id: 'agendar',
+          icon: Icons.calendar_month_rounded,
+          label: 'Agendar',
+          pageBuilder: (_) => const AgendarPage(),
+        ),
+      if (FeatureFlags.showMisClasesTab)
+        _NavTab(
+          id: 'mis_clases',
+          icon: Icons.fitness_center,
+          label: 'Mis Clases',
+          pageBuilder: (_) => const MisClasesPage(),
+        ),
+      if (FeatureFlags.showPagosTab)
+        _NavTab(
+          id: 'pagos',
+          icon: Icons.payments_rounded,
+          label: 'Pagos',
+          pageBuilder: (_) => const PagosPage(),
+        ),
+    ];
+  }
+
+  void _selectTabById(String id) {
+    final tabs = _visibleTabs();
+    final index = tabs.indexWhere((tab) => tab.id == id);
+    if (index == -1) return; // Tab oculto por feature flag: no navegar.
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   Future<void> _onQRPressed() async {
@@ -59,11 +98,7 @@ class _MainNavBarState extends State<MainNavBar> {
             action: SnackBarAction(
               label: 'Agendar',
               textColor: Colors.white,
-              onPressed: () {
-                setState(() {
-                  _selectedIndex = 1;
-                });
-              },
+              onPressed: () => _selectTabById('agendar'),
             ),
           ),
         );
@@ -82,7 +117,15 @@ class _MainNavBarState extends State<MainNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final currentPage = _buildPage(_selectedIndex);
+    final tabs = _visibleTabs();
+    final selectedIndex = _selectedIndex.clamp(0, tabs.length - 1);
+    final currentPage = tabs[selectedIndex].pageBuilder(context);
+
+    // Distribución simétrica alrededor del FAB central: mitad de los tabs
+    // visibles a la izquierda y mitad a la derecha.
+    final splitIndex = (tabs.length / 2).ceil();
+    final leftTabs = tabs.sublist(0, splitIndex);
+    final rightTabs = tabs.sublist(splitIndex);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
@@ -132,56 +175,38 @@ class _MainNavBarState extends State<MainNavBar> {
         shape: const CircularNotchedRectangle(),
         notchMargin: 10.0,
         elevation: 8,
-        child: Container(
+        // Sin borde superior: una línea recta queda cortada por el notch del
+        // FAB. La separación visual la dan la elevation y el color del bar.
+        child: SizedBox(
           height: 68,
-          decoration: BoxDecoration(
-            border: Border(
-              top: BorderSide(
-                color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Lado izquierdo - dos botones
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildNavItem(
-                      icon: Icons.home_rounded,
-                      label: 'Inicio',
-                      index: 0,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.calendar_month_rounded,
-                      label: 'Agendar',
-                      index: 1,
-                    ),
+                    for (var i = 0; i < leftTabs.length; i++)
+                      _buildNavItem(
+                        tab: leftTabs[i],
+                        index: i,
+                        selectedIndex: selectedIndex,
+                      ),
                   ],
                 ),
               ),
               // Espacio para el botón flotante QR
               const SizedBox(width: 80),
-              // Lado derecho - dos botones
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildNavItem(
-                      icon: Icons.fitness_center,
-                      label: 'Mis Clases',
-                      index: 2,
-                    ),
-                    // Fase 1 (acceso libre): sin pagos.
-                    if (!AppFlags.freeAccessPhase)
+                    for (var i = 0; i < rightTabs.length; i++)
                       _buildNavItem(
-                        icon: Icons.payments_rounded,
-                        label: 'Pagos',
-                        index: 3,
+                        tab: rightTabs[i],
+                        index: splitIndex + i,
+                        selectedIndex: selectedIndex,
                       ),
                   ],
                 ),
@@ -194,11 +219,11 @@ class _MainNavBarState extends State<MainNavBar> {
   }
 
   Widget _buildNavItem({
-    required IconData icon,
-    required String label,
+    required _NavTab tab,
     required int index,
+    required int selectedIndex,
   }) {
-    final isSelected = _selectedIndex == index;
+    final isSelected = selectedIndex == index;
     final itemColor = isSelected ? const Color(0xFFFF6A00) : Colors.white.withValues(alpha: 0.6);
 
     return InkWell(
@@ -215,13 +240,13 @@ class _MainNavBarState extends State<MainNavBar> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              icon,
+              tab.icon,
               color: itemColor,
               size: isSelected ? 26 : 24,
             ),
             const SizedBox(height: 2),
             Text(
-              label,
+              tab.label,
               style: TextStyle(
                 color: itemColor,
                 fontSize: 10,
