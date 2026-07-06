@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soporte — Ayutthaya Camp</title>
+<meta name="description" content="Centro de soporte de la app Ayutthaya Camp. Resuelve dudas sobre clases, cuenta, pagos y más.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-void:#0c0c0d;
+    --bg-panel:#17140f;
+    --bg-panel-2:#1e1a13;
+    --accent-ember:#f2731e;
+    --accent-ember-dim:#c85c14;
+    --accent-gold:#c9a46b;
+    --text-bone:#ede7dc;
+    --text-dim:#a89e8f;
+    --text-dim2:#8b857a;
+    --line:#2a251d;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg-void);
+    color:var(--text-bone);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.55;
+  }
+  a{color:var(--accent-ember);}
+  .wrap{max-width:880px;margin:0 auto;padding:0 24px;}
+
+  .rope{
+    position:relative;
+    height:26px;
+    background:
+      repeating-linear-gradient(90deg,
+        var(--accent-ember) 0 2px, transparent 2px 14px);
+    background-position:0 6px, 0 14px;
+    background-size:100% 2px;
+    background-repeat:repeat-x;
+    opacity:.9;
+  }
+  .rope::before,.rope::after{
+    content:"";
+    position:absolute;top:-7px;
+    width:14px;height:14px;border-radius:50%;
+    background:var(--accent-gold);
+    box-shadow:0 0 0 3px var(--bg-void);
+  }
+  .rope::before{left:16px;}
+  .rope::after{right:16px;}
+  .rope-lines{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;justify-content:space-evenly;
+    padding:0 30px;
+  }
+  .rope-lines span{display:block;height:2px;background:var(--accent-ember);opacity:.55;}
+
+  header{padding:64px 0 40px;text-align:center;}
+  .emblem{
+    width:96px;height:96px;border-radius:50%;
+    margin:0 auto 28px;
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 40%, #201a10 0%, #0c0c0d 70%);
+    border:2px solid var(--accent-ember);
+    box-shadow:0 0 24px rgba(242,115,30,.35), inset 0 0 12px rgba(242,115,30,.15);
+    font-size:40px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--accent-gold);margin:0 0 14px;
+  }
+  h1{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    font-size:clamp(40px,7vw,64px);
+    letter-spacing:.01em;
+    margin:0 0 14px;
+    text-transform:uppercase;
+    color:var(--text-bone);
+  }
+  h1 span{color:var(--accent-ember);}
+  .sub{
+    color:var(--text-dim2);
+    font-size:17px;
+    max-width:520px;margin:0 auto;
+  }
+
+  .contact{
+    margin:48px 0 8px;
+    background:linear-gradient(160deg,var(--bg-panel-2),var(--bg-panel));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:36px 32px;
+    text-align:center;
+  }
+  .contact .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--text-dim2);margin-bottom:10px;
+  }
+  .contact .email{
+    font-family:'Anton',sans-serif;
+    font-size:clamp(24px,5vw,34px);
+    color:var(--accent-ember);
+    text-decoration:none;
+    word-break:break-word;
+    display:inline-block;
+    letter-spacing:.02em;
+  }
+  .contact .note{color:var(--text-dim2);font-size:14px;margin-top:14px;}
+  .btn{
+    display:inline-block;margin-top:22px;
+    background:var(--accent-ember);color:#151005;
+    font-weight:700;text-decoration:none;
+    padding:14px 30px;border-radius:999px;
+    font-size:15px;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .btn:hover{background:var(--accent-ember-dim);transform:translateY(-1px);}
+
+  .tabs{
+    display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+    margin:56px 0 28px;
+  }
+  .tab{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    padding:9px 16px;border:1px solid var(--line);border-radius:999px;
+    color:var(--text-dim2);text-decoration:none;
+  }
+  .tab:hover{border-color:var(--accent-ember);color:var(--accent-ember);}
+
+  h2.section-title{
+    font-family:'Anton',sans-serif;font-weight:400;
+    text-transform:uppercase;letter-spacing:.02em;
+    font-size:22px;color:var(--accent-gold);
+    margin:44px 0 18px;
+    display:flex;align-items:center;gap:10px;
+  }
+  h2.section-title::before{
+    content:"";width:8px;height:8px;background:var(--accent-ember);
+    transform:rotate(45deg);flex:none;
+  }
+
+  .faq-item{
+    border:1px solid var(--line);
+    border-radius:12px;
+    margin-bottom:10px;
+    overflow:hidden;
+    background:var(--bg-panel);
+  }
+  .faq-q{
+    width:100%;text-align:left;
+    background:none;border:none;color:var(--text-bone);
+    font-family:'Inter',sans-serif;font-weight:600;font-size:15.5px;
+    padding:18px 20px;cursor:pointer;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;
+  }
+  .faq-q .plus{color:var(--accent-ember);font-size:20px;font-weight:400;transition:transform .2s ease;flex:none;}
+  .faq-item[open] .plus{transform:rotate(45deg);}
+  .faq-a{padding:0 20px 20px;color:var(--text-dim);font-size:14.5px;}
+  .faq-item::marker,.faq-item::-webkit-details-marker{display:none;content:"";}
+
+  footer{
+    margin-top:70px;padding:34px 0 60px;
+    text-align:center;color:var(--text-dim2);font-size:13px;
+    border-top:1px solid var(--line);
+  }
+  footer .foot-brand{
+    font-family:'Anton',sans-serif;color:var(--accent-gold);
+    letter-spacing:.06em;font-size:14px;margin-bottom:6px;
+  }
+
+  @media (max-width:520px){
+    .contact{padding:28px 20px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="rope">
+  <div class="rope-lines"><span></span><span></span><span></span></div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="emblem">🐯</div>
+    <p class="eyebrow">Ayutthaya Camp</p>
+    <h1>Centro de <span>Soporte</span></h1>
+    <p class="sub">¿Problemas con la app, tu cuenta o una clase agendada? Estamos para ayudarte.</p>
+  </header>
+
+  <div class="contact">
+    <p class="label">Escríbenos directamente</p>
+    <a class="email" href="mailto:soporte@ayutthayacamp.com">soporte@ayutthayacamp.com</a>
+    <p class="note">Respondemos en un plazo de 24 a 48 horas hábiles.</p>
+    <a class="btn" href="mailto:soporte@ayutthayacamp.com?subject=Soporte%20Ayutthaya%20Camp">Enviar un correo</a>
+  </div>
+
+  <nav class="tabs">
+    <a class="tab" href="#clases">Clases</a>
+    <a class="tab" href="#cuenta">Cuenta</a>
+    <a class="tab" href="#progreso">Progreso</a>
+    <a class="tab" href="#tecnico">Técnico</a>
+  </nav>
+
+  <section id="clases">
+    <h2 class="section-title">Clases y agenda</h2>
+
+    <details class="faq-item">
+      <summary class="faq-q">¿Cómo agendo una clase? <span class="plus">+</span></summary>
+      <div class="faq-a">Ve a la pestaña <strong>Agendar</strong>, elige un día en el calendario y selecciona una de las clases disponibles para esa fecha. Recibirás la confirmación al instante en <strong>Mis Clases</strong>.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">¿Puedo cancelar una clase ya agendada? <span class="plus">+</span></summary>
+      <div class="faq-a">Sí, siempre que falten más de 24 horas para el inicio de la clase. Dentro de las 24 horas previas, la opción de cancelar se bloquea automáticamente y la clase se mantiene como confirmada.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">¿Cómo registro mi asistencia al llegar al gimnasio? <span class="plus">+</span></summary>
+      <div class="faq-a">Usa el botón de escaneo QR en la barra inferior de la app y apunta la cámara al código disponible en recepción. Tu asistencia quedará registrada de inmediato.</div>
+    </details>
+  </section>
+
+  <section id="cuenta">
+    <h2 class="section-title">Cuenta y acceso</h2>
+
+    <details class="faq-item">
+      <summary class="faq-q">Olvidé mi contraseña, ¿qué hago? <span class="plus">+</span></summary>
+      <div class="faq-a">En la pantalla de inicio de sesión, toca <strong>¿Olvidaste tu contraseña?</strong>, ingresa tu correo y sigue las instrucciones que te enviaremos.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">¿Cómo actualizo mi foto de perfil o mis datos? <span class="plus">+</span></summary>
+      <div class="faq-a">Entra a <strong>Mi Perfil</strong> desde el ícono superior derecho. Ahí puedes cambiar tu foto, nombre, correo y fecha de nacimiento.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">¿Puedo usar la app en más de un dispositivo? <span class="plus">+</span></summary>
+      <div class="faq-a">Sí, tu cuenta funciona en cualquier dispositivo con solo iniciar sesión con tu correo y contraseña.</div>
+    </details>
+  </section>
+
+  <section id="progreso">
+    <h2 class="section-title">Progreso de luchador</h2>
+
+    <details class="faq-item">
+      <summary class="faq-q">¿Cómo funciona el sistema de rangos Nak Rian? <span class="plus">+</span></summary>
+      <div class="faq-a">Cada clase asistida suma a tu progreso. Al completar el número de clases requerido, avanzas al siguiente grado. Puedes ver tu avance exacto en la sección <strong>Mi Perfil</strong>.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">Asistí a una clase pero no se sumó a mi progreso. <span class="plus">+</span></summary>
+      <div class="faq-a">Verifica que hayas escaneado el código QR al llegar. Si el problema persiste, escríbenos a soporte con la fecha y el horario de la clase.</div>
+    </details>
+  </section>
+
+  <section id="tecnico">
+    <h2 class="section-title">Problemas técnicos</h2>
+
+    <details class="faq-item">
+      <summary class="faq-q">La app se cierra o no carga correctamente. <span class="plus">+</span></summary>
+      <div class="faq-a">Prueba cerrar la app por completo y volver a abrirla, y confirma que tienes conexión a internet. Si el problema continúa, actualiza a la última versión disponible en el App Store.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">No me llegan las notificaciones. <span class="plus">+</span></summary>
+      <div class="faq-a">Revisa que las notificaciones estén activadas para Ayutthaya Camp en Ajustes de tu iPhone → Notificaciones.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-q">Encontré un error o tengo una sugerencia. <span class="plus">+</span></summary>
+      <div class="faq-a">Cuéntanos con el mayor detalle posible (qué pasó, en qué pantalla, y si es posible una captura) a <a href="mailto:soporte@ayutthayacamp.com">soporte@ayutthayacamp.com</a>.</div>
+    </details>
+  </section>
+
+  <footer>
+    <div class="foot-brand">AYUTTHAYA CAMP</div>
+    <div>© 2026 Ayutthaya Studio. Todos los derechos reservados.</div>
+  </footer>
+</div>
+
+<div class="rope">
+  <div class="rope-lines"><span></span><span></span><span></span></div>
+</div>
+
+</body>
+</html>
