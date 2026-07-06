@@ -7,10 +7,10 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' show File;
 
+import 'package:ayutthaya_camp/core/services/ranking_service.dart';
 import 'package:ayutthaya_camp/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:ayutthaya_camp/features/auth/presentation/pages/login_page.dart';
 // import 'package:ayutthaya_camp/features/gamification/presentation/widgets/avatar_progress_widget.dart';
-import 'package:ayutthaya_camp/features/gamification/presentation/widgets/pixel_avatar_widget.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
@@ -248,50 +248,172 @@ class _PerfilPageState extends State<PerfilPage> {
     }
   }
 
-  Widget _buildProgressMilestones() {
-    final milestones = [
-      {'classes': 3, 'label': 'Calentando', 'icon': Icons.directions_walk},
-      {'classes': 6, 'label': 'Corriendo', 'icon': Icons.directions_run},
-      {'classes': 9, 'label': 'Imparable', 'icon': Icons.sports_martial_arts},
-    ];
+  // Color por tier del sistema de rangos.
+  static const Map<String, Color> _tierColors = {
+    'Nak Rian': Color(0xFFB08D57), // bronce/cobre real (no naranjo)
+    'Nak Muay': Color(0xFFC0C0C0), // plateado
+    'Nak Su': Color(0xFFFFD700), // dorado
+    'Yod Muay': Color(0xFF7FDBFF), // celeste/diamante
+  };
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: milestones.map((milestone) {
-        final classCount = milestone['classes'] as int;
-        final achieved = _totalAttendedClasses >= classCount;
-        final color = achieved ? _getProgressColor() : Colors.grey.shade700;
+  Color _tierColor(String tier) => _tierColors[tier] ?? Colors.grey;
 
-        return Column(
+  Widget _buildRankBadge() {
+    final rango = RankingService.rangoDesdeClases(_totalAttendedClasses);
+    final color = _tierColor(rango.tier);
+    // Borde, glow y texto en un tono un poco más claro que el base del tier
+    // (p. ej. cobre claro sobre bronce) para asegurar contraste sobre fondo oscuro.
+    final accent = Color.lerp(color, Colors.white, 0.25)!;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.35),
+            blurRadius: 12,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.military_tech, color: accent, size: 18),
+          const SizedBox(width: 6),
+          Text(
+            rango.nombre,
+            style: TextStyle(
+              color: accent,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRankProgress() {
+    const umbral = RankingService.clasesPorDivision;
+    final progreso = RankingService.progresoEnDivision(_totalAttendedClasses);
+    final siguiente = RankingService.siguienteRango(_totalAttendedClasses);
+    final faltan =
+        RankingService.clasesParaSiguienteRango(_totalAttendedClasses);
+    final actual = RankingService.rangoDesdeClases(_totalAttendedClasses);
+    final color = _tierColor((siguiente ?? actual).tier);
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: achieved
-                    ? color.withValues(alpha: 0.2)
-                    : Colors.grey.shade900,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: achieved ? color : Colors.grey.shade800,
-                  width: 2,
-                ),
-              ),
-              child: Icon(
-                milestone['icon'] as IconData,
-                color: achieved ? color : Colors.grey.shade700,
-                size: 20,
+            const Text(
+              'Progreso',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 4),
             Text(
-              '$classCount',
+              '$progreso/$umbral clases',
               style: TextStyle(
-                color: achieved ? color : Colors.grey.shade700,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progreso / umbral,
+            minHeight: 8,
+            backgroundColor: Colors.white12,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          siguiente == null
+              ? '¡Rango máximo alcanzado! 🏆'
+              : 'Te faltan $faltan ${faltan == 1 ? 'clase' : 'clases'} para ${siguiente.nombre}',
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRankMilestones() {
+    final actual = RankingService.rangoDesdeClases(_totalAttendedClasses);
+    final ventana = RankingService.ventanaDeRangos(_totalAttendedClasses);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: ventana.map((rango) {
+        final achieved = rango.index <= actual.index;
+        final faltan = RankingService.clasesParaRango(rango.index) -
+            _totalAttendedClasses;
+        final color = achieved ? _tierColor(rango.tier) : Colors.grey.shade700;
+
+        return Expanded(
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: achieved
+                      ? color.withValues(alpha: 0.2)
+                      : Colors.grey.shade900,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: achieved ? color : Colors.grey.shade800,
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  Icons.military_tech,
+                  color: achieved ? color : Colors.grey.shade700,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                rango.nombre,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: achieved ? color : Colors.grey.shade600,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                achieved ? 'Obtenido' : 'Faltan $faltan',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: achieved
+                      ? color.withValues(alpha: 0.8)
+                      : Colors.grey.shade700,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
         );
       }).toList(),
     );
@@ -331,7 +453,19 @@ class _PerfilPageState extends State<PerfilPage> {
     final auth = context.read<AuthViewModel>();
     final userId = auth.currentUser?.uid;
 
-    if (userId == null) return;
+    // Las reglas de Storage exigen un usuario autenticado cuyo uid coincida
+    // con el nombre del archivo: sin sesión no tiene sentido intentar subir.
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tu sesión expiró. Inicia sesión de nuevo para cambiar tu foto.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     try {
       // En web, solo galería (la cámara requiere permisos especiales)
@@ -394,7 +528,8 @@ class _PerfilPageState extends State<PerfilPage> {
           .child('profile_photos')
           .child('$userId.jpg');
 
-      // Para web, usar bytes en lugar de File
+      // Para web, usar bytes en lugar de File. En ambos casos se declara el
+      // contentType: las reglas de Storage solo aceptan imágenes.
       if (kIsWeb) {
         final bytes = await image.readAsBytes();
         await storageRef.putData(
@@ -402,7 +537,10 @@ class _PerfilPageState extends State<PerfilPage> {
           SettableMetadata(contentType: 'image/jpeg'),
         );
       } else {
-        await storageRef.putFile(File(image.path));
+        await storageRef.putFile(
+          File(image.path),
+          SettableMetadata(contentType: 'image/jpeg'),
+        );
       }
 
       // Obtener URL de descarga
@@ -430,16 +568,40 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
         );
       }
+    } on FirebaseException catch (e) {
+      debugPrint('❌ FirebaseException subiendo foto: ${e.code} - ${e.message}');
+      if (mounted) {
+        setState(() {
+          _isUploadingPhoto = false;
+        });
+
+        final msg = switch (e.code) {
+          'unauthorized' =>
+            'No tienes permiso para subir esta foto. Vuelve a iniciar sesión e inténtalo de nuevo.',
+          'canceled' => 'Subida cancelada.',
+          'quota-exceeded' =>
+            'No se pudo subir la foto por límite de almacenamiento. Inténtalo más tarde.',
+          'retry-limit-exceeded' =>
+            'La subida tardó demasiado. Revisa tu conexión e inténtalo de nuevo.',
+          _ => 'No se pudo subir la foto, inténtalo de nuevo.',
+        };
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } catch (e) {
-      debugPrint('Error subiendo foto: $e');
+      debugPrint('❌ Error inesperado subiendo foto: $e');
       if (mounted) {
         setState(() {
           _isUploadingPhoto = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al subir foto: $e'),
+          const SnackBar(
+            content: Text('No se pudo subir la foto, inténtalo de nuevo.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -698,32 +860,24 @@ class _PerfilPageState extends State<PerfilPage> {
                       child: Column(
                         children: [
                           // Título de la sección
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.sports_martial_arts,
-                                color: Color(0xFFFF6A00),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Tu Luchador',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                          const Text(
+                            'Tu Luchador',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
-                          // Pixel Art Avatar
-                          PixelAvatarWidget(
-                            totalClasses: _totalAttendedClasses,
-                            scale: 4.0,
-                          ),
+                          // Badge del rango actual (tier + división)
+                          _buildRankBadge(),
+
+                          const SizedBox(height: 16),
+
+                          // Progreso hacia la siguiente división
+                          _buildRankProgress(),
 
                           const SizedBox(height: 20),
 
@@ -778,8 +932,8 @@ class _PerfilPageState extends State<PerfilPage> {
 
                           const SizedBox(height: 12),
 
-                          // Progress milestones
-                          _buildProgressMilestones(),
+                          // Próximos rangos a alcanzar
+                          _buildRankMilestones(),
                         ],
                       ),
                     ),
