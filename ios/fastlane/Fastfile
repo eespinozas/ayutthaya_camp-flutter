@@ -247,10 +247,12 @@ platform :ios do
     asc_api_key
     app = Spaceship::ConnectAPI::App.find(BUNDLE_ID)
     UI.header("TestFlight builds for #{app.name} (#{BUNDLE_ID})")
-    list = Spaceship::ConnectAPI::Build.all(app_id: app.id, sort: "-uploadedDate", limit: 10)
+    list = Spaceship::ConnectAPI::Build.all(app_id: app.id, sort: "-uploadedDate", limit: 50)
     UI.important("No builds visible yet — Apple may still be processing the upload.") if list.empty?
     list.each do |b|
-      UI.message("  build #{b.version}  |  state: #{b.processing_state}  |  uploaded: #{b.uploaded_date}")
+      version_str = (b.respond_to?(:version_string) && b.version_string) || "?"
+      expired = b.respond_to?(:expired) ? b.expired : "?"
+      UI.message("  v=#{version_str} build=#{b.version}  |  state: #{b.processing_state}  |  expired: #{expired}  |  uploaded: #{b.uploaded_date}")
     end
   end
 end
