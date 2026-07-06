@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
+import 'package:ayutthaya_camp/utils/currency_formatter.dart';
 import '../viewmodels/admin_dashboard_viewmodel.dart';
 import 'admin_qr_codes_page.dart';
 
@@ -233,13 +234,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             ),
             const SizedBox(height: 12),
 
-            GridView.count(
-              crossAxisCount: 2,
+            GridView(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.5,
+              // Altura fija por card: garantiza que todo el contenido
+              // (ícono, valor, subtítulo, barra y título) quepa en
+              // cualquier ancho de pantalla.
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                mainAxisExtent: 164,
+              ),
               children: [
                 _buildEnhancedKPICard(
                   label: 'Asistencias Hoy',
@@ -272,7 +278,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
                 _buildEnhancedKPICard(
                   label: 'Ingresos Hoy',
-                  value: '\$${(todayStats['pagosRecibidos']! / 1000).toStringAsFixed(1)}K',
+                  value: formatCLP(todayStats['pagosRecibidos'] ?? 0),
                   subtitle: 'total recibido',
                   icon: Icons.payments_rounded,
                   gradientColors: const [Color(0xFFFF6A00), Color(0xFFFF8534)],
@@ -487,7 +493,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     bool trendUp = true,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: gradientColors,
@@ -511,12 +517,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: Colors.white, size: 24),
+                child: Icon(icon, color: Colors.white, size: 22),
               ),
               if (showTrend)
                 Container(
@@ -549,18 +555,25 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  height: 1.2,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 11,
@@ -568,7 +581,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
               ),
               if (percentage != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
@@ -584,9 +597,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               const SizedBox(height: 4),
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
