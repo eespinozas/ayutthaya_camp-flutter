@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ayutthaya_camp/core/services/auth_email_service.dart';
+import 'package:ayutthaya_camp/utils/validators.dart';
 
 // Modelo simple para School
 class School {
@@ -37,6 +38,24 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
   final _repeatEmailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _repeatPassCtrl = TextEditingController();
+
+  // Keys por campo, en orden de aparición: permiten hacer scroll
+  // al primer campo inválido al presionar CREAR CUENTA.
+  final _nombreKey = GlobalKey<FormFieldState<String>>();
+  final _apellidoKey = GlobalKey<FormFieldState<String>>();
+  final _emailKey = GlobalKey<FormFieldState<String>>();
+  final _repeatEmailKey = GlobalKey<FormFieldState<String>>();
+  final _passKey = GlobalKey<FormFieldState<String>>();
+  final _repeatPassKey = GlobalKey<FormFieldState<String>>();
+
+  late final List<GlobalKey<FormFieldState<String>>> _orderedFieldKeys = [
+    _nombreKey,
+    _apellidoKey,
+    _emailKey,
+    _repeatEmailKey,
+    _passKey,
+    _repeatPassKey,
+  ];
 
   bool _loading = false;
   bool _loadingSchools = true;
@@ -165,8 +184,29 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     }
   }
 
+  void _scrollToFirstInvalidField() {
+    for (final key in _orderedFieldKeys) {
+      if (key.currentState?.hasError ?? false) {
+        final ctx = key.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(
+            ctx,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+            alignment: 0.15,
+          );
+        }
+        return;
+      }
+    }
+  }
+
   Future<void> _onRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) {
+      _scrollToFirstInvalidField();
+      return;
+    }
     if (_selectedSchool == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -181,7 +221,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     try {
       final nombre = _nombreCtrl.text.trim();
       final apellido = _apellidoCtrl.text.trim();
-      final email = _emailCtrl.text.trim();
+      final email = Validators.normalizeEmail(_emailCtrl.text);
       final pass = _passCtrl.text.trim();
       final schoolId = _selectedSchool!.id;
 
@@ -268,31 +308,90 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
 
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     } on FirebaseAuthException catch (e) {
-      String msg = "Error en Firebase";
-      if (e.code == 'email-already-in-use') msg = "Ese email ya está en uso";
-      if (e.code == 'weak-password') msg = "Contraseña muy débil";
-      if (e.code == 'invalid-email') msg = "Email inválido";
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: const Color(0xFFEF4444),
-        ),
-      );
+      debugPrint('❌ FirebaseAuthException en registro: ${e.code} - ${e.message}');
+      final msg = switch (e.code) {
+        'email-already-in-use' =>
+          'Ese correo ya está registrado. Intenta iniciar sesión.',
+        'invalid-email' => 'El correo no es válido',
+        'weak-password' => 'La contraseña es muy débil',
+        'network-request-failed' =>
+          'Sin conexión. Revisa tu internet e intenta de nuevo.',
+        'too-many-requests' =>
+          'Demasiados intentos. Espera unos minutos e intenta de nuevo.',
+        _ => 'No se pudo crear la cuenta. Intenta de nuevo.',
+      };
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: $e"),
-          backgroundColor: const Color(0xFFEF4444),
-        ),
-      );
+      debugPrint('❌ Error inesperado en registro: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo crear la cuenta. Intenta de nuevo.'),
+            backgroundColor: Color(0xFFEF4444),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  String? _required(String? v, {String msg = 'Campo requerido'}) {
-    if (v == null || v.trim().isEmpty) return msg;
-    return null;
+  /// Checklist en vivo de requisitos de contraseña: se marca en verde
+  /// a medida que se cumplen.
+  Widget _buildPasswordChecklist() {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: _passCtrl,
+      builder: (context, value, _) {
+        final rules = [
+          (
+            'Mínimo ${Validators.passwordMinLength} caracteres',
+            Validators.passwordHasMinLength(value.text),
+          ),
+          (
+            'Al menos una mayúscula',
+            Validators.passwordHasUppercase(value.text),
+          ),
+          (
+            'Letras y números',
+            Validators.passwordIsAlphanumeric(value.text),
+          ),
+        ];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rules.map((rule) {
+            final (label, ok) = rule;
+            final color = ok
+                ? const Color(0xFF10B981)
+                : Colors.white.withValues(alpha: 0.4);
+            return Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    ok ? Icons.check_circle : Icons.radio_button_unchecked,
+                    size: 16,
+                    color: color,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(fontSize: 12, color: color),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
   }
 
   @override
@@ -335,6 +434,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                       ),
                       child: Form(
                         key: _formKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -494,9 +594,10 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                     const SizedBox(height: 6),
                     _buildTextField(
                       controller: _nombreCtrl,
+                      fieldKey: _nombreKey,
                       hint: 'Juan',
                       icon: Icons.person_outline,
-                      validator: _required,
+                      validator: Validators.validateName,
                       textInputAction: TextInputAction.next,
                     ),
                   ],
@@ -519,9 +620,10 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                     const SizedBox(height: 6),
                     _buildTextField(
                       controller: _apellidoCtrl,
+                      fieldKey: _apellidoKey,
                       hint: 'Pérez',
                       icon: Icons.badge_outlined,
-                      validator: _required,
+                      validator: Validators.validateName,
                       textInputAction: TextInputAction.next,
                     ),
                   ],
@@ -536,15 +638,16 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           const SizedBox(height: 6),
           _buildTextField(
             controller: _emailCtrl,
+            fieldKey: _emailKey,
             hint: 'tu@email.com',
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
-            validator: (v) {
-              if (_required(v) != null) return 'Ingresa tu email';
-              final email = v!.trim();
-              final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-              if (!regex.hasMatch(email)) return 'Email no válido';
-              return null;
+            validator: Validators.validateEmail,
+            onChanged: (_) {
+              // Revalidar "Confirmar Email" si el usuario vuelve a editar este campo.
+              if (_repeatEmailCtrl.text.isNotEmpty) {
+                _repeatEmailKey.currentState?.validate();
+              }
             },
             textInputAction: TextInputAction.next,
           ),
@@ -555,16 +658,11 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           const SizedBox(height: 6),
           _buildTextField(
             controller: _repeatEmailCtrl,
+            fieldKey: _repeatEmailKey,
             hint: 'tu@email.com',
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
-            validator: (v) {
-              if (_required(v) != null) return 'Repite tu email';
-              if (v!.trim() != _emailCtrl.text.trim()) {
-                return 'Los emails no coinciden';
-              }
-              return null;
-            },
+            validator: (v) => Validators.validateEmailMatch(v, _emailCtrl.text),
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
@@ -574,7 +672,8 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           const SizedBox(height: 6),
           _buildTextField(
             controller: _passCtrl,
-            hint: '••••••••',
+            fieldKey: _passKey,
+            hint: '••••••••••',
             icon: Icons.lock_outlined,
             obscureText: _obscurePassword,
             suffixIcon: IconButton(
@@ -585,13 +684,19 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
               ),
               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
             ),
-            validator: (v) {
-              if (_required(v) != null) return 'Ingresa tu contraseña';
-              if ((v ?? '').length < 6) return 'Mínimo 6 caracteres';
-              return null;
+            validator: Validators.validatePassword,
+            onChanged: (_) {
+              // Revalidar "Confirmar Contraseña" si el usuario vuelve a editarla.
+              if (_repeatPassCtrl.text.isNotEmpty) {
+                _repeatPassKey.currentState?.validate();
+              }
             },
             textInputAction: TextInputAction.next,
           ),
+          const SizedBox(height: 4),
+
+          // Checklist de requisitos en vivo
+          _buildPasswordChecklist(),
           const SizedBox(height: 16),
 
           // Confirmar Contraseña
@@ -599,7 +704,8 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           const SizedBox(height: 6),
           _buildTextField(
             controller: _repeatPassCtrl,
-            hint: '••••••••',
+            fieldKey: _repeatPassKey,
+            hint: '••••••••••',
             icon: Icons.lock_outlined,
             obscureText: _obscureRepeatPassword,
             suffixIcon: IconButton(
@@ -610,13 +716,8 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
               ),
               onPressed: () => setState(() => _obscureRepeatPassword = !_obscureRepeatPassword),
             ),
-            validator: (v) {
-              if (_required(v) != null) return 'Repite tu contraseña';
-              if (v!.trim() != _passCtrl.text.trim()) {
-                return 'Las contraseñas no coinciden';
-              }
-              return null;
-            },
+            validator: (v) =>
+                Validators.validatePasswordMatch(v, _passCtrl.text),
           ),
           const SizedBox(height: 16),
 
@@ -679,17 +780,21 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+    GlobalKey<FormFieldState<String>>? fieldKey,
     bool obscureText = false,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     TextInputAction? textInputAction,
     Widget? suffixIcon,
+    void Function(String)? onChanged,
   }) {
     return TextFormField(
+      key: fieldKey,
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
+      onChanged: onChanged,
       style: const TextStyle(
         color: Colors.white,
         fontSize: 15,
