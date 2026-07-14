@@ -9,6 +9,7 @@ import 'package:ayutthaya_camp/features/dashboard/presentation/pages/main_nav_ba
 import 'package:ayutthaya_camp/features/admin/presentation/pages/admin_main_nav_bar.dart';
 import 'package:ayutthaya_camp/core/services/auth_email_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
+import '../widgets/session_guard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -102,8 +103,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
       // 3) Redirigir según el rol
       final Widget destination = authVM.isAdmin
-          ? const AdminMainNavBar()
-          : const MainNavBar();
+          ? const SessionGuard(child: AdminMainNavBar())
+          : const SessionGuard(child: MainNavBar());
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => destination),

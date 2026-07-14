@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import '../features/auth/presentation/pages/login_page.dart';
+import '../features/auth/presentation/widgets/session_guard.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 import '../features/auth/presentation/pages/forgot_password_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
@@ -123,8 +124,8 @@ class _SplashDecider extends StatelessWidget {
         }
 
         return vm.isAdmin
-            ? const AdminMainNavBar()
-            : const MainNavBar();
+            ? const SessionGuard(child: AdminMainNavBar())
+            : const SessionGuard(child: MainNavBar());
       },
     );
   }
