@@ -3,10 +3,12 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/services/attendance_window.dart';
 import '../../../auth/presentation/viewmodels/auth_viewmodel.dart';
 import '../../../auth/presentation/widgets/membership_guard.dart';
 import '../../../bookings/viewmodels/booking_viewmodel.dart';
 import '../../../bookings/models/booking.dart';
+import '../../../schedules/viewmodels/class_schedule_viewmodel.dart';
 
 class MisClasesPage extends StatefulWidget {
   const MisClasesPage({super.key});
@@ -20,11 +22,39 @@ class _MisClasesPageState extends State<MisClasesPage>
   late TabController _tabController;
   bool _localeInitialized = false;
 
+  // Horarios por día de la semana (1=Lun..7=Dom): permiten saber si una
+  // reserva es de la primera clase del día (60 min) o del resto (90 min),
+  // lo que define la ventana del botón "Confirmar Asistencia".
+  Map<int, List<String>> _horariosPorDia = const {};
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _initializeLocale();
+    _loadHorarios();
+  }
+
+  Future<void> _loadHorarios() async {
+    try {
+      final schedules = await context
+          .read<ClassScheduleViewModel>()
+          .getActiveSchedules()
+          .first;
+      final porDia = <int, List<String>>{};
+      for (final schedule in schedules) {
+        for (final dia in schedule.daysOfWeek) {
+          porDia.putIfAbsent(dia, () => []).add(schedule.time);
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _horariosPorDia = porDia;
+        });
+      }
+    } catch (e) {
+      debugPrint('No se pudieron cargar los horarios: $e');
+    }
   }
 
   Future<void> _initializeLocale() async {
@@ -501,6 +531,10 @@ class _MisClasesPageState extends State<MisClasesPage>
     final isAttended = booking.status == BookingStatus.attended;
     final isNoShow = booking.status == BookingStatus.noShow;
     final isCancelled = booking.status == BookingStatus.cancelled;
+    final esPrimeraClase = AttendanceWindow.esPrimeraClaseDelDia(
+      booking.scheduleTime,
+      _horariosPorDia[booking.classDate.weekday] ?? const [],
+    );
 
     // Verificar si se puede cancelar (más de 24 horas de anticipación)
     final now = DateTime.now();
@@ -516,8 +550,8 @@ class _MisClasesPageState extends State<MisClasesPage>
     final canCancel = hoursUntilClass >= 24;
 
     Color statusColor = const Color(0xFFFF6A00);
-    String statusText = 'Confirmada';
-    IconData statusIcon = Icons.check_circle;
+    String statusText = 'Agendada';
+    IconData statusIcon = Icons.event_available;
 
     if (isAttended) {
       statusColor = Colors.green;
@@ -666,16 +700,16 @@ class _MisClasesPageState extends State<MisClasesPage>
                     Icon(
                       booking.userConfirmedAttendance
                           ? Icons.check_circle
-                          : booking.missedConfirmationWindow()
+                          : booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClase)
                               ? Icons.cancel
-                              : booking.canConfirmAttendance()
+                              : booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClase)
                                   ? Icons.schedule
                                   : Icons.event,
                       color: booking.userConfirmedAttendance
                           ? Colors.green
-                          : booking.missedConfirmationWindow()
+                          : booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClase)
                               ? Colors.red
-                              : booking.canConfirmAttendance()
+                              : booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClase)
                                   ? Colors.orange
                                   : Colors.grey,
                       size: 18,
@@ -683,13 +717,13 @@ class _MisClasesPageState extends State<MisClasesPage>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        booking.getConfirmationStatusText(),
+                        booking.getConfirmationStatusText(esPrimeraClaseDelDia: esPrimeraClase),
                         style: TextStyle(
                           color: booking.userConfirmedAttendance
                               ? Colors.green
-                              : booking.missedConfirmationWindow()
+                              : booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClase)
                                   ? Colors.red
-                                  : booking.canConfirmAttendance()
+                                  : booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClase)
                                       ? Colors.orange
                                       : Colors.grey,
                           fontSize: 13,
@@ -700,35 +734,56 @@ class _MisClasesPageState extends State<MisClasesPage>
                   ],
                 ),
               ),
-              // Botón confirmar si está en ventana de confirmación
-              if (booking.canConfirmAttendance() && !booking.userConfirmedAttendance) ...[
+              // Botón confirmar: habilitado dentro de la ventana (15 min antes
+              // del inicio hasta 15 min después del término); si la clase es
+              // hoy y aún no abre la ventana, se muestra deshabilitado con la
+              // hora desde la que estará disponible.
+              if (!booking.userConfirmedAttendance &&
+                  (booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClase) ||
+                      (booking.isToday() &&
+                          !booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClase)))) ...[
                 const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final bookingVM = context.read<BookingViewModel>();
-                      final success = await bookingVM.confirmAttendance(booking.id!);
-                      if (success && mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Asistencia confirmada'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.check, size: 20),
-                    label: const Text('Confirmar Asistencia'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6A00),
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                Builder(builder: (context) {
+                  final habilitado = booking.canConfirmAttendance(
+                    esPrimeraClaseDelDia: esPrimeraClase,
+                  );
+                  final abre = booking.confirmationOpensAt();
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: habilitado
+                          ? () async {
+                              final bookingVM = context.read<BookingViewModel>();
+                              final success =
+                                  await bookingVM.confirmAttendance(booking.id!);
+                              if (success && mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Asistencia confirmada'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            }
+                          : null,
+                      icon: Icon(habilitado ? Icons.check : Icons.lock_clock, size: 20),
+                      label: Text(
+                        habilitado
+                            ? 'Confirmar Asistencia'
+                            : 'Disponible desde las ${abre.hour.toString().padLeft(2, '0')}:${abre.minute.toString().padLeft(2, '0')}',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6A00),
+                        foregroundColor: Colors.black,
+                        disabledBackgroundColor: Colors.white12,
+                        disabledForegroundColor: Colors.white54,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }),
               ],
             ],
 

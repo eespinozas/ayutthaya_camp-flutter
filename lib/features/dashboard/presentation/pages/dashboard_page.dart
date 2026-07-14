@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/config/app_constants.dart';
+import '../../../../core/services/attendance_window.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import 'perfil_page.dart';
-import 'qr_checkin_page.dart';
 import '../../../auth/presentation/viewmodels/auth_viewmodel.dart';
 import '../../../bookings/viewmodels/booking_viewmodel.dart';
 import '../../../bookings/models/booking.dart';
+import '../../../schedules/viewmodels/class_schedule_viewmodel.dart';
 
 // TODO: ajusta el import a la página real donde el alumno elige escuela/plan/sube comprobante
 // import '../../seleccion_escuela/presentation/pages/seleccion_escuela_page.dart';
@@ -26,6 +27,33 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   bool _isRefreshing = false;
+
+  // Horarios de las clases de hoy: permiten saber si una reserva es de la
+  // primera clase del día (dura 60 min) o de las demás (90 min), lo que
+  // define la ventana del botón "Confirmar Asistencia".
+  List<String> _horariosHoy = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHorariosHoy();
+  }
+
+  Future<void> _loadHorariosHoy() async {
+    try {
+      final schedules = await context
+          .read<ClassScheduleViewModel>()
+          .getSchedulesForDay(DateTime.now().weekday)
+          .first;
+      if (mounted) {
+        setState(() {
+          _horariosHoy = schedules.map((s) => s.time).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('No se pudieron cargar los horarios de hoy: $e');
+    }
+  }
 
   /// Función para actualizar el dashboard
   Future<void> _refreshData() async {
@@ -247,7 +275,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(height: 24),
 
                       // MIS CLASES DE HOY
-                      _TodayClassesSection(),
+                      _TodayClassesSection(horariosHoy: _horariosHoy),
 
                       const SizedBox(height: 24),
 
@@ -929,6 +957,12 @@ class _MatriculaPlaceholderPage extends StatelessWidget {
 // WIDGET: MIS CLASES DE HOY
 // -----------------------------------------------------------------------------
 class _TodayClassesSection extends StatelessWidget {
+  /// Horarios de hoy, para saber si cada reserva es de la primera clase
+  /// del día (define la duración de la ventana de confirmación).
+  final List<String> horariosHoy;
+
+  const _TodayClassesSection({this.horariosHoy = const []});
+
   @override
   Widget build(BuildContext context) {
     final authVM = context.watch<AuthViewModel>();
@@ -1047,6 +1081,10 @@ class _TodayClassesSection extends StatelessWidget {
               children: todayBookings.map((booking) {
                 return _TodayClassCard(
                   booking: booking,
+                  esPrimeraClaseDelDia: AttendanceWindow.esPrimeraClaseDelDia(
+                    booking.scheduleTime,
+                    horariosHoy,
+                  ),
                   onConfirm: () async {
                     final success = await bookingVM.confirmAttendance(booking.id!);
                     if (success && context.mounted) {
@@ -1074,10 +1112,12 @@ class _TodayClassesSection extends StatelessWidget {
 class _TodayClassCard extends StatelessWidget {
   final Booking booking;
   final VoidCallback onConfirm;
+  final bool esPrimeraClaseDelDia;
 
   const _TodayClassCard({
     required this.booking,
     required this.onConfirm,
+    this.esPrimeraClaseDelDia = false,
   });
 
   String _formatTime(String time24) {
@@ -1096,23 +1136,40 @@ class _TodayClassCard extends StatelessWidget {
 
   Color _getStatusColor() {
     if (booking.userConfirmedAttendance) return Colors.green;
-    if (booking.canConfirmAttendance()) return Colors.orange;
-    if (booking.missedConfirmationWindow()) return Colors.red;
+    if (booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+      return Colors.orange;
+    }
+    if (booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+      return Colors.red;
+    }
     return Colors.grey;
   }
 
   IconData _getStatusIcon() {
     if (booking.userConfirmedAttendance) return Icons.check_circle;
-    if (booking.canConfirmAttendance()) return Icons.schedule;
-    if (booking.missedConfirmationWindow()) return Icons.cancel;
+    if (booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+      return Icons.schedule;
+    }
+    if (booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+      return Icons.cancel;
+    }
     return Icons.event;
   }
 
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor();
-    final canConfirm = booking.canConfirmAttendance();
+    final canConfirm =
+        booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClaseDelDia);
     final confirmed = booking.userConfirmedAttendance;
+    // Clase de hoy aún sin abrir su ventana: botón visible pero deshabilitado
+    // indicando desde cuándo se puede confirmar.
+    final preVentana = !confirmed &&
+        booking.status == BookingStatus.confirmed &&
+        !canConfirm &&
+        !booking.missedConfirmationWindow(
+          esPrimeraClaseDelDia: esPrimeraClaseDelDia,
+        );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1202,7 +1259,9 @@ class _TodayClassCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  booking.getConfirmationStatusText(),
+                  booking.getConfirmationStatusText(
+                    esPrimeraClaseDelDia: esPrimeraClaseDelDia,
+                  ),
                   style: TextStyle(
                     color: statusColor,
                     fontSize: 13,
@@ -1212,22 +1271,26 @@ class _TodayClassCard extends StatelessWidget {
               ),
             ],
           ),
-          if (canConfirm && !confirmed) ...[
+          if ((canConfirm || preVentana) && !confirmed) ...[
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: onConfirm,
-                icon: const Icon(Icons.check, size: 20),
-                label: const Text(
-                  'Confirmar Asistencia',
-                  style: TextStyle(
+                onPressed: canConfirm ? onConfirm : null,
+                icon: Icon(canConfirm ? Icons.check : Icons.lock_clock, size: 20),
+                label: Text(
+                  canConfirm
+                      ? 'Confirmar Asistencia'
+                      : 'Disponible desde las ${_formatTime('${booking.confirmationOpensAt().hour.toString().padLeft(2, '0')}:${booking.confirmationOpensAt().minute.toString().padLeft(2, '0')}')}',
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orangeAccent,
                   foregroundColor: Colors.black,
+                  disabledBackgroundColor: Colors.white12,
+                  disabledForegroundColor: Colors.white54,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/services/attendance_window.dart';
+
 enum BookingStatus {
   confirmed,  // Reserva confirmada
   attended,   // Usuario asistió
@@ -182,70 +184,66 @@ class Booking {
     );
   }
 
-  // Helper: Verificar si puede confirmar asistencia (30 min antes o 30 min después)
-  bool canConfirmAttendance() {
+  // Helper: DateTime de inicio de la clase (fecha + hora del horario)
+  DateTime get classStartDateTime {
+    final timeParts = scheduleTime.split(':');
+    return DateTime(
+      classDate.year,
+      classDate.month,
+      classDate.day,
+      int.parse(timeParts[0]),
+      int.parse(timeParts[1]),
+    );
+  }
+
+  // Helper: momento en que se habilita la confirmación de asistencia
+  DateTime confirmationOpensAt() =>
+      AttendanceWindow.opensAt(classStartDateTime);
+
+  // Helper: momento en que se cierra la confirmación
+  DateTime confirmationClosesAt({bool esPrimeraClaseDelDia = false}) =>
+      AttendanceWindow.closesAt(
+        classStartDateTime,
+        esPrimeraClaseDelDia: esPrimeraClaseDelDia,
+      );
+
+  // Helper: Verificar si puede confirmar asistencia.
+  // Ventana: 15 min antes del inicio hasta 15 min después del término
+  // (primera clase del día: 60 min; el resto: 90 min).
+  bool canConfirmAttendance({bool esPrimeraClaseDelDia = false}) {
     if (status != BookingStatus.confirmed) return false;
     if (userConfirmedAttendance) return false; // Ya confirmada
 
-    final now = DateTime.now();
-
-    // Parsear la hora de la clase
-    final timeParts = scheduleTime.split(':');
-    final classHour = int.parse(timeParts[0]);
-    final classMinute = int.parse(timeParts[1]);
-
-    // Crear DateTime de la clase
-    final classDateTime = DateTime(
-      classDate.year,
-      classDate.month,
-      classDate.day,
-      classHour,
-      classMinute,
+    return AttendanceWindow.isOpen(
+      classStartDateTime,
+      esPrimeraClaseDelDia: esPrimeraClaseDelDia,
     );
-
-    // Ventana: 30 min antes hasta 30 min después
-    final windowStart = classDateTime.subtract(const Duration(minutes: 30));
-    final windowEnd = classDateTime.add(const Duration(minutes: 30));
-
-    return now.isAfter(windowStart) && now.isBefore(windowEnd);
   }
 
   // Helper: Verificar si pasó la ventana de confirmación
-  bool missedConfirmationWindow() {
+  bool missedConfirmationWindow({bool esPrimeraClaseDelDia = false}) {
     if (status != BookingStatus.confirmed) return false;
     if (userConfirmedAttendance) return false;
 
-    final now = DateTime.now();
-
-    // Parsear la hora de la clase
-    final timeParts = scheduleTime.split(':');
-    final classHour = int.parse(timeParts[0]);
-    final classMinute = int.parse(timeParts[1]);
-
-    // Crear DateTime de la clase
-    final classDateTime = DateTime(
-      classDate.year,
-      classDate.month,
-      classDate.day,
-      classHour,
-      classMinute,
+    return AttendanceWindow.isClosed(
+      classStartDateTime,
+      esPrimeraClaseDelDia: esPrimeraClaseDelDia,
     );
-
-    // Ventana termina 30 min después
-    final windowEnd = classDateTime.add(const Duration(minutes: 30));
-
-    return now.isAfter(windowEnd);
   }
 
   // Helper: Obtener texto del estado de confirmación
-  String getConfirmationStatusText() {
+  String getConfirmationStatusText({bool esPrimeraClaseDelDia = false}) {
     if (status == BookingStatus.cancelled) return 'Cancelada';
     if (status == BookingStatus.attended) return 'Asistió';
     if (status == BookingStatus.noShow) return 'No asistió';
 
-    if (userConfirmedAttendance) return 'Confirmada';
-    if (missedConfirmationWindow()) return 'No confirmada';
-    if (canConfirmAttendance()) return 'Pendiente confirmación';
+    if (userConfirmedAttendance) return 'Asistencia confirmada';
+    if (missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+      return 'No confirmada';
+    }
+    if (canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+      return 'Pendiente confirmación';
+    }
 
     return 'Agendada';
   }

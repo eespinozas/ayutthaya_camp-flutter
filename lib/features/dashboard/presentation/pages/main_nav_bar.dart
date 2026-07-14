@@ -5,7 +5,7 @@ import 'dashboard_page.dart';
 import 'agendar_page.dart';
 import 'mis_clases_page.dart';
 import 'pagos_page.dart';
-import 'qr_scanner_page.dart';
+import 'qr_checkin_page.dart';
 
 class _NavTab {
   final String id;
@@ -79,40 +79,15 @@ class _MainNavBarState extends State<MainNavBar> {
   }
 
   Future<void> _onQRPressed() async {
-    try {
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const QRScannerPage(),
-        ),
-      );
-
-      if (result != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'QR escaneado: ${result['class']} - ${result['time']}',
-            ),
-            backgroundColor: const Color(0xFF10B981),
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: 'Agendar',
-              textColor: Colors.white,
-              onPressed: () => _selectTabById('agendar'),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al escanear QR: $e'),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
-        );
-      }
-    }
+    // QRCheckInPage escanea el QR del gimnasio y registra la asistencia
+    // (antes se abría el escáner "pelado" y el resultado solo mostraba un
+    // snackbar, sin registrar nada).
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const QRCheckInPage(),
+      ),
+    );
   }
 
   @override

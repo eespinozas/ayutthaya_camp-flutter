@@ -380,9 +380,15 @@ class BookingService {
   }
 
   /// Confirmar asistencia (usuario)
+  ///
+  /// Marca también status = attended: la asistencia confirmada por botón
+  /// cuenta igual que el check-in por QR (ranking, contadores y reportes
+  /// consultan status == 'attended').
   Future<void> confirmAttendance(String bookingId) async {
     try {
       await _firestore.collection('bookings').doc(bookingId).update({
+        'status': BookingStatus.attended.name,
+        'attendedAt': FieldValue.serverTimestamp(),
         'userConfirmedAttendance': true,
         'attendanceConfirmedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -657,8 +663,10 @@ class BookingService {
         final classStartTime = DateTime(now.year, now.month, now.day, hour, minute);
         final minutesSinceStart = now.difference(classStartTime).inMinutes;
 
-        // Clase activa: entre 0 y 20 minutos desde el inicio
-        if (minutesSinceStart >= 0 && minutesSinceStart <= 20) {
+        // Clase activa: desde 15 min antes del inicio (llegada temprana,
+        // consistente con la ventana del botón de confirmación) hasta
+        // 20 minutos después de iniciada.
+        if (minutesSinceStart >= -15 && minutesSinceStart <= 20) {
           activeClasses.add({
             'id': doc.id,
             'time': classTime,
@@ -834,29 +842,16 @@ class BookingService {
             'classType': scheduleType,
           };
         } else {
-          // No tiene booking, crear uno como noShow
-          debugPrint('   - No tiene booking, creando como noShow...');
-
-          final booking = Booking(
-            userId: userId,
-            userName: userName,
-            userEmail: userEmail,
-            scheduleId: scheduleId,
-            scheduleTime: scheduleTime,
-            scheduleType: scheduleType,
-            instructor: mostRecentClass['instructor'] as String,
-            classDate: today,
-            status: BookingStatus.noShow,
-            createdAt: now,
-          );
-
-          final docRef = await _firestore.collection('bookings').add(booking.toMap());
-          debugPrint('❌ Booking creado como noShow: ${docRef.id}');
+          // Sin booking previo no se crea un noShow: marcaría inasistencia
+          // de una clase que el usuario nunca agendó y ensucia estadísticas.
+          debugPrint('   - Sin booking previo: no se registra noShow');
 
           return {
-            'success': true,
-            'message': 'La clase de $scheduleType ($scheduleTime) ha sido marcada como no asistida',
-            'action': 'created_no_show',
+            'success': false,
+            'message': 'La clase de $scheduleType ($scheduleTime) ya comenzó '
+                'hace más de 20 minutos y no tenías reserva para ella. '
+                'Agenda tu próxima clase desde la app.',
+            'action': 'no_active_class',
             'classTime': scheduleTime,
             'classType': scheduleType,
           };
