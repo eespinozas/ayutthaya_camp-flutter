@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' show File;
 
+import 'package:ayutthaya_camp/core/services/auth_email_service.dart';
 import 'package:ayutthaya_camp/core/services/ranking_service.dart';
 import 'package:ayutthaya_camp/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:ayutthaya_camp/features/auth/presentation/pages/login_page.dart';
@@ -33,6 +34,7 @@ class _PerfilPageState extends State<PerfilPage> {
   bool _isSaving = false;
   bool _isUploadingPhoto = false;
   bool _isRefreshing = false;
+  bool _isRequestingDeletion = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   int _totalAttendedClasses = 0;
@@ -445,6 +447,81 @@ class _PerfilPageState extends State<PerfilPage> {
       setState(() {
         _birthDate = picked;
       });
+    }
+  }
+
+  /// Flujo de eliminación de cuenta: confirmación en la app y luego
+  /// confirmación definitiva por correo (el backend elimina la cuenta
+  /// solo cuando el usuario abre el enlace enviado a su email).
+  Future<void> _requestAccountDeletion() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text(
+          '¿Eliminar tu cuenta?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Esta acción es permanente: se borrarán tu perfil, tus clases '
+          'agendadas, tu progreso y tu foto.\n\n'
+          'Para confirmar, te enviaremos un correo con un enlace de '
+          'eliminación (válido por 24 horas). Tu cuenta seguirá activa '
+          'hasta que lo abras.',
+          style: TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Enviar correo de confirmación'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isRequestingDeletion = true);
+    try {
+      await AuthEmailService().requestAccountDeletion();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Te enviamos un correo para confirmar la eliminación. '
+              'Revisa tu bandeja de entrada (y spam). El enlace dura 24 horas.',
+            ),
+            backgroundColor: Color(0xFFFF8534),
+            duration: Duration(seconds: 6),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.toString().replaceFirst('Exception: ', ''),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRequestingDeletion = false);
+      }
     }
   }
 
@@ -1169,6 +1246,76 @@ class _PerfilPageState extends State<PerfilPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Zona de peligro: eliminación de cuenta
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.red.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Eliminar cuenta',
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Se eliminarán permanentemente tu perfil, tus clases '
+                            'agendadas y tu progreso. Te enviaremos un correo '
+                            'para confirmar antes de borrar nada.',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.55),
+                              fontSize: 12.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _isRequestingDeletion
+                                  ? null
+                                  : _requestAccountDeletion,
+                              icon: _isRequestingDeletion
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.red,
+                                      ),
+                                    )
+                                  : const Icon(Icons.delete_forever, size: 18),
+                              label: Text(
+                                _isRequestingDeletion
+                                    ? 'Enviando correo...'
+                                    : 'Eliminar mi cuenta',
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red.shade400,
+                                side: BorderSide(color: Colors.red.shade400),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 

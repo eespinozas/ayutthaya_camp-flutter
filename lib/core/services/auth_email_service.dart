@@ -85,6 +85,41 @@ class AuthEmailService {
     }
   }
 
+  /// Solicita la eliminación de la cuenta del usuario autenticado.
+  ///
+  /// El backend genera un token de un solo uso (vigencia 24 h) y envía un
+  /// correo de confirmación: la cuenta solo se elimina cuando el usuario
+  /// abre el enlace del correo.
+  ///
+  /// Throws [Exception] si el usuario no está autenticado o falla el envío.
+  Future<void> requestAccountDeletion() async {
+    final user = _auth.currentUser;
+
+    if (user == null) {
+      throw Exception('Usuario no autenticado');
+    }
+
+    try {
+      final callable = _functions.httpsCallable('requestAccountDeletion');
+      final result = await callable.call<Map<String, dynamic>>();
+
+      final success = result.data['success'] as bool;
+      final message = result.data['message'] as String;
+
+      if (!success) {
+        throw Exception(message);
+      }
+
+      print('✅ Solicitud de eliminación enviada: $message');
+    } on FirebaseFunctionsException catch (e) {
+      print('❌ Error: ${e.code} - ${e.message}');
+      throw Exception(_getErrorMessage(e.code));
+    } catch (e) {
+      print('❌ Error inesperado: $e');
+      throw Exception('No se pudo procesar la solicitud. Intenta nuevamente');
+    }
+  }
+
   /// Valida formato de email
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);

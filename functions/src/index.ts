@@ -25,6 +25,12 @@ export {sendVerificationEmail} from "./functions/sendVerificationEmail";
 export {sendPasswordResetEmail} from "./functions/sendPasswordResetEmail";
 
 // ============================================================================
+// ELIMINACIÓN DE CUENTA (requisito App Store: confirmación por correo)
+// ============================================================================
+export {requestAccountDeletion} from "./functions/requestAccountDeletion";
+export {confirmAccountDeletion} from "./functions/confirmAccountDeletion";
+
+// ============================================================================
 // FUNCIONES EXISTENTES (del index.js original)
 // ============================================================================
 // Si deseas mantener las funciones existentes, re-impórtalas aquí
