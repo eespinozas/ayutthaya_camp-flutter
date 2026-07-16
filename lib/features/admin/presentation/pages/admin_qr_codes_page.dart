@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import '../../../schedules/models/class_schedule.dart';
+import '../../../../core/services/chilean_holidays.dart';
 
 class AdminQRCodesPage extends StatefulWidget {
   const AdminQRCodesPage({super.key});
@@ -293,7 +294,8 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
 
                 // Filtrar clases de HOY
                 final today = DateTime.now();
-                final todayDayOfWeek = today.weekday;
+                // Feriados de lunes a viernes usan el horario del sábado
+                final todayDayOfWeek = ChileanHolidays.effectiveDayOfWeek(today);
                 final schedules = snapshot.data!.docs
                     .map((doc) => ClassSchedule.fromFirestore(doc))
                     .where((schedule) => schedule.isOnDay(todayDayOfWeek))

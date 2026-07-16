@@ -13,6 +13,7 @@ import '../../../bookings/viewmodels/booking_viewmodel.dart';
 import '../../../bookings/models/booking.dart';
 import '../../../auth/presentation/viewmodels/auth_viewmodel.dart';
 import '../../../auth/presentation/widgets/membership_guard.dart';
+import '../../../../core/services/chilean_holidays.dart';
 
 class AgendarPage extends StatefulWidget {
   const AgendarPage({super.key});
@@ -43,7 +44,8 @@ class _AgendarPageState extends State<AgendarPage> {
 
   // Obtener clases del día desde Firebase
   List<ClassSchedule> _getSchedulesForDay(List<ClassSchedule> allSchedules, DateTime day) {
-    final dayOfWeek = day.weekday; // 1 = Monday, 7 = Sunday
+    // Feriados de lunes a viernes usan el horario del sábado
+    final dayOfWeek = ChileanHolidays.effectiveDayOfWeek(day);
     return allSchedules.where((schedule) => schedule.isOnDay(dayOfWeek)).toList();
   }
 

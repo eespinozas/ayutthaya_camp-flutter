@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/services/chilean_holidays.dart';
 
 class AdminDashboardViewModel extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -343,7 +344,8 @@ class AdminDashboardViewModel extends ChangeNotifier {
     try {
       // Filtrar schedules por el día de la semana actual
       final now = DateTime.now();
-      final weekday = now.weekday; // 1=Lunes, 2=Martes, ..., 7=Domingo
+      // Feriados de lunes a viernes usan el horario del sábado
+      final weekday = ChileanHolidays.effectiveDayOfWeek(now);
 
       final schedulesForToday = docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;

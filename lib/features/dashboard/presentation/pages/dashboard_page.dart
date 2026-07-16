@@ -9,6 +9,7 @@ import '../../../auth/presentation/viewmodels/auth_viewmodel.dart';
 import '../../../bookings/viewmodels/booking_viewmodel.dart';
 import '../../../bookings/models/booking.dart';
 import '../../../schedules/viewmodels/class_schedule_viewmodel.dart';
+import '../../../../core/services/chilean_holidays.dart';
 
 // TODO: ajusta el import a la página real donde el alumno elige escuela/plan/sube comprobante
 // import '../../seleccion_escuela/presentation/pages/seleccion_escuela_page.dart';
@@ -43,7 +44,7 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final schedules = await context
           .read<ClassScheduleViewModel>()
-          .getSchedulesForDay(DateTime.now().weekday)
+          .getSchedulesForDay(ChileanHolidays.effectiveDayOfWeek(DateTime.now()))
           .first;
       if (mounted) {
         setState(() {

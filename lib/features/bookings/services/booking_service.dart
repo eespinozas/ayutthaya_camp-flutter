@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/booking.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/config/app_constants.dart';
+import '../../../core/services/chilean_holidays.dart';
 
 class BookingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -631,7 +632,8 @@ class BookingService {
 
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      final currentDayOfWeek = now.weekday; // 1 = Monday, 7 = Sunday
+      // Feriados de lunes a viernes usan el horario del sábado
+      final currentDayOfWeek = ChileanHolidays.effectiveDayOfWeek(now);
 
       debugPrint('🔍 Procesando QR Check-in genérico:');
       debugPrint('   - Usuario: $userName ($userId)');

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../bookings/models/booking.dart';
 import '../../../schedules/models/class_schedule.dart';
+import '../../../../core/services/chilean_holidays.dart';
 
 class AdminClasesViewModel extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -38,7 +39,8 @@ class AdminClasesViewModel extends ChangeNotifier {
   Stream<List<ClassSchedule>> getSchedules() {
     // Obtener el día de la semana de la fecha seleccionada
     // weekday: 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves, 5=Viernes, 6=Sábado, 7=Domingo
-    final weekday = _selectedDate.weekday;
+    // Feriados de lunes a viernes usan el horario del sábado
+    final weekday = ChileanHolidays.effectiveDayOfWeek(_selectedDate);
     final dayNames = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     final dayName = dayNames[weekday];
 

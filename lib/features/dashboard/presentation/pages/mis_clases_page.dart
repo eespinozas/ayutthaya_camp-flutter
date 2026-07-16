@@ -9,6 +9,7 @@ import '../../../auth/presentation/widgets/membership_guard.dart';
 import '../../../bookings/viewmodels/booking_viewmodel.dart';
 import '../../../bookings/models/booking.dart';
 import '../../../schedules/viewmodels/class_schedule_viewmodel.dart';
+import '../../../../core/services/chilean_holidays.dart';
 
 class MisClasesPage extends StatefulWidget {
   const MisClasesPage({super.key});
@@ -533,7 +534,8 @@ class _MisClasesPageState extends State<MisClasesPage>
     final isCancelled = booking.status == BookingStatus.cancelled;
     final esPrimeraClase = AttendanceWindow.esPrimeraClaseDelDia(
       booking.scheduleTime,
-      _horariosPorDia[booking.classDate.weekday] ?? const [],
+      _horariosPorDia[ChileanHolidays.effectiveDayOfWeek(booking.classDate)] ??
+          const [],
     );
 
     // Verificar si se puede cancelar (más de 24 horas de anticipación)

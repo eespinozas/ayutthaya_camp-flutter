@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../bookings/models/booking.dart';
 import '../../../payments/models/payment.dart';
+import '../../../../core/services/chilean_holidays.dart';
 
 class AdminReportesViewModel extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -69,7 +70,8 @@ class AdminReportesViewModel extends ChangeNotifier {
         final totalIncome = payments.fold<double>(0, (total, payment) => total + payment.amount).toInt();
 
         // Get schedules for the day to calculate capacity
-        final weekday = selectedDate.weekday;
+        // Feriados de lunes a viernes usan el horario del sábado
+        final weekday = ChileanHolidays.effectiveDayOfWeek(selectedDate);
         final schedulesSnapshot = await _firestore
             .collection('class_schedules')
             .where('daysOfWeek', arrayContains: weekday)
