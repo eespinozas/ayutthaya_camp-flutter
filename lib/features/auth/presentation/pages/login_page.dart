@@ -10,6 +10,7 @@ import 'package:ayutthaya_camp/features/admin/presentation/pages/admin_main_nav_
 import 'package:ayutthaya_camp/core/services/auth_email_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../widgets/session_guard.dart';
+import 'force_password_change_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -101,10 +102,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         ),
       );
 
-      // 3) Redirigir según el rol
-      final Widget destination = authVM.isAdmin
-          ? const SessionGuard(child: AdminMainNavBar())
-          : const SessionGuard(child: MainNavBar());
+      // 3) Redirigir según el rol. Las cuentas creadas con contraseña
+      //    temporal deben cambiarla antes de entrar.
+      final Widget destination = authVM.mustChangePassword
+          ? const ForcePasswordChangePage()
+          : authVM.isAdmin
+              ? const SessionGuard(child: AdminMainNavBar())
+              : const SessionGuard(child: MainNavBar());
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => destination),
@@ -148,7 +152,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
   }
 
-  /// Reenvía el correo de verificación usando SendGrid (email profesional).
+  /// Reenvía el correo de verificación con la plantilla profesional
+  /// (Cloud Function + Resend, la misma del registro).
   /// Nota: Para enviarlo, el usuario debe estar autenticado; hacemos un login silencioso.
   Future<void> _onResendVerification() async {
     try {
@@ -156,21 +161,24 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       final pass = _password.text.trim();
 
       // Login silencioso para autenticar al usuario
-      final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: pass,
       );
 
-      // Enviar email de verificación (Firebase Auth nativo)
-      await cred.user?.sendEmailVerification();
-
-      // Logout después de enviar
-      await FirebaseAuth.instance.signOut();
+      // Enviar con la Cloud Function + Resend (NO el email nativo de
+      // Firebase, que usa la plantilla por defecto y suele caer en spam).
+      try {
+        await AuthEmailService().sendVerificationEmail();
+      } finally {
+        // Logout siempre, incluso si falla el envío
+        await FirebaseAuth.instance.signOut();
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Correo de verificación enviado. Revisa tu bandeja de entrada.'),
+            content: Text('Correo de verificación enviado. Revisa tu bandeja de entrada y spam.'),
             backgroundColor: Color(0xFF10B981),
           ),
         );
@@ -188,7 +196,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
             backgroundColor: const Color(0xFFEF4444),
           ),
         );

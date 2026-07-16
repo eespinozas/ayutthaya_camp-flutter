@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import '../features/auth/presentation/pages/login_page.dart';
+import '../features/auth/presentation/pages/force_password_change_page.dart';
 import '../features/auth/presentation/widgets/session_guard.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 import '../features/auth/presentation/pages/forgot_password_page.dart';
@@ -121,6 +122,11 @@ class _SplashDecider extends StatelessWidget {
         // Si NO está logeado → LoginPage
         if (!vm.isLoggedIn) {
           return const LoginPage();
+        }
+
+        // Contraseña temporal pendiente de cambio: bloquear hasta definirla
+        if (vm.mustChangePassword) {
+          return const ForcePasswordChangePage();
         }
 
         return vm.isAdmin

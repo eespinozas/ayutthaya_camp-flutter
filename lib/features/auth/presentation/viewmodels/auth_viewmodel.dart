@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/services/auth_email_service.dart';
 import '../../../../core/services/notification_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
@@ -18,6 +19,7 @@ class AuthViewModel extends ChangeNotifier {
   User? _user;
   String _userRole = 'student'; // 'student' o 'admin'
   String _membershipStatus = 'none'; // none, pending, active, expired, frozen
+  bool _mustChangePassword = false; // Cuenta creada con contraseña temporal
   DateTime? _expirationDate;
 
   bool get isCheckingSession => _isCheckingSession;
@@ -25,6 +27,7 @@ class AuthViewModel extends ChangeNotifier {
   User? get currentUser => _user;
   String get userRole => _userRole;
   bool get isAdmin => _userRole == 'admin';
+  bool get mustChangePassword => _mustChangePassword;
   String get membershipStatus => _membershipStatus;
   DateTime? get expirationDate => _expirationDate;
 
@@ -64,6 +67,7 @@ class AuthViewModel extends ChangeNotifier {
         final data = doc.data()!;
         _userRole = data['role'] ?? 'student';
         _membershipStatus = data['membershipStatus'] ?? 'none';
+        _mustChangePassword = data['mustChangePassword'] == true;
 
         // Cargar fecha de expiración si existe
         if (data['expirationDate'] != null) {
@@ -119,6 +123,23 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Cambiar la contraseña temporal por una definitiva (primer login de
+  /// cuentas creadas por un admin) y limpiar el flag mustChangePassword.
+  Future<void> changeTemporaryPassword(String newPassword) async {
+    if (_user == null) {
+      throw Exception('No hay usuario autenticado');
+    }
+
+    await _user!.updatePassword(newPassword);
+    await _firestore.collection('users').doc(_user!.uid).update({
+      'mustChangePassword': false,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    _mustChangePassword = false;
+    notifyListeners();
+  }
+
   /// Chequear sesión al iniciar la app
   Future<void> checkSession() async {
     try {
@@ -135,6 +156,7 @@ class AuthViewModel extends ChangeNotifier {
         _userRole = 'student';
         _membershipStatus = 'none';
         _expirationDate = null;
+        _mustChangePassword = false;
       }
     } catch (e) {
       _error = e.toString();
@@ -168,8 +190,13 @@ class AuthViewModel extends ChangeNotifier {
         await cred.user?.updateDisplayName(displayName);
       }
 
-      // 3. Enviar email de verificación
-      await cred.user?.sendEmailVerification();
+      // 3. Enviar email de verificación (plantilla profesional via
+      //    Cloud Function + Resend; en try-catch para no romper el registro)
+      try {
+        await AuthEmailService().sendVerificationEmail();
+      } catch (e) {
+        debugPrint('⚠️ No se pudo enviar el email de verificación: $e');
+      }
 
       // 4. Crear documento del usuario en Firestore
       await _firestore.collection('users').doc(cred.user!.uid).set({
@@ -298,6 +325,7 @@ class AuthViewModel extends ChangeNotifier {
       await _auth.signOut();
       _user = null;
       _userRole = 'student';
+      _mustChangePassword = false;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -317,7 +345,8 @@ class AuthViewModel extends ChangeNotifier {
         return false;
       }
 
-      await _user!.sendEmailVerification();
+      // Plantilla profesional via Cloud Function + Resend
+      await AuthEmailService().sendVerificationEmail();
       return true;
     } catch (e) {
       _error = e.toString();

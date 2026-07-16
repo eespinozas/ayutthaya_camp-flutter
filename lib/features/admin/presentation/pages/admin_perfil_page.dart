@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ayutthaya_camp/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 
+import 'admin_create_admin_page.dart';
+
 class AdminPerfilPage extends StatelessWidget {
   const AdminPerfilPage({super.key});
 
@@ -76,6 +78,29 @@ class AdminPerfilPage extends StatelessWidget {
               ),
 
               const SizedBox(height: 48),
+
+              // Gestión: crear otros administradores
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminCreateAdminPage(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: const Text('Crear administrador'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFFF6A00),
+                    side: const BorderSide(color: Color(0xFFFF6A00)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
 
               // Botón de cerrar sesión
               SizedBox(
