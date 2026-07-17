@@ -105,7 +105,10 @@ class _MainNavBarState extends State<MainNavBar> {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
       body: currentPage,
-      floatingActionButton: Container(
+      // En web no hay check-in QR: sin FAB ni notch (ver FeatureFlags).
+      floatingActionButton: !FeatureFlags.enableQrCheckIn
+          ? null
+          : Container(
         width: 70,
         height: 70,
         decoration: BoxDecoration(
@@ -172,7 +175,7 @@ class _MainNavBarState extends State<MainNavBar> {
                 ),
               ),
               // Espacio para el botón flotante QR
-              const SizedBox(width: 80),
+              if (FeatureFlags.enableQrCheckIn) const SizedBox(width: 80),
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
