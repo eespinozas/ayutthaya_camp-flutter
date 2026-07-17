@@ -321,9 +321,13 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                     children: (data['clases'] as List).map((clase) {
                       final inscritos = clase['inscritos'] as int;
                       final asistieron = clase['asistieron'] as int;
-                      final capacidad = clase['capacidad'] as int;
-                      final percentage = capacidad > 0 ? asistieron / capacidad : 0.0;
-                      final ausencias = inscritos - asistieron;
+                      final faltas = (clase['faltas'] as int?) ?? 0;
+                      final porAprobar = (clase['porAprobar'] as int?) ?? 0;
+                      final finalizada = (clase['finalizada'] as bool?) ?? true;
+                      // Barra = asistencia sobre los inscritos de la clase
+                      // (no sobre la capacidad total del gimnasio).
+                      final percentage =
+                          inscritos > 0 ? asistieron / inscritos : 0.0;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
@@ -360,21 +364,44 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            '$asistieron/$capacidad asistieron',
+                                            '$asistieron/$inscritos asistieron',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          if (ausencias > 0)
-                                            Text(
-                                              '$ausencias falta${ausencias > 1 ? 's' : ''}',
-                                              style: const TextStyle(
-                                                color: Colors.red,
-                                                fontSize: 12,
-                                              ),
-                                            ),
+                                          Row(
+                                            children: [
+                                              if (porAprobar > 0) ...[
+                                                Text(
+                                                  '$porAprobar por aprobar',
+                                                  style: const TextStyle(
+                                                    color: Colors.amber,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                              ],
+                                              if (finalizada && faltas > 0)
+                                                Text(
+                                                  '$faltas falta${faltas > 1 ? 's' : ''}',
+                                                  style: const TextStyle(
+                                                    color: Colors.red,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              if (!finalizada)
+                                                const Text(
+                                                  'Por realizarse',
+                                                  style: TextStyle(
+                                                    color: Colors.white54,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
                                         ],
                                       ),
                                       const SizedBox(height: 6),
@@ -385,11 +412,13 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                                           minHeight: 6,
                                           backgroundColor: Colors.white12,
                                           valueColor: AlwaysStoppedAnimation<Color>(
-                                            percentage >= 0.9
-                                                ? Colors.green
-                                                : percentage >= 0.7
-                                                    ? Colors.orange
-                                                    : Colors.red,
+                                            !finalizada
+                                                ? Colors.white38
+                                                : percentage >= 0.9
+                                                    ? Colors.green
+                                                    : percentage >= 0.7
+                                                        ? Colors.orange
+                                                        : Colors.red,
                                           ),
                                         ),
                                       ),
@@ -1289,7 +1318,9 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                           children: (data['asistenciaPorDia'] as List).map((dia) {
                             final asistencias = dia['asistencias'] as int;
                             final capacidad = dia['capacidad'] as int;
-                            final percentage = asistencias / capacidad;
+                            // Días sin horarios (ej: domingo) tienen capacidad 0
+                            final percentage =
+                                capacidad > 0 ? asistencias / capacidad : 0.0;
                             final today = DateTime.now();
                             final diaFecha = int.parse(dia['fecha']);
                             final isToday = today.day == diaFecha;
@@ -1482,16 +1513,16 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '${data['claseMasPopular']['asistenciaPromedio'].toStringAsFixed(1)}',
+                            '${data['claseMasPopular']['asistencias']}',
                             style: const TextStyle(
                               color: Colors.green,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(
-                            'de ${data['claseMasPopular']['capacidad']} promedio',
-                            style: const TextStyle(
+                          const Text(
+                            'asistencias esta semana',
+                            style: TextStyle(
                               color: Colors.white60,
                               fontSize: 11,
                             ),
@@ -1560,16 +1591,16 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '${data['claseMenosPopular']['asistenciaPromedio'].toStringAsFixed(1)}',
+                            '${data['claseMenosPopular']['asistencias']}',
                             style: const TextStyle(
                               color: Colors.orange,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(
-                            'de ${data['claseMenosPopular']['capacidad']} promedio',
-                            style: const TextStyle(
+                          const Text(
+                            'asistencias esta semana',
+                            style: TextStyle(
                               color: Colors.white60,
                               fontSize: 11,
                             ),

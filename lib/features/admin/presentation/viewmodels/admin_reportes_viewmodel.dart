@@ -64,8 +64,15 @@ class AdminReportesViewModel extends ChangeNotifier {
             .get();
 
         // Calculate metrics
-        final totalBookings = bookings.length;
-        final attendedBookings = bookings.where((b) => b.status == BookingStatus.attended).length;
+        final now = DateTime.now();
+
+        // Reservas válidas = las que ocuparon un cupo (excluye canceladas).
+        final validBookings = bookings
+            .where((b) => b.status != BookingStatus.cancelled)
+            .toList();
+        final attendedBookings = validBookings
+            .where((b) => b.status == BookingStatus.attended)
+            .length;
         final newUsers = newUsersSnapshot.docs.length;
         final totalIncome = payments.fold<double>(0, (total, payment) => total + payment.amount).toInt();
 
@@ -83,41 +90,79 @@ class AdminReportesViewModel extends ChangeNotifier {
         );
         final classesTotal = schedulesSnapshot.docs.length;
 
-        // Calculate attendance rate
-        final attendanceRate = totalCapacity > 0
-            ? (attendedBookings / totalCapacity * 100).toInt()
+        // Ocupación del día: cupos reservados (válidos) / cupos disponibles.
+        final occupancyRate = totalCapacity > 0
+            ? (validBookings.length / totalCapacity * 100).round()
             : 0;
 
-        // Group bookings by schedule (class time)
+        // Término estimado de una clase del día (90 min desde su inicio).
+        DateTime classEnd(String time) {
+          final parts = time.split(':');
+          final hour = int.tryParse(parts[0]) ?? 0;
+          final minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+          return DateTime(
+            selectedDate.year,
+            selectedDate.month,
+            selectedDate.day,
+            hour,
+            minute,
+          ).add(const Duration(minutes: 90));
+        }
+
+        // Clases realizadas: horarios del día cuya clase ya terminó.
+        final completedClasses = schedulesSnapshot.docs.where((doc) {
+          final time = doc.data()['time'] as String? ?? '00:00';
+          return classEnd(time).isBefore(now);
+        }).length;
+
+        // Group bookings by schedule (class time).
+        // La info del horario sale del snapshot ya cargado; el fetch
+        // individual queda solo como fallback (ej: reserva en un horario
+        // que ese día de semana no corre).
+        final scheduleInfo = {
+          for (var doc in schedulesSnapshot.docs) doc.id: doc.data(),
+        };
         final classesBySchedule = <String, Map<String, dynamic>>{};
-        for (var booking in bookings) {
+        for (var booking in validBookings) {
           final scheduleId = booking.scheduleId;
           if (!classesBySchedule.containsKey(scheduleId)) {
-            // Get schedule info
-            final scheduleDoc = await _firestore
-                .collection('class_schedules')
-                .doc(scheduleId)
-                .get();
-
-            if (scheduleDoc.exists) {
-              final scheduleData = scheduleDoc.data()!;
-              classesBySchedule[scheduleId] = {
-                'hora': scheduleData['time'] ?? 'N/A',
-                'inscritos': 0,
-                'asistieron': 0,
-                'capacidad': scheduleData['capacity'] ?? 15,
-              };
+            var scheduleData = scheduleInfo[scheduleId];
+            if (scheduleData == null) {
+              final scheduleDoc = await _firestore
+                  .collection('class_schedules')
+                  .doc(scheduleId)
+                  .get();
+              scheduleData = scheduleDoc.data();
             }
+
+            final hora =
+                (scheduleData?['time'] as String?) ?? booking.scheduleTime;
+            classesBySchedule[scheduleId] = {
+              'hora': hora,
+              'inscritos': 0,
+              'asistieron': 0,
+              'faltas': 0,
+              'porAprobar': 0,
+              'capacidad': (scheduleData?['capacity'] as int?) ?? 15,
+              'finalizada': classEnd(hora).isBefore(now),
+            };
           }
 
-          if (classesBySchedule.containsKey(scheduleId)) {
-            classesBySchedule[scheduleId]!['inscritos'] =
-                (classesBySchedule[scheduleId]!['inscritos'] as int) + 1;
-
-            if (booking.status == BookingStatus.attended) {
-              classesBySchedule[scheduleId]!['asistieron'] =
-                  (classesBySchedule[scheduleId]!['asistieron'] as int) + 1;
-            }
+          final entry = classesBySchedule[scheduleId]!;
+          entry['inscritos'] = (entry['inscritos'] as int) + 1;
+          switch (booking.status) {
+            case BookingStatus.attended:
+              entry['asistieron'] = (entry['asistieron'] as int) + 1;
+              break;
+            case BookingStatus.noShow:
+            case BookingStatus.rejected:
+              entry['faltas'] = (entry['faltas'] as int) + 1;
+              break;
+            case BookingStatus.pendingApproval:
+              entry['porAprobar'] = (entry['porAprobar'] as int) + 1;
+              break;
+            default:
+              break;
           }
         }
 
@@ -125,10 +170,7 @@ class AdminReportesViewModel extends ChangeNotifier {
         final classesList = classesBySchedule.values.toList();
         classesList.sort((a, b) => (a['hora'] as String).compareTo(b['hora'] as String));
 
-        // Count completed classes (classes with at least one booking)
-        final completedClasses = classesList.length;
-
-        debugPrint('   ✅ Total Bookings: $totalBookings');
+        debugPrint('   ✅ Valid Bookings: ${validBookings.length}');
         debugPrint('   ✅ Attended: $attendedBookings');
         debugPrint('   ✅ New Users: $newUsers');
         debugPrint('   ✅ Income: $totalIncome');
@@ -140,7 +182,7 @@ class AdminReportesViewModel extends ChangeNotifier {
           'clasesTotales': classesTotal,
           'alumnosNuevos': newUsers,
           'pagosRecibidos': totalIncome,
-          'tasaAsistencia': attendanceRate,
+          'tasaAsistencia': occupancyRate,
           'clases': classesList,
         };
       } catch (e) {
@@ -206,6 +248,23 @@ class AdminReportesViewModel extends ChangeNotifier {
             .where('membershipStatus', isEqualTo: 'active')
             .get();
 
+        // Horarios activos: para calcular la capacidad real de cada día.
+        final schedulesSnapshot = await _firestore
+            .collection('class_schedules')
+            .where('active', isEqualTo: true)
+            .get();
+
+        int capacityForDay(DateTime day) {
+          final weekday = ChileanHolidays.effectiveDayOfWeek(day);
+          return schedulesSnapshot.docs
+              .where((doc) => List<int>.from(doc.data()['daysOfWeek'] ?? [])
+                  .contains(weekday))
+              .fold<int>(
+                0,
+                (total, doc) => total + ((doc.data()['capacity'] as int?) ?? 15),
+              );
+        }
+
         // Calculate metrics
         final attendedBookings = bookings.where((b) => b.status == BookingStatus.attended).length;
         final totalIncome = payments.fold<double>(0, (total, payment) => total + payment.amount).toInt();
@@ -224,7 +283,7 @@ class AdminReportesViewModel extends ChangeNotifier {
             'dia': dayNames[i],
             'fecha': currentDay.day.toString(),
             'asistencias': 0,
-            'capacidad': 75, // Will be calculated properly
+            'capacidad': capacityForDay(currentDay),
           };
         }
 
@@ -261,32 +320,36 @@ class AdminReportesViewModel extends ChangeNotifier {
         final sortedSchedules = attendanceBySchedule.entries.toList()
           ..sort((a, b) => (b.value['count'] as int).compareTo(a.value['count'] as int));
 
+        // Total de asistencias de la semana en el horario más/menos popular
+        // (antes se dividía por 7, un "promedio" sin sentido para clases
+        // que no corren todos los días).
         final mostPopular = sortedSchedules.isNotEmpty
             ? {
                 'hora': sortedSchedules.first.value['time'],
-                'asistenciaPromedio': (sortedSchedules.first.value['count'] as int) / 7.0,
-                'capacidad': 15,
+                'asistencias': sortedSchedules.first.value['count'] as int,
               }
             : {
                 'hora': 'N/A',
-                'asistenciaPromedio': 0.0,
-                'capacidad': 15,
+                'asistencias': 0,
               };
 
         final leastPopular = sortedSchedules.length > 1
             ? {
                 'hora': sortedSchedules.last.value['time'],
-                'asistenciaPromedio': (sortedSchedules.last.value['count'] as int) / 7.0,
-                'capacidad': 15,
+                'asistencias': sortedSchedules.last.value['count'] as int,
               }
             : {
                 'hora': 'N/A',
-                'asistenciaPromedio': 0.0,
-                'capacidad': 15,
+                'asistencias': 0,
               };
 
-        // Calculate average daily attendance
-        final avgDailyAttendance = attendedBookings / 7;
+        // Promedio diario sobre los días ya transcurridos de la semana
+        // (una semana en curso no debe diluirse entre 7 días).
+        final now = DateTime.now();
+        final daysElapsed = now.isBefore(weekStart)
+            ? 1
+            : (now.difference(weekStart).inDays + 1).clamp(1, 7);
+        final avgDailyAttendance = attendedBookings / daysElapsed;
 
         // Get previous week data for comparison
         final prevWeekStart = weekStart.subtract(const Duration(days: 7));
@@ -337,8 +400,8 @@ class AdminReportesViewModel extends ChangeNotifier {
           'ingresosSemana': 0,
           'comparacionSemanaAnterior': 0,
           'asistenciaPorDia': [],
-          'claseMasPopular': {'hora': 'N/A', 'asistenciaPromedio': 0.0, 'capacidad': 15},
-          'claseMenosPopular': {'hora': 'N/A', 'asistenciaPromedio': 0.0, 'capacidad': 15},
+          'claseMasPopular': {'hora': 'N/A', 'asistencias': 0},
+          'claseMenosPopular': {'hora': 'N/A', 'asistencias': 0},
           'tendencia': 'stable',
         };
       }
@@ -428,38 +491,59 @@ class AdminReportesViewModel extends ChangeNotifier {
         final enrollmentIncome = enrollmentPayments.fold<double>(0, (total, p) => total + p.amount).toInt();
         final totalIncome = monthlyIncome + enrollmentIncome;
 
-        // Calculate average daily attendance
+        // Días a considerar: el mes completo si ya pasó, o solo los
+        // transcurridos si es el mes en curso (antes se diluía todo
+        // entre 30/31 días aunque recién fuera día 5).
+        final now = DateTime.now();
         final daysInMonth = monthEnd.day;
-        final avgDailyAttendance = daysInMonth > 0
-            ? (attendedBookings / daysInMonth).toInt()
-            : 0;
+        final isCurrentMonth =
+            now.year == monthStart.year && now.month == monthStart.month;
+        final daysElapsed = now.isBefore(monthStart)
+            ? 1
+            : (isCurrentMonth ? now.day : daysInMonth);
+        final avgDailyAttendance = (attendedBookings / daysElapsed).round();
 
-        // Calculate average occupancy by schedule time
-        final attendanceBySchedule = <String, Map<String, dynamic>>{};
-        for (var booking in bookings.where((b) => b.status == BookingStatus.attended)) {
-          final scheduleTime = booking.scheduleTime;
+        // Ocupación promedio por horario: cupos reservados (reservas
+        // válidas, sin canceladas) dividido por los cupos realmente
+        // ofrecidos en el período (veces que la clase corrió × capacidad).
+        final schedulesSnapshot = await _firestore
+            .collection('class_schedules')
+            .where('active', isEqualTo: true)
+            .get();
 
-          if (!attendanceBySchedule.containsKey(scheduleTime)) {
-            attendanceBySchedule[scheduleTime] = {
-              'hora': scheduleTime,
-              'count': 0,
-            };
-          }
+        final lastDayToCount = isCurrentMonth ? now.day : daysInMonth;
+        final validMonthBookings =
+            bookings.where((b) => b.status != BookingStatus.cancelled);
 
-          attendanceBySchedule[scheduleTime]!['count'] =
-              (attendanceBySchedule[scheduleTime]!['count'] as int) + 1;
+        final bookingsByScheduleId = <String, int>{};
+        for (var booking in validMonthBookings) {
+          bookingsByScheduleId[booking.scheduleId] =
+              (bookingsByScheduleId[booking.scheduleId] ?? 0) + 1;
         }
 
-        // Calculate average occupancy percentage per schedule
-        final scheduleOccupancy = attendanceBySchedule.entries.map((entry) {
-          final avgAttendance = (entry.value['count'] as int) / daysInMonth;
-          final occupancyPercent = (avgAttendance / 15 * 100).toInt(); // Assuming capacity of 15
+        final scheduleOccupancy = <Map<String, dynamic>>[];
+        for (var doc in schedulesSnapshot.docs) {
+          final data = doc.data();
+          final daysOfWeek = List<int>.from(data['daysOfWeek'] ?? []);
+          final capacity = (data['capacity'] as int?) ?? 15;
 
-          return {
-            'hora': entry.key,
-            'ocupacion': occupancyPercent.clamp(0, 100),
-          };
-        }).toList();
+          // Cuántas veces corrió este horario en el período contado
+          var occurrences = 0;
+          for (var day = 1; day <= lastDayToCount; day++) {
+            final date = DateTime(monthStart.year, monthStart.month, day);
+            if (daysOfWeek.contains(ChileanHolidays.effectiveDayOfWeek(date))) {
+              occurrences++;
+            }
+          }
+          if (occurrences == 0) continue;
+
+          final reserved = bookingsByScheduleId[doc.id] ?? 0;
+          scheduleOccupancy.add({
+            'hora': data['time'] ?? 'N/A',
+            'ocupacion':
+                (reserved / (occurrences * capacity) * 100).round().clamp(0, 100),
+          });
+        }
 
         // Sort by time
         scheduleOccupancy.sort((a, b) => (a['hora'] as String).compareTo(b['hora'] as String));
