@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'admin_alumno_historial_page.dart';
+
 class AdminAlumnosPage extends StatefulWidget {
   final VoidCallback onNavigateToPagos;
 
@@ -242,6 +244,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                     final data = doc.data() as Map<String, dynamic>;
 
                     return _UserCard(
+                      userId: doc.id,
                       name: _nameOf(data),
                       email: data['email'] as String? ?? 'Sin email',
                       status: 'registered',
@@ -266,6 +269,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                     final data = doc.data() as Map<String, dynamic>;
 
                     return _UserCard(
+                      userId: doc.id,
                       name: _nameOf(data),
                       email: data['email'] as String? ?? 'Sin email',
                       status: 'pending',
@@ -290,6 +294,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                     final data = doc.data() as Map<String, dynamic>;
 
                     return _UserCard(
+                      userId: doc.id,
                       name: _nameOf(data),
                       email: data['email'] as String? ?? 'Sin email',
                       status: 'active',
@@ -314,6 +319,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                     final data = doc.data() as Map<String, dynamic>;
 
                     return _UserCard(
+                      userId: doc.id,
                       name: _nameOf(data),
                       email: data['email'] as String? ?? 'Sin email',
                       status: 'inactive',
@@ -485,8 +491,10 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
   }
 }
 
-// Card de alumno; el nombre viene directo del documento de usuario
+// Card de alumno; el nombre viene directo del documento de usuario.
+// Tocar la card abre el historial de clases del alumno.
 class _UserCard extends StatelessWidget {
+  final String userId;
   final String name;
   final String email;
   final String status; // 'registered', 'pending', 'active', 'inactive'
@@ -495,6 +503,7 @@ class _UserCard extends StatelessWidget {
   final VoidCallback? onActivate;
 
   const _UserCard({
+    required this.userId,
     required this.name,
     required this.email,
     required this.status,
@@ -505,18 +514,35 @@ class _UserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget card;
     switch (status) {
-      case 'registered':
-        return _buildRegisteredCard(name);
       case 'pending':
-        return _buildPendingCard(name);
+        card = _buildPendingCard(name);
+        break;
       case 'active':
-        return _buildActiveCard(name);
+        card = _buildActiveCard(name);
+        break;
       case 'inactive':
-        return _buildInactiveCard(name);
+        card = _buildInactiveCard(name);
+        break;
       default:
-        return _buildRegisteredCard(name);
+        card = _buildRegisteredCard(name);
     }
+
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AdminAlumnoHistorialPage(
+            userId: userId,
+            userName: name,
+            userEmail: email,
+          ),
+        ),
+      ),
+      borderRadius: BorderRadius.circular(12),
+      child: card,
+    );
   }
 
   Widget _buildRegisteredCard(String name) {
