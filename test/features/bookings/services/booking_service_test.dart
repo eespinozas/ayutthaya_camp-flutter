@@ -243,24 +243,25 @@ void main() {
     });
 
     test('should prevent booking past class times', () async {
+      // Una clase de HOY que ya comenzó. Ojo: restar horas con aritmética
+      // de campos (now.hour - 2) da horas negativas pasada la medianoche y
+      // la fecha se normaliza a ayer, saltándose la validación de "hoy".
       final now = DateTime.now();
-      final pastClass = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        now.hour - 2, // 2 hours ago
-        0,
-      );
+      var pastTime = now.subtract(const Duration(minutes: 1));
+      if (pastTime.day != now.day) {
+        pastTime = DateTime(now.year, now.month, now.day); // 00:00 de hoy
+      }
 
       final booking = Booking(
         userId: 'user_1',
         userName: 'Test User',
         userEmail: 'test@test.com',
         scheduleId: 'schedule_1',
-        scheduleTime: '${pastClass.hour}:00',
+        scheduleTime:
+            '${pastTime.hour.toString().padLeft(2, '0')}:${pastTime.minute.toString().padLeft(2, '0')}',
         scheduleType: 'Muay Thai',
         instructor: 'Francisco Poveda',
-        classDate: pastClass,
+        classDate: DateTime(pastTime.year, pastTime.month, pastTime.day),
         createdAt: DateTime.now(),
       );
 

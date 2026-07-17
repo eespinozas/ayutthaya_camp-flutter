@@ -689,7 +689,8 @@ class _UserCard extends StatelessWidget {
   }
 
   Widget _buildActiveCard(String name) {
-    String expirationText = 'Sin fecha';
+    // Sin expirationDate = activo por acceso libre (sin membresía pagada)
+    String expirationText = 'Sin vencimiento';
     if (expirationDate != null) {
       final date = expirationDate!.toDate();
       expirationText =

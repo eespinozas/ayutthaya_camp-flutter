@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/config/app_constants.dart';
 import '../../../../core/services/auth_email_service.dart';
 import '../../../../core/services/notification_service.dart';
 
@@ -82,10 +83,12 @@ class AuthViewModel extends ChangeNotifier {
         final userEmail = _user?.email ?? '';
         final userName = _user?.displayName ?? '';
 
-        // Determinar el rol y estado según el email
+        // Determinar el rol y estado según el email.
+        // Fase de acceso libre: los alumnos también nacen activos.
         final isAdmin = userEmail.startsWith('admin');
         final role = isAdmin ? 'admin' : 'student';
-        final membershipStatus = isAdmin ? 'active' : 'none';
+        final membershipStatus =
+            (isAdmin || AppFlags.freeAccessPhase) ? 'active' : 'none';
 
         debugPrint('⚠️ Usuario no encontrado en Firestore, creando documento...');
         debugPrint('   UID: $userId');
@@ -204,7 +207,9 @@ class AuthViewModel extends ChangeNotifier {
         'searchKey': email.toLowerCase(), // Para búsquedas fáciles en Firebase Console
         'name': displayName ?? '',
         'role': 'student',
-        'membershipStatus': 'none', // none, pending, active, expired, frozen
+        // none, pending, active, expired, frozen.
+        // Fase de acceso libre: los alumnos nacen activos (sin pagos).
+        'membershipStatus': AppFlags.freeAccessPhase ? 'active' : 'none',
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });

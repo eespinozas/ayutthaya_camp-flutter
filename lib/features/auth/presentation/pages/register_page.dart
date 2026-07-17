@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ayutthaya_camp/core/config/app_constants.dart';
 import 'package:ayutthaya_camp/core/services/auth_email_service.dart';
 import 'package:ayutthaya_camp/utils/validators.dart';
 
@@ -246,7 +247,9 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           'searchKey': email.toLowerCase(),
           'name': '$nombre $apellido',
           'role': 'student',
-          'membershipStatus': 'none',
+          // Fase de acceso libre: los alumnos nacen activos (sin pagos).
+          // En Fase 2 vuelven a 'none' hasta matricularse.
+          'membershipStatus': AppFlags.freeAccessPhase ? 'active' : 'none',
           'schoolId': schoolId,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),

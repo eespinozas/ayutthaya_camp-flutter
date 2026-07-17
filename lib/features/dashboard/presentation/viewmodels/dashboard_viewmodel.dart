@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../../core/config/app_constants.dart';
+
 class DashboardViewModel extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -182,7 +184,9 @@ class DashboardViewModel extends ChangeNotifier {
             'searchKey': userEmail.toLowerCase(), // Para búsquedas fáciles en Firebase Console
             'name': userName,
             'role': isAdmin ? 'admin' : 'student',
-            'membershipStatus': isAdmin ? 'active' : 'none',
+            // Fase de acceso libre: los alumnos también nacen activos.
+            'membershipStatus':
+                (isAdmin || AppFlags.freeAccessPhase) ? 'active' : 'none',
             'createdAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
           });
