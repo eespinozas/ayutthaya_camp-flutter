@@ -88,7 +88,7 @@ class ConfigService {
   String get supportPhone => getAppSetting<String>('support_phone', defaultValue: '+506-1234-5678') ?? '+506-1234-5678';
 
   /// Obtener capacidad por defecto de las clases
-  int get defaultClassCapacity => getAppSetting<int>('default_class_capacity', defaultValue: 15) ?? 15;
+  int get defaultClassCapacity => getAppSetting<int>('default_class_capacity', defaultValue: 30) ?? 30;
 
   /// Obtener días máximos de reserva anticipada
   int get maxAdvanceBookingDays => getAppSetting<int>('max_advance_booking_days', defaultValue: 7) ?? 7;

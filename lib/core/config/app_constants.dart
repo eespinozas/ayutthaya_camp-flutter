@@ -36,7 +36,7 @@ class BookingConstants {
   static const List<int> reminderMinutesBefore = [30, 15];
 
   // Capacidad
-  static const int defaultClassCapacity = 15;
+  static const int defaultClassCapacity = 30;
 }
 
 class MembershipConstants {

@@ -86,7 +86,7 @@ class AdminReportesViewModel extends ChangeNotifier {
 
         final totalCapacity = schedulesSnapshot.docs.fold<int>(
           0,
-          (total, doc) => total + ((doc.data()['capacity'] as int?) ?? 15),
+          (total, doc) => total + ((doc.data()['capacity'] as int?) ?? 30),
         );
         final classesTotal = schedulesSnapshot.docs.length;
 
@@ -143,7 +143,7 @@ class AdminReportesViewModel extends ChangeNotifier {
               'asistieron': 0,
               'faltas': 0,
               'porAprobar': 0,
-              'capacidad': (scheduleData?['capacity'] as int?) ?? 15,
+              'capacidad': (scheduleData?['capacity'] as int?) ?? 30,
               'finalizada': classEnd(hora).isBefore(now),
             };
           }
@@ -261,7 +261,7 @@ class AdminReportesViewModel extends ChangeNotifier {
                   .contains(weekday))
               .fold<int>(
                 0,
-                (total, doc) => total + ((doc.data()['capacity'] as int?) ?? 15),
+                (total, doc) => total + ((doc.data()['capacity'] as int?) ?? 30),
               );
         }
 
@@ -525,7 +525,7 @@ class AdminReportesViewModel extends ChangeNotifier {
         for (var doc in schedulesSnapshot.docs) {
           final data = doc.data();
           final daysOfWeek = List<int>.from(data['daysOfWeek'] ?? []);
-          final capacity = (data['capacity'] as int?) ?? 15;
+          final capacity = (data['capacity'] as int?) ?? 30;
 
           // Cuántas veces corrió este horario en el período contado
           var occurrences = 0;

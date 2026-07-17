@@ -369,7 +369,7 @@ class AdminDashboardViewModel extends ChangeNotifier {
       for (var doc in schedulesForToday) {
         final data = doc.data() as Map<String, dynamic>;
         final scheduleId = doc.id;
-        final capacity = (data['capacity'] as int?) ?? 15;
+        final capacity = (data['capacity'] as int?) ?? 30;
 
         // Sumar a la capacidad total del día
         capacidadTotalHoy += capacity;

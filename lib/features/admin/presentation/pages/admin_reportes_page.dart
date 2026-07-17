@@ -324,10 +324,11 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                       final faltas = (clase['faltas'] as int?) ?? 0;
                       final porAprobar = (clase['porAprobar'] as int?) ?? 0;
                       final finalizada = (clase['finalizada'] as bool?) ?? true;
-                      // Barra = asistencia sobre los inscritos de la clase
-                      // (no sobre la capacidad total del gimnasio).
+                      final capacidad = clase['capacidad'] as int;
+                      // Métrica principal: cupos tomados sobre capacidad
+                      // de la clase (los inscritos cuentan aunque no vayan).
                       final percentage =
-                          inscritos > 0 ? asistieron / inscritos : 0.0;
+                          capacidad > 0 ? inscritos / capacidad : 0.0;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
@@ -364,7 +365,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            '$asistieron/$inscritos asistieron',
+                                            '$inscritos/$capacidad inscritos',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 14,
@@ -373,6 +374,17 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                                           ),
                                           Row(
                                             children: [
+                                              if (asistieron > 0) ...[
+                                                Text(
+                                                  '$asistieron asistieron',
+                                                  style: const TextStyle(
+                                                    color: Colors.green,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                              ],
                                               if (porAprobar > 0) ...[
                                                 Text(
                                                   '$porAprobar por aprobar',
@@ -411,14 +423,12 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                                           value: percentage,
                                           minHeight: 6,
                                           backgroundColor: Colors.white12,
+                                          // Ocupación: llena = verde; el resto
+                                          // en el naranjo de la marca.
                                           valueColor: AlwaysStoppedAnimation<Color>(
-                                            !finalizada
-                                                ? Colors.white38
-                                                : percentage >= 0.9
-                                                    ? Colors.green
-                                                    : percentage >= 0.7
-                                                        ? Colors.orange
-                                                        : Colors.red,
+                                            percentage >= 1.0
+                                                ? Colors.green
+                                                : const Color(0xFFFF6A00),
                                           ),
                                         ),
                                       ),

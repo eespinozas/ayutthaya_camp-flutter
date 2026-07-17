@@ -96,7 +96,7 @@ class BookingService {
               'Esta clase no está disponible para esta fecha (horario suspendido)');
         }
 
-        final maxCapacity = scheduleSnapshot.data()?['capacity'] ?? 15;
+        final maxCapacity = scheduleSnapshot.data()?['capacity'] ?? 30;
 
         // Crear clave única para el contador de capacidad (formato: scheduleId_YYYY-MM-DD)
         final dateKey = _getDateKey(booking.classDate);
@@ -206,7 +206,7 @@ class BookingService {
       throw Exception('Horario no encontrado');
     }
 
-    final maxCapacity = scheduleDoc.data()?['capacity'] ?? 15;
+    final maxCapacity = scheduleDoc.data()?['capacity'] ?? 30;
 
     // Obtener contador de capacidad
     final dateKey = _getDateKey(classDate);
@@ -721,7 +721,7 @@ class BookingService {
             'time': classTime,
             'type': data['type'],
             'instructor': data['instructor'],
-            'capacity': data['capacity'] ?? 15,
+            'capacity': data['capacity'] ?? 30,
             'startTime': classStartTime,
             'minutesSinceStart': minutesSinceStart,
           });
