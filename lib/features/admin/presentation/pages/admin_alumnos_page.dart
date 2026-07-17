@@ -128,30 +128,47 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
             return role != 'admin';
           }).toList();
 
+          // Más recientes primero (los registros nuevos quedan arriba)
+          studentUsers.sort((a, b) {
+            final dataA = a.data() as Map<String, dynamic>;
+            final dataB = b.data() as Map<String, dynamic>;
+            final createdA = dataA['createdAt'] as Timestamp?;
+            final createdB = dataB['createdAt'] as Timestamp?;
+            if (createdA == null && createdB == null) return 0;
+            if (createdA == null) return 1;
+            if (createdB == null) return -1;
+            return createdB.compareTo(createdA);
+          });
+
+          String statusOf(QueryDocumentSnapshot doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['membershipStatus'] ?? 'none';
+          }
+
           final pendingUsers = studentUsers
-              .where((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                final status = data['membershipStatus'] ?? 'none';
-                // Solo usuarios que han pagado matrícula y esperan aprobación
-                return status == 'pending';
-              })
+              .where((doc) => statusOf(doc) == 'pending')
               .toList();
 
           final activeUsers = studentUsers
-              .where((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                final status = data['membershipStatus'] ?? 'none';
-                return status == 'active';
-              })
+              .where((doc) => statusOf(doc) == 'active')
               .toList();
 
+          // Membresías terminadas: el resto del código escribe
+          // 'expired'/'frozen' (nunca 'inactive', que se mantiene por
+          // compatibilidad con datos antiguos).
+          const inactiveStatuses = {'inactive', 'expired', 'frozen'};
           final inactiveUsers = studentUsers
-              .where((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                final status = data['membershipStatus'] ?? 'none';
-                return status == 'inactive';
-              })
+              .where((doc) => inactiveStatuses.contains(statusOf(doc)))
               .toList();
+
+          // Registrados sin membresía ('none' y cualquier valor desconocido):
+          // bucket residual para que ningún alumno quede invisible.
+          final registeredUsers = studentUsers.where((doc) {
+            final status = statusOf(doc);
+            return status != 'pending' &&
+                status != 'active' &&
+                !inactiveStatuses.contains(status);
+          }).toList();
 
           return RefreshIndicator(
             onRefresh: _refreshData,
@@ -168,13 +185,26 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                   children: [
                     Expanded(
                       child: _buildEnhancedStatCard(
+                        label: 'Registrados',
+                        value: '${registeredUsers.length}',
+                        icon: Icons.person_add_alt_1_rounded,
+                        gradientColors: const [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildEnhancedStatCard(
                         label: 'Pendientes',
                         value: '${pendingUsers.length}',
                         icon: Icons.pending_actions_rounded,
                         gradientColors: const [Color(0xFFF59E0B), Color(0xFFEF4444)],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
                     Expanded(
                       child: _buildEnhancedStatCard(
                         label: 'Activos',
@@ -197,6 +227,30 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
 
                 const SizedBox(height: 24),
 
+                // Usuarios registrados sin membresía (incluye a los nuevos)
+                if (registeredUsers.isNotEmpty) ...[
+                  const Text(
+                    'Registrados (sin membresía)',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...registeredUsers.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+
+                    return _UserCard(
+                      name: _nameOf(data),
+                      email: data['email'] as String? ?? 'Sin email',
+                      status: 'registered',
+                      createdAt: data['createdAt'] as Timestamp?,
+                    );
+                  }).toList(),
+                  const SizedBox(height: 24),
+                ],
+
                 // Usuarios pendientes
                 if (pendingUsers.isNotEmpty) ...[
                   const Text(
@@ -210,11 +264,10 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                   const SizedBox(height: 12),
                   ...pendingUsers.map((doc) {
                     final data = doc.data() as Map<String, dynamic>;
-                    final email = data['email'] as String?;
 
-                    return _UserCardWithName(
-                      userId: doc.id,
-                      email: email ?? 'Sin email',
+                    return _UserCard(
+                      name: _nameOf(data),
+                      email: data['email'] as String? ?? 'Sin email',
                       status: 'pending',
                       onActivate: () => _goToPagosToActivate(data),
                     );
@@ -235,11 +288,10 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                   const SizedBox(height: 12),
                   ...activeUsers.map((doc) {
                     final data = doc.data() as Map<String, dynamic>;
-                    final email = data['email'] as String?;
 
-                    return _UserCardWithName(
-                      userId: doc.id,
-                      email: email ?? 'Sin email',
+                    return _UserCard(
+                      name: _nameOf(data),
+                      email: data['email'] as String? ?? 'Sin email',
                       status: 'active',
                       expirationDate: data['expirationDate'],
                     );
@@ -260,11 +312,10 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                   const SizedBox(height: 12),
                   ...inactiveUsers.map((doc) {
                     final data = doc.data() as Map<String, dynamic>;
-                    final email = data['email'] as String?;
 
-                    return _UserCardWithName(
-                      userId: doc.id,
-                      email: email ?? 'Sin email',
+                    return _UserCard(
+                      name: _nameOf(data),
+                      email: data['email'] as String? ?? 'Sin email',
                       status: 'inactive',
                       expirationDate: data['expirationDate'],
                     );
@@ -333,6 +384,15 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
         ],
       ),
     );
+  }
+
+  /// Nombre a mostrar: el campo `name` del doc de usuario (se guarda en el
+  /// registro) o, si viene vacío, la parte local del email.
+  String _nameOf(Map<String, dynamic> data) {
+    final name = (data['name'] as String?)?.trim() ?? '';
+    if (name.isNotEmpty) return name;
+    final email = data['email'] as String? ?? '';
+    return email.contains('@') ? email.split('@')[0] : 'Sin nombre';
   }
 
   void _goToPagosToActivate(Map<String, dynamic> userData) {
@@ -425,114 +485,125 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
   }
 }
 
-// Widget que obtiene el nombre del usuario desde bookings
-class _UserCardWithName extends StatelessWidget {
-  final String userId;
+// Card de alumno; el nombre viene directo del documento de usuario
+class _UserCard extends StatelessWidget {
+  final String name;
   final String email;
-  final String status; // 'pending', 'active', 'inactive'
+  final String status; // 'registered', 'pending', 'active', 'inactive'
   final Timestamp? expirationDate;
+  final Timestamp? createdAt;
   final VoidCallback? onActivate;
 
-  const _UserCardWithName({
-    required this.userId,
+  const _UserCard({
+    required this.name,
     required this.email,
     required this.status,
     this.expirationDate,
+    this.createdAt,
     this.onActivate,
   });
 
-  Future<String> _getUserName() async {
-    try {
-      final bookingsSnapshot = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('userId', isEqualTo: userId)
-          .orderBy('createdAt', descending: true)
-          .limit(1)
-          .get();
-
-      if (bookingsSnapshot.docs.isNotEmpty) {
-        final booking = bookingsSnapshot.docs.first.data();
-        final userName = booking['userName'] as String?;
-        if (userName != null && userName.isNotEmpty) {
-          return userName;
-        }
-      }
-    } catch (e) {
-      debugPrint('Error obteniendo userName de bookings: $e');
-    }
-
-    // Fallback: usar parte del email antes del @
-    return email.split('@')[0];
-  }
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: _getUserName(),
-      builder: (context, snapshot) {
-        // Esperar a que cargue el nombre antes de mostrar el card
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          // Mostrar un placeholder mientras carga
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
+    switch (status) {
+      case 'registered':
+        return _buildRegisteredCard(name);
+      case 'pending':
+        return _buildPendingCard(name);
+      case 'active':
+        return _buildActiveCard(name);
+      case 'inactive':
+        return _buildInactiveCard(name);
+      default:
+        return _buildRegisteredCard(name);
+    }
+  }
+
+  Widget _buildRegisteredCard(String name) {
+    String registeredText = '';
+    if (createdAt != null) {
+      final date = createdAt!.toDate();
+      registeredText = 'Registro: ${date.day}/${date.month}/${date.year}';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF3B82F6).withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFF3B82F6).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Row(
+            child: const Icon(Icons.person_outline, color: Color(0xFF3B82F6)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(8),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                   ),
-                  child: const Icon(Icons.person_outline, color: Colors.white30, size: 24),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 16,
-                        width: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(4),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'REGISTRADO',
+                        style: TextStyle(
+                          color: Color(0xFF3B82F6),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Container(
-                        height: 12,
-                        width: 180,
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(4),
+                    ),
+                    if (registeredText.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      Text(
+                        registeredText,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 12,
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ],
             ),
-          );
-        }
-
-        final name = snapshot.data ?? email.split('@')[0];
-
-        switch (status) {
-          case 'pending':
-            return _buildPendingCard(name);
-          case 'active':
-            return _buildActiveCard(name);
-          case 'inactive':
-            return _buildInactiveCard(name);
-          default:
-            return _buildPendingCard(name);
-        }
-      },
+          ),
+        ],
+      ),
     );
   }
 

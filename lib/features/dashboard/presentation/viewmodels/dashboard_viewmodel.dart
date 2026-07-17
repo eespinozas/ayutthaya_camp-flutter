@@ -313,6 +313,11 @@ class DashboardViewModel extends ChangeNotifier {
           asistidas++;
         } else if (status == 'noShow') {
           noAsistidas++;
+        } else if (status == 'pendingApproval') {
+          // Confirmada por el alumno, esperando aprobación del admin
+          agendadas++;
+        } else if (status == 'rejected') {
+          noAsistidas++;
         }
       }
 
@@ -335,7 +340,11 @@ class DashboardViewModel extends ChangeNotifier {
       for (var doc in bookingsSnapshot.docs) {
         final status = doc.data()['status'];
         debugPrint('   - Booking: status=$status');
-        if (status == 'confirmed' || status == 'attended' || status == 'noShow') {
+        if (status == 'confirmed' ||
+            status == 'attended' ||
+            status == 'noShow' ||
+            status == 'pendingApproval' ||
+            status == 'rejected') {
           clasesUsadas++;
         }
       }
@@ -536,6 +545,13 @@ class DashboardViewModel extends ChangeNotifier {
           asistidas++;
           clasesUsadas++;
         } else if (status == 'noShow') {
+          noAsistidas++;
+          clasesUsadas++;
+        } else if (status == 'pendingApproval') {
+          // Confirmada por el alumno, esperando aprobación del admin
+          agendadas++;
+          clasesUsadas++;
+        } else if (status == 'rejected') {
           noAsistidas++;
           clasesUsadas++;
         }

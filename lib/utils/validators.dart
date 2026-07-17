@@ -96,6 +96,20 @@ class Validators {
     return null;
   }
 
+  /// Largo máximo del motivo al suspender un horario en una fecha.
+  static const int overrideReasonMaxLength = 120;
+
+  /// Motivo de suspensión de un horario: opcional, con largo acotado
+  /// (se muestra tal cual en la UI del alumno).
+  static String? validateOverrideReason(String? value) {
+    final reason = (value ?? '').trim();
+    if (reason.isEmpty) return null;
+    if (reason.length > overrideReasonMaxLength) {
+      return 'Máximo $overrideReasonMaxLength caracteres';
+    }
+    return null;
+  }
+
   /// "Confirmar Contraseña" debe coincidir con "Contraseña".
   static String? validatePasswordMatch(String? value, String? original) {
     return validateMatch(

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/config/app_constants.dart';
 import '../../../../core/services/attendance_window.dart';
 import '../../../auth/presentation/viewmodels/auth_viewmodel.dart';
 import '../../../auth/presentation/widgets/membership_guard.dart';
@@ -364,9 +365,12 @@ class _MisClasesPageState extends State<MisClasesPage>
 
         final filteredBookings = allBookings.where((booking) {
           if (status == BookingStatus.confirmed) {
-            // Incluir clases futuras Y clases de hoy
-            final shouldInclude = booking.status == BookingStatus.confirmed &&
-                                  (booking.isFuture() || booking.isToday());
+            // Incluir clases futuras Y clases de hoy; las confirmaciones de
+            // hoy pendientes de aprobación siguen visibles como "próximas"
+            final shouldInclude = (booking.status == BookingStatus.confirmed &&
+                    (booking.isFuture() || booking.isToday())) ||
+                (booking.status == BookingStatus.pendingApproval &&
+                    booking.isToday());
             debugPrint('   Filtering ${booking.scheduleType}: status=${booking.status.name}, isFuture=${booking.isFuture()}, isToday=${booking.isToday()}, included=$shouldInclude');
             return shouldInclude;
           }
@@ -488,7 +492,11 @@ class _MisClasesPageState extends State<MisClasesPage>
         final allBookings = snapshot.data ?? [];
         final completedBookings = allBookings.where((booking) {
           return booking.status == BookingStatus.attended ||
-              booking.status == BookingStatus.noShow;
+              booking.status == BookingStatus.noShow ||
+              booking.status == BookingStatus.rejected ||
+              // Confirmaciones de días anteriores aún sin resolver
+              (booking.status == BookingStatus.pendingApproval &&
+                  !booking.isToday());
         }).toList();
 
         if (completedBookings.isEmpty) {
@@ -532,6 +540,8 @@ class _MisClasesPageState extends State<MisClasesPage>
     final isAttended = booking.status == BookingStatus.attended;
     final isNoShow = booking.status == BookingStatus.noShow;
     final isCancelled = booking.status == BookingStatus.cancelled;
+    final isPendingApproval = booking.status == BookingStatus.pendingApproval;
+    final isRejected = booking.status == BookingStatus.rejected;
     final esPrimeraClase = AttendanceWindow.esPrimeraClaseDelDia(
       booking.scheduleTime,
       _horariosPorDia[ChileanHolidays.effectiveDayOfWeek(booking.classDate)] ??
@@ -567,6 +577,14 @@ class _MisClasesPageState extends State<MisClasesPage>
       statusColor = Colors.orange;
       statusText = 'Cancelada';
       statusIcon = Icons.event_busy;
+    } else if (isPendingApproval) {
+      statusColor = Colors.amber;
+      statusText = 'Esperando aprobación';
+      statusIcon = Icons.hourglass_top;
+    } else if (isRejected) {
+      statusColor = Colors.red;
+      statusText = 'Rechazada';
+      statusIcon = Icons.block;
     }
 
     return Card(
@@ -760,8 +778,12 @@ class _MisClasesPageState extends State<MisClasesPage>
                                   await bookingVM.confirmAttendance(booking.id!);
                               if (success && mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Asistencia confirmada'),
+                                  SnackBar(
+                                    content: Text(
+                                      AppFlags.attendanceApprovalFlow
+                                          ? 'Confirmación enviada: queda pendiente de aprobación del admin'
+                                          : 'Asistencia confirmada',
+                                    ),
                                     backgroundColor: Colors.green,
                                   ),
                                 );

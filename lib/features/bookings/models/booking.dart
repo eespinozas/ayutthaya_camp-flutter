@@ -4,10 +4,12 @@ import 'package:flutter/foundation.dart';
 import '../../../core/services/attendance_window.dart';
 
 enum BookingStatus {
-  confirmed,  // Reserva confirmada
-  attended,   // Usuario asistió
-  cancelled,  // Usuario canceló
-  noShow,     // No asistió
+  confirmed,       // Reserva agendada
+  pendingApproval, // Alumno confirmó por app; espera aprobación del admin
+  attended,        // Asistencia validada (check-in QR o aprobación del admin)
+  cancelled,       // Usuario canceló
+  noShow,          // No asistió (no confirmó dentro de la ventana)
+  rejected,        // Admin rechazó la confirmación del alumno
 }
 
 class Booking {
@@ -236,6 +238,8 @@ class Booking {
     if (status == BookingStatus.cancelled) return 'Cancelada';
     if (status == BookingStatus.attended) return 'Asistió';
     if (status == BookingStatus.noShow) return 'No asistió';
+    if (status == BookingStatus.pendingApproval) return 'Esperando aprobación';
+    if (status == BookingStatus.rejected) return 'Confirmación rechazada';
 
     if (userConfirmedAttendance) return 'Asistencia confirmada';
     if (missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {

@@ -56,6 +56,23 @@ service cloud.firestore {
       allow read: if true;  // Lectura pública para ver horarios
       allow write: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+      // Contador de capacidad por fecha: lo escriben las transacciones de
+      // reserva/cancelación de cualquier usuario autenticado.
+      match /capacity_tracking/{dateKey} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // ============================================
+    // SCHEDULE_OVERRIDES - Horarios deshabilitados en fechas puntuales
+    // Lectura autenticada (los alumnos filtran clases suspendidas),
+    // escritura solo admin.
+    // ============================================
+    match /schedule_overrides/{overrideId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     // ============================================

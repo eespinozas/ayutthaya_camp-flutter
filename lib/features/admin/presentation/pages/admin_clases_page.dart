@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/admin_clases_viewmodel.dart';
 import '../../../schedules/models/class_schedule.dart';
 import '../../../bookings/models/booking.dart';
+import '../../../../utils/validators.dart';
 
 class AdminClasesPage extends StatefulWidget {
   const AdminClasesPage({super.key});
@@ -209,14 +210,23 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                         );
                       }
 
-                      return ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: schedules.length,
-                        itemBuilder: (context, index) {
-                          final schedule = schedules[index];
-                          return _ClassCard(
-                            schedule: schedule,
-                            viewModel: viewModel,
+                      return StreamBuilder<Set<String>>(
+                        stream: viewModel.getDisabledScheduleIds(),
+                        builder: (context, disabledSnapshot) {
+                          final disabledIds =
+                              disabledSnapshot.data ?? const <String>{};
+
+                          return ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: schedules.length,
+                            itemBuilder: (context, index) {
+                              final schedule = schedules[index];
+                              return _ClassCard(
+                                schedule: schedule,
+                                viewModel: viewModel,
+                                isDisabled: disabledIds.contains(schedule.id),
+                              );
+                            },
                           );
                         },
                       );
@@ -235,10 +245,12 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
 class _ClassCard extends StatefulWidget {
   final ClassSchedule schedule;
   final AdminClasesViewModel viewModel;
+  final bool isDisabled;
 
   const _ClassCard({
     required this.schedule,
     required this.viewModel,
+    this.isDisabled = false,
   });
 
   @override
@@ -270,17 +282,199 @@ class _ClassCardState extends State<_ClassCard> {
     }
   }
 
+  /// Diálogo para deshabilitar el horario en la fecha seleccionada.
+  Future<void> _showDisableDialog() async {
+    final reasonController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final dateStr =
+        DateFormat('dd MMM yyyy', 'es_ES').format(widget.viewModel.selectedDate);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Row(
+          children: [
+            Icon(Icons.event_busy, color: Colors.red),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Suspender clase',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Se suspenderá la clase de las ${widget.schedule.time} '
+                'solo para el $dateStr.\n\n'
+                'Nadie podrá agendar ni hacer check-in QR en este horario esa fecha. '
+                'Las reservas ya existentes no se modifican.',
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: reasonController,
+                maxLength: Validators.overrideReasonMaxLength,
+                style: const TextStyle(color: Colors.white),
+                validator: Validators.validateOverrideReason,
+                decoration: InputDecoration(
+                  labelText: 'Motivo (opcional)',
+                  hintText: 'Ej: Pelea / evento',
+                  labelStyle: const TextStyle(color: Colors.white60),
+                  hintStyle: const TextStyle(color: Colors.white30),
+                  counterStyle: const TextStyle(color: Colors.white38),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFFF6A00)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.pop(dialogContext, true);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.event_busy, size: 18),
+            label: const Text('Suspender'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await widget.viewModel.disableScheduleForSelectedDate(
+        widget.schedule.id!,
+        reason: reasonController.text,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Clase de las ${widget.schedule.time} suspendida para el $dateStr'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al suspender: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Diálogo de confirmación para rehabilitar el horario.
+  Future<void> _showEnableDialog() async {
+    final dateStr =
+        DateFormat('dd MMM yyyy', 'es_ES').format(widget.viewModel.selectedDate);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text(
+          'Rehabilitar clase',
+          style: TextStyle(color: Colors.white, fontSize: 18),
+        ),
+        content: Text(
+          'La clase de las ${widget.schedule.time} volverá a estar '
+          'disponible para agendar el $dateStr.',
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Rehabilitar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await widget.viewModel.enableScheduleForSelectedDate(widget.schedule.id!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('Clase de las ${widget.schedule.time} rehabilitada'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al rehabilitar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = widget.viewModel.getClassStatus(widget.schedule.time);
-    final statusColor = _getStatusColor(status);
-    final statusText = _getStatusText(status);
+    final statusColor =
+        widget.isDisabled ? Colors.red : _getStatusColor(status);
+    final statusText =
+        widget.isDisabled ? 'Suspendida' : _getStatusText(status);
 
     return StreamBuilder<List<Booking>>(
       stream: widget.viewModel.getClassBookings(widget.schedule.id!),
       builder: (context, snapshot) {
         final bookings = snapshot.data ?? [];
         final attended = bookings.where((b) => b.status == BookingStatus.attended).length;
+        final pendingApproval = bookings
+            .where((b) => b.status == BookingStatus.pendingApproval)
+            .length;
         final total = bookings.length;
         final isFull = attended == total && total > 0;
 
@@ -348,6 +542,27 @@ class _ClassCardState extends State<_ClassCard> {
                       // Attendance count
                       Row(
                         children: [
+                          if (pendingApproval > 0) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$pendingApproval por aprobar',
+                                style: const TextStyle(
+                                  color: Colors.amber,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
                           Icon(
                             isFull ? Icons.check_circle : Icons.people,
                             color: isFull ? Colors.green : Colors.white70,
@@ -364,7 +579,28 @@ class _ClassCardState extends State<_ClassCard> {
                           ),
                         ],
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        onPressed: widget.isDisabled
+                            ? _showEnableDialog
+                            : _showDisableDialog,
+                        icon: Icon(
+                          widget.isDisabled
+                              ? Icons.event_available
+                              : Icons.event_busy,
+                          color:
+                              widget.isDisabled ? Colors.green : Colors.white38,
+                          size: 20,
+                        ),
+                        tooltip: widget.isDisabled
+                            ? 'Rehabilitar en esta fecha'
+                            : 'Suspender en esta fecha',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      ),
                       Icon(
                         _expanded ? Icons.expand_less : Icons.expand_more,
                         color: Colors.white70,
@@ -432,6 +668,19 @@ class _ClassCardState extends State<_ClassCard> {
                   else
                     ...bookings.map((booking) {
                       final hasAttended = booking.status == BookingStatus.attended;
+                      final isPending =
+                          booking.status == BookingStatus.pendingApproval;
+                      final isRejected =
+                          booking.status == BookingStatus.rejected;
+
+                      final rowColor = hasAttended
+                          ? Colors.green
+                          : isPending
+                              ? Colors.amber
+                              : isRejected
+                                  ? Colors.red
+                                  : null;
+
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.symmetric(
@@ -439,41 +688,47 @@ class _ClassCardState extends State<_ClassCard> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: hasAttended
-                              ? Colors.green.withValues(alpha: 0.1)
-                              : const Color(0xFF0F0F0F),
+                          color: rowColor?.withValues(alpha: 0.1) ??
+                              const Color(0xFF0F0F0F),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: hasAttended
-                                ? Colors.green.withValues(alpha: 0.3)
-                                : Colors.white10,
+                            color: rowColor?.withValues(alpha: 0.3) ??
+                                Colors.white10,
                             width: 1,
                           ),
                         ),
                         child: Row(
                           children: [
-                            Checkbox(
-                              value: hasAttended,
-                              onChanged: (_) async {
-                                try {
-                                  await widget.viewModel.toggleAttendance(
-                                    booking.id!,
-                                    booking.status,
-                                  );
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Error: $e'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
+                            if (isPending)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12),
+                                child: Icon(
+                                  Icons.hourglass_top,
+                                  color: Colors.amber,
+                                  size: 22,
+                                ),
+                              )
+                            else
+                              Checkbox(
+                                value: hasAttended,
+                                onChanged: (_) async {
+                                  try {
+                                    await widget.viewModel
+                                        .toggleAttendance(booking);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Error: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
                                   }
-                                }
-                              },
-                              activeColor: Colors.green,
-                              checkColor: Colors.white,
-                            ),
+                                },
+                                activeColor: Colors.green,
+                                checkColor: Colors.white,
+                              ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(
@@ -519,10 +774,83 @@ class _ClassCardState extends State<_ClassCard> {
                                         ],
                                       ),
                                     ),
+                                  if (isPending)
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        'Confirmó por app — esperando aprobación',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.amber,
+                                        ),
+                                      ),
+                                    ),
+                                  if (isRejected)
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        'Confirmación rechazada',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
-                            if (hasAttended)
+                            if (isPending) ...[
+                              IconButton(
+                                onPressed: () async {
+                                  try {
+                                    await widget.viewModel
+                                        .approveAttendance(booking.id!);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Error: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                                icon: const Icon(Icons.check_circle,
+                                    color: Colors.green, size: 24),
+                                tooltip: 'Aprobar asistencia',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () async {
+                                  try {
+                                    await widget.viewModel
+                                        .rejectAttendance(booking.id!);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Error: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                                icon: const Icon(Icons.cancel,
+                                    color: Colors.red, size: 24),
+                                tooltip: 'Rechazar confirmación',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
+                                ),
+                              ),
+                            ] else if (hasAttended)
                               const Icon(
                                 Icons.check_circle,
                                 color: Colors.green,

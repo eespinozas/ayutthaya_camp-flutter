@@ -1136,6 +1136,8 @@ class _TodayClassCard extends StatelessWidget {
   }
 
   Color _getStatusColor() {
+    if (booking.status == BookingStatus.pendingApproval) return Colors.amber;
+    if (booking.status == BookingStatus.rejected) return Colors.red;
     if (booking.userConfirmedAttendance) return Colors.green;
     if (booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
       return Colors.orange;
@@ -1147,6 +1149,10 @@ class _TodayClassCard extends StatelessWidget {
   }
 
   IconData _getStatusIcon() {
+    if (booking.status == BookingStatus.pendingApproval) {
+      return Icons.hourglass_top;
+    }
+    if (booking.status == BookingStatus.rejected) return Icons.block;
     if (booking.userConfirmedAttendance) return Icons.check_circle;
     if (booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
       return Icons.schedule;

@@ -23,7 +23,7 @@ class PaginationService<T> {
   final T Function(DocumentSnapshot) fromFirestore;
   final Query Function(Query)? queryBuilder;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
 
   // Estado de paginación
   final List<T> _items = [];
@@ -38,7 +38,8 @@ class PaginationService<T> {
     this.pageSize = 20,
     required this.fromFirestore,
     this.queryBuilder,
-  });
+    FirebaseFirestore? firestore,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   List<T> get items => List.unmodifiable(_items);
   bool get hasMore => _hasMore;

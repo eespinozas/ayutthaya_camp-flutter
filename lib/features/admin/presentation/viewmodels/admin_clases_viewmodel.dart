@@ -3,11 +3,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../bookings/models/booking.dart';
 import '../../../schedules/models/class_schedule.dart';
+import '../../../schedules/models/schedule_override.dart';
+import '../../../schedules/services/schedule_override_service.dart';
+import '../../../../core/config/app_constants.dart';
 import '../../../../core/services/chilean_holidays.dart';
 
 class AdminClasesViewModel extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final ScheduleOverrideService _overrideService = ScheduleOverrideService();
 
   DateTime _selectedDate = DateTime.now();
   DateTime get selectedDate => _selectedDate;
@@ -174,6 +178,40 @@ class AdminClasesViewModel extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Overrides: deshabilitar/rehabilitar un horario en la fecha seleccionada
+  // ---------------------------------------------------------------------------
+
+  /// IDs de horarios deshabilitados en la fecha seleccionada (tiempo real).
+  Stream<Set<String>> getDisabledScheduleIds() {
+    return _overrideService.disabledScheduleIdsForDate(_selectedDate);
+  }
+
+  /// Override vigente para un horario en la fecha seleccionada (o null).
+  Future<ScheduleOverride?> getOverride(String scheduleId) {
+    return _overrideService.getOverride(scheduleId, _selectedDate);
+  }
+
+  /// Deshabilitar un horario solo para la fecha seleccionada.
+  /// Las reservas existentes no se tocan; solo se bloquean las nuevas.
+  Future<void> disableScheduleForSelectedDate(
+    String scheduleId, {
+    String? reason,
+  }) async {
+    final adminId = _auth.currentUser?.uid ?? 'unknown';
+    await _overrideService.disableSchedule(
+      scheduleId: scheduleId,
+      date: _selectedDate,
+      adminId: adminId,
+      reason: reason,
+    );
+  }
+
+  /// Rehabilitar un horario para la fecha seleccionada.
+  Future<void> enableScheduleForSelectedDate(String scheduleId) async {
+    await _overrideService.enableSchedule(scheduleId, _selectedDate);
+  }
+
+  // ---------------------------------------------------------------------------
   // Marcar asistencia de un alumno
   // ---------------------------------------------------------------------------
   Future<void> markAttendance(String bookingId) async {
@@ -219,14 +257,52 @@ class AdminClasesViewModel extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Aprobar / rechazar confirmaciones pendientes (pendingApproval)
+  // ---------------------------------------------------------------------------
+
+  /// Aprobar la confirmación del alumno: pasa a attended y cuenta para el
+  /// ranking (equivalente a marcar asistencia manualmente).
+  Future<void> approveAttendance(String bookingId) => markAttendance(bookingId);
+
+  /// Rechazar la confirmación del alumno: pasa a rejected (no cuenta como
+  /// asistencia). Se registra qué admin decidió en attendedBy.
+  Future<void> rejectAttendance(String bookingId) async {
+    try {
+      debugPrint('🔄 Rechazando confirmación: $bookingId');
+
+      final adminId = _auth.currentUser?.uid ?? 'unknown';
+
+      await _firestore.collection('bookings').doc(bookingId).update({
+        'status': BookingStatus.rejected.name,
+        'attendedBy': adminId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      debugPrint('✅ Confirmación rechazada');
+    } catch (e) {
+      debugPrint('❌ Error rechazando confirmación: $e');
+      rethrow;
+    }
+  }
+
+  /// Estado al que vuelve una reserva cuando el admin desmarca su
+  /// asistencia: si el alumno había confirmado (y el flujo de aprobación
+  /// está activo) vuelve a pendiente de aprobación; si no, a agendada.
+  String _revertStatusFor(Booking booking) {
+    return (AppFlags.attendanceApprovalFlow && booking.userConfirmedAttendance)
+        ? BookingStatus.pendingApproval.name
+        : BookingStatus.confirmed.name;
+  }
+
+  // ---------------------------------------------------------------------------
   // Toggle asistencia (marcar/desmarcar)
   // ---------------------------------------------------------------------------
-  Future<void> toggleAttendance(String bookingId, BookingStatus currentStatus) async {
+  Future<void> toggleAttendance(Booking booking) async {
     try {
-      if (currentStatus == BookingStatus.attended) {
-        // Si ya estaba marcado como asistido, volver a confirmed
-        await _firestore.collection('bookings').doc(bookingId).update({
-          'status': BookingStatus.confirmed.name,
+      if (booking.status == BookingStatus.attended) {
+        // Si ya estaba marcado como asistido, revertir
+        await _firestore.collection('bookings').doc(booking.id).update({
+          'status': _revertStatusFor(booking),
           'attendedAt': null,
           'attendedBy': null,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -234,7 +310,7 @@ class AdminClasesViewModel extends ChangeNotifier {
         debugPrint('✅ Asistencia removida');
       } else {
         // Marcar como asistido
-        await markAttendance(bookingId);
+        await markAttendance(booking.id!);
       }
     } catch (e) {
       debugPrint('❌ Error toggling asistencia: $e');
@@ -253,7 +329,9 @@ class AdminClasesViewModel extends ChangeNotifier {
       final batch = _firestore.batch();
 
       for (var booking in bookings) {
-        if (booking.status != BookingStatus.attended) {
+        // No tocar asistencias ya registradas ni reservas canceladas
+        if (booking.status != BookingStatus.attended &&
+            booking.status != BookingStatus.cancelled) {
           final docRef = _firestore.collection('bookings').doc(booking.id);
           batch.update(docRef, {
             'status': BookingStatus.attended.name,
@@ -285,7 +363,7 @@ class AdminClasesViewModel extends ChangeNotifier {
         if (booking.status == BookingStatus.attended) {
           final docRef = _firestore.collection('bookings').doc(booking.id);
           batch.update(docRef, {
-            'status': BookingStatus.confirmed.name,
+            'status': _revertStatusFor(booking),
             'attendedAt': null,
             'attendedBy': null,
             'updatedAt': FieldValue.serverTimestamp(),

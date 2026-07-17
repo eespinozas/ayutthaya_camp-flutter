@@ -1,8 +1,11 @@
 /// Sistema de rangos Muay Thai basado en asistencia acumulada.
 ///
-/// El rango se deriva directamente del total histórico de clases asistidas
-/// (contador de check-ins QR): no requiere jobs mensuales ni estado extra,
-/// y nunca desciende porque el contador solo crece.
+/// El rango se deriva directamente del total histórico de clases asistidas:
+/// bookings con status == 'attended', que solo se alcanza por check-in QR
+/// en el gimnasio o por aprobación del admin (las confirmaciones por app
+/// quedan en 'pendingApproval' y no cuentan hasta ser aprobadas). No
+/// requiere jobs mensuales ni estado extra, y nunca desciende porque el
+/// contador solo crece.
 ///
 /// Progresión: cada [RankingService.clasesPorDivision] clases acumuladas
 /// se sube una división. 4 tiers × 4 divisiones = 16 rangos:

@@ -9,6 +9,7 @@ import 'dart:convert';
 
 import '../../../schedules/viewmodels/class_schedule_viewmodel.dart';
 import '../../../schedules/models/class_schedule.dart';
+import '../../../schedules/services/schedule_override_service.dart';
 import '../../../bookings/viewmodels/booking_viewmodel.dart';
 import '../../../bookings/models/booking.dart';
 import '../../../auth/presentation/viewmodels/auth_viewmodel.dart';
@@ -27,6 +28,7 @@ class _AgendarPageState extends State<AgendarPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   bool _localeInitialized = false;
+  final ScheduleOverrideService _overrideService = ScheduleOverrideService();
 
   @override
   void initState() {
@@ -749,20 +751,30 @@ class _AgendarPageState extends State<AgendarPage> {
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: classes.length,
-                  itemBuilder: (context, index) {
-                    final schedule = classes[index];
+                // Horarios suspendidos puntualmente en la fecha seleccionada
+                return StreamBuilder<Set<String>>(
+                  stream: _overrideService.disabledScheduleIdsForDate(_selectedDay!),
+                  builder: (context, overridesSnapshot) {
+                    final suspendedIds =
+                        overridesSnapshot.data ?? const <String>{};
 
-                    // Usar un widget con estado para evitar flickering
-                    return ClassScheduleCard(
-                      key: ValueKey('${schedule.id}_${_selectedDay?.toString()}'),
-                      schedule: schedule,
-                      selectedDay: _selectedDay!,
-                      onBook: () => _bookClass(schedule),
-                      formatTime: _formatTime,
-                      hasClassPassed: _hasClassPassed,
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: classes.length,
+                      itemBuilder: (context, index) {
+                        final schedule = classes[index];
+
+                        // Usar un widget con estado para evitar flickering
+                        return ClassScheduleCard(
+                          key: ValueKey('${schedule.id}_${_selectedDay?.toString()}'),
+                          schedule: schedule,
+                          selectedDay: _selectedDay!,
+                          onBook: () => _bookClass(schedule),
+                          formatTime: _formatTime,
+                          hasClassPassed: _hasClassPassed,
+                          isSuspended: suspendedIds.contains(schedule.id),
+                        );
+                      },
                     );
                   },
                 );
@@ -1116,6 +1128,7 @@ class ClassScheduleCard extends StatefulWidget {
   final VoidCallback onBook;
   final String Function(String) formatTime;
   final bool Function(String, DateTime) hasClassPassed;
+  final bool isSuspended; // Horario deshabilitado solo para esta fecha
 
   const ClassScheduleCard({
     super.key,
@@ -1124,6 +1137,7 @@ class ClassScheduleCard extends StatefulWidget {
     required this.onBook,
     required this.formatTime,
     required this.hasClassPassed,
+    this.isSuspended = false,
   });
 
   @override
@@ -1224,7 +1238,9 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
     final isFull = enrolled >= widget.schedule.capacity;
     final availableSpots = widget.schedule.capacity - enrolled;
     final alreadyBooked = _alreadyBooked ?? false;
-    final hasPassed = widget.hasClassPassed(widget.schedule.time, widget.selectedDay);
+    // Una clase suspendida se muestra atenuada igual que una finalizada
+    final hasPassed = widget.isSuspended ||
+        widget.hasClassPassed(widget.schedule.time, widget.selectedDay);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -1333,13 +1349,17 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.3),
+                          color: widget.isSuspended
+                              ? Colors.red.withOpacity(0.25)
+                              : Colors.grey.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
-                          'FINALIZADA',
+                        child: Text(
+                          widget.isSuspended ? 'SUSPENDIDA' : 'FINALIZADA',
                           style: TextStyle(
-                            color: Colors.grey,
+                            color: widget.isSuspended
+                                ? Colors.redAccent
+                                : Colors.grey,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1403,13 +1423,15 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
                         ),
                       )
                     : Text(
-                        hasPassed
-                            ? 'CLASE FINALIZADA'
-                            : isFull
-                                ? 'CLASE LLENA'
-                                : alreadyBooked
-                                    ? 'YA AGENDADA'
-                                    : 'RESERVAR CLASE',
+                        widget.isSuspended
+                            ? 'CLASE SUSPENDIDA'
+                            : hasPassed
+                                ? 'CLASE FINALIZADA'
+                                : isFull
+                                    ? 'CLASE LLENA'
+                                    : alreadyBooked
+                                        ? 'YA AGENDADA'
+                                        : 'RESERVAR CLASE',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 14,

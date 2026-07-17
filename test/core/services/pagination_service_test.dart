@@ -35,11 +35,8 @@ void main() {
         descending: false,
         pageSize: 10,
         fromFirestore: TestModel.fromFirestore,
+        firestore: fakeFirestore,
       );
-
-      // Override firestore instance (for testing with fake)
-      // Note: This requires modifying PaginationService to accept optional firestore instance
-      // For now, this test demonstrates the expected behavior
 
       await paginationService.loadFirstPage();
 
@@ -54,6 +51,7 @@ void main() {
         orderByField: 'createdAt',
         pageSize: 15,
         fromFirestore: TestModel.fromFirestore,
+        firestore: fakeFirestore,
       );
 
       await paginationService.loadFirstPage();
@@ -70,10 +68,17 @@ void main() {
         orderByField: 'createdAt',
         pageSize: 50,
         fromFirestore: TestModel.fromFirestore,
+        firestore: fakeFirestore,
       );
 
       await paginationService.loadFirstPage();
 
+      expect(paginationService.itemCount, 50);
+      // Con una página exactamente llena el servicio no puede saber si hay
+      // más datos: hasMore queda true y la siguiente página (vacía) lo apaga.
+      expect(paginationService.hasMore, true);
+
+      await paginationService.loadNextPage();
       expect(paginationService.itemCount, 50);
       expect(paginationService.hasMore, false);
     });
@@ -84,6 +89,7 @@ void main() {
         orderByField: 'createdAt',
         pageSize: 10,
         fromFirestore: TestModel.fromFirestore,
+        firestore: fakeFirestore,
       );
 
       await paginationService.loadFirstPage();
@@ -99,6 +105,7 @@ void main() {
         orderByField: 'createdAt',
         pageSize: 10,
         fromFirestore: TestModel.fromFirestore,
+        firestore: fakeFirestore,
       );
 
       await paginationService.loadFirstPage();
@@ -118,6 +125,7 @@ void main() {
         orderByField: 'createdAt',
         pageSize: 10,
         fromFirestore: TestModel.fromFirestore,
+        firestore: fakeFirestore,
       );
 
       await paginationService.loadFirstPage();
@@ -136,6 +144,7 @@ void main() {
         orderByField: 'createdAt',
         pageSize: 10,
         fromFirestore: TestModel.fromFirestore,
+        firestore: fakeFirestore,
       );
 
       await paginationService.loadFirstPage();
@@ -156,6 +165,7 @@ void main() {
         pageSize: 10,
         fromFirestore: TestModel.fromFirestore,
         queryBuilder: (query) => query.where('value', isGreaterThan: 25),
+        firestore: fakeFirestore,
       );
 
       await paginationService.loadFirstPage();
@@ -172,6 +182,7 @@ void main() {
         descending: true,
         pageSize: 5,
         fromFirestore: TestModel.fromFirestore,
+        firestore: fakeFirestore,
       );
 
       await paginationService.loadFirstPage();

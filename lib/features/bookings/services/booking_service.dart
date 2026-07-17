@@ -1,12 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/booking.dart';
+import '../../schedules/models/schedule_override.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/config/app_constants.dart';
 import '../../../core/services/chilean_holidays.dart';
 
 class BookingService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+
+  /// [firestore] inyectable para tests (default: instancia real).
+  BookingService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Generar clave única para tracking de capacidad (formato: YYYY-MM-DD)
   String _getDateKey(DateTime date) {
@@ -76,6 +81,19 @@ class BookingService {
 
         if (!scheduleSnapshot.exists) {
           throw Exception('Horario de clase no encontrado');
+        }
+
+        // Horario deshabilitado puntualmente para esa fecha (ej: evento):
+        // se bloquean solo las reservas nuevas. Validado dentro de la
+        // transacción para cubrir también apps con UI desactualizada.
+        final overrideRef = _firestore
+            .collection('schedule_overrides')
+            .doc(ScheduleOverride.docIdFor(booking.scheduleId, booking.classDate));
+        final overrideSnapshot = await transaction.get(overrideRef);
+        if (overrideSnapshot.exists &&
+            (overrideSnapshot.data()?['disabled'] ?? false) == true) {
+          throw Exception(
+              'Esta clase no está disponible para esta fecha (horario suspendido)');
         }
 
         final maxCapacity = scheduleSnapshot.data()?['capacity'] ?? 15;
@@ -287,9 +305,10 @@ class BookingService {
   /// Cancelar una reserva (usuario) con decremento atómico del contador
   Future<void> cancelBooking(String bookingId, String reason) async {
     try {
-      // 🔒 TRANSACCIÓN ATÓMICA: Cancelar booking y decrementar contador
+      // 🔒 TRANSACCIÓN ATÓMICA: Cancelar booking y decrementar contador.
+      // Firestore exige TODAS las lecturas antes de cualquier escritura.
       await _firestore.runTransaction((transaction) async {
-        // Obtener el booking para saber scheduleId y classDate
+        // Lectura 1: el booking (para saber scheduleId y classDate)
         final bookingRef = _firestore.collection('bookings').doc(bookingId);
         final bookingSnapshot = await transaction.get(bookingRef);
 
@@ -307,7 +326,16 @@ class BookingService {
           throw Exception('Solo se pueden cancelar reservas confirmadas');
         }
 
-        // Actualizar el booking a cancelado
+        // Lectura 2: el contador de capacidad
+        final dateKey = _getDateKey(classDate);
+        final capacityRef = _firestore
+            .collection('class_schedules')
+            .doc(scheduleId)
+            .collection('capacity_tracking')
+            .doc(dateKey);
+        final capacitySnapshot = await transaction.get(capacityRef);
+
+        // Escritura 1: actualizar el booking a cancelado
         transaction.update(bookingRef, {
           'status': BookingStatus.cancelled.name,
           'cancelledAt': FieldValue.serverTimestamp(),
@@ -315,16 +343,7 @@ class BookingService {
           'updatedAt': FieldValue.serverTimestamp(),
         });
 
-        // Decrementar contador de capacidad
-        final dateKey = _getDateKey(classDate);
-        final capacityRef = _firestore
-            .collection('class_schedules')
-            .doc(scheduleId)
-            .collection('capacity_tracking')
-            .doc(dateKey);
-
-        final capacitySnapshot = await transaction.get(capacityRef);
-
+        // Escritura 2: decrementar contador de capacidad
         if (capacitySnapshot.exists) {
           final currentBookings = capacitySnapshot.data()?['currentBookings'] ?? 0;
 
@@ -382,18 +401,28 @@ class BookingService {
 
   /// Confirmar asistencia (usuario)
   ///
-  /// Marca también status = attended: la asistencia confirmada por botón
-  /// cuenta igual que el check-in por QR (ranking, contadores y reportes
-  /// consultan status == 'attended').
+  /// Con [AppFlags.attendanceApprovalFlow] la confirmación deja la reserva
+  /// en `pendingApproval`: el admin debe aprobarla (→ attended, cuenta para
+  /// ranking y reportes) o rechazarla (→ rejected). Con el flag apagado se
+  /// marca attended de inmediato, igual que el check-in por QR.
   Future<void> confirmAttendance(String bookingId) async {
     try {
-      await _firestore.collection('bookings').doc(bookingId).update({
-        'status': BookingStatus.attended.name,
-        'attendedAt': FieldValue.serverTimestamp(),
-        'userConfirmedAttendance': true,
-        'attendanceConfirmedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      if (AppFlags.attendanceApprovalFlow) {
+        await _firestore.collection('bookings').doc(bookingId).update({
+          'status': BookingStatus.pendingApproval.name,
+          'userConfirmedAttendance': true,
+          'attendanceConfirmedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        await _firestore.collection('bookings').doc(bookingId).update({
+          'status': BookingStatus.attended.name,
+          'attendedAt': FieldValue.serverTimestamp(),
+          'userConfirmedAttendance': true,
+          'attendanceConfirmedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
     } catch (e) {
       throw Exception('Error al confirmar asistencia: $e');
     }
@@ -476,6 +505,7 @@ class BookingService {
           attended++;
           break;
         case BookingStatus.noShow:
+        case BookingStatus.rejected:
           noShow++;
           break;
         case BookingStatus.cancelled:
@@ -646,6 +676,17 @@ class BookingService {
           .where('active', isEqualTo: true)
           .get();
 
+      // Horarios deshabilitados puntualmente para hoy: no reciben check-in
+      // ni deben marcar noShow (la clase no se dictó).
+      final overridesSnapshot = await _firestore
+          .collection('schedule_overrides')
+          .where('dateKey', isEqualTo: ScheduleOverride.dateKeyFor(today))
+          .where('disabled', isEqualTo: true)
+          .get();
+      final disabledScheduleIds = overridesSnapshot.docs
+          .map((doc) => doc.data()['scheduleId'] as String? ?? '')
+          .toSet();
+
       // Clasificar clases en: activas (0-20 min) y pasadas (>20 min)
       List<Map<String, dynamic>> activeClasses = [];
       List<Map<String, dynamic>> recentlyPassedClasses = [];
@@ -656,6 +697,12 @@ class BookingService {
 
         // Verificar si la clase es hoy
         if (!classDays.contains(currentDayOfWeek)) continue;
+
+        // Horario suspendido hoy: se ignora por completo
+        if (disabledScheduleIds.contains(doc.id)) {
+          debugPrint('   🚫 Clase ${data['time']} suspendida hoy: se omite');
+          continue;
+        }
 
         final classTime = data['time'] as String;
         final parts = classTime.split(':');
@@ -825,6 +872,27 @@ class BookingService {
               'success': true,
               'message': 'Esta clase de $scheduleType ($scheduleTime) ya está marcada como no asistida',
               'action': 'already_no_show',
+              'classTime': scheduleTime,
+              'classType': scheduleType,
+            };
+          }
+
+          // No degradar asistencias ya registradas ni confirmaciones
+          // que esperan aprobación del admin.
+          if (currentStatus == BookingStatus.attended.name) {
+            return {
+              'success': true,
+              'message': 'Tu asistencia a $scheduleType de las $scheduleTime ya estaba registrada',
+              'action': 'already_attended',
+              'classTime': scheduleTime,
+              'classType': scheduleType,
+            };
+          }
+          if (currentStatus == BookingStatus.pendingApproval.name) {
+            return {
+              'success': true,
+              'message': 'Tu confirmación de $scheduleType ($scheduleTime) está esperando la aprobación del administrador',
+              'action': 'pending_approval',
               'classTime': scheduleTime,
               'classType': scheduleType,
             };

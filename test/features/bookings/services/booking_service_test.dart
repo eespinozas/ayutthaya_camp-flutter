@@ -48,7 +48,7 @@ void main() {
         'classesUsedThisMonth': 0,
       });
 
-      bookingService = BookingService();
+      bookingService = BookingService(firestore: fakeFirestore);
     });
 
     test('should create booking and increment capacity counter atomically',
@@ -292,7 +292,7 @@ void main() {
 
     setUp(() async {
       fakeFirestore = FakeFirebaseFirestore();
-      bookingService = BookingService();
+      bookingService = BookingService(firestore: fakeFirestore);
 
       // Seed bookings
       final now = DateTime.now();
@@ -341,6 +341,146 @@ void main() {
           return bookings.every((b) => !b.isPast());
         })),
       );
+    });
+  });
+
+  group('BookingService - Schedule overrides (horarios suspendidos)', () {
+    late FakeFirebaseFirestore fakeFirestore;
+    late BookingService bookingService;
+    final classDate = DateTime.now().add(const Duration(days: 2));
+    late DateTime normalizedDate;
+
+    setUp(() async {
+      fakeFirestore = FakeFirebaseFirestore();
+      bookingService = BookingService(firestore: fakeFirestore);
+      normalizedDate = DateTime(classDate.year, classDate.month, classDate.day);
+
+      await fakeFirestore.collection('class_schedules').doc('schedule_1').set({
+        'time': '07:00',
+        'type': 'Muay Thai',
+        'instructor': 'Francisco Poveda',
+        'capacity': 15,
+        'daysOfWeek': [1, 2, 3, 4, 5, 6, 7],
+        'active': true,
+        'displayOrder': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      await fakeFirestore.collection('users').doc('user_1').set({
+        'email': 'test@test.com',
+        'name': 'Test User',
+        'role': 'student',
+        'membershipStatus': 'active',
+        'classesPerMonth': null,
+      });
+    });
+
+    Booking buildBooking() => Booking(
+          userId: 'user_1',
+          userName: 'Test User',
+          userEmail: 'test@test.com',
+          scheduleId: 'schedule_1',
+          scheduleTime: '07:00',
+          scheduleType: 'Muay Thai',
+          instructor: 'Francisco Poveda',
+          classDate: normalizedDate,
+          createdAt: DateTime.now(),
+        );
+
+    test('bloquea reservas nuevas cuando el horario está suspendido', () async {
+      final dateKey =
+          '${normalizedDate.year}-${normalizedDate.month.toString().padLeft(2, '0')}-${normalizedDate.day.toString().padLeft(2, '0')}';
+      await fakeFirestore
+          .collection('schedule_overrides')
+          .doc('schedule_1_$dateKey')
+          .set({
+        'scheduleId': 'schedule_1',
+        'dateKey': dateKey,
+        'disabled': true,
+        'reason': 'Pelea',
+        'createdBy': 'admin_1',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      expect(
+        () => bookingService.createBooking(buildBooking()),
+        throwsA(predicate((e) => e.toString().contains('suspendido'))),
+      );
+    });
+
+    test('permite reservar cuando el override está en disabled=false', () async {
+      final dateKey =
+          '${normalizedDate.year}-${normalizedDate.month.toString().padLeft(2, '0')}-${normalizedDate.day.toString().padLeft(2, '0')}';
+      await fakeFirestore
+          .collection('schedule_overrides')
+          .doc('schedule_1_$dateKey')
+          .set({
+        'scheduleId': 'schedule_1',
+        'dateKey': dateKey,
+        'disabled': false,
+        'createdBy': 'admin_1',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      final bookingId = await bookingService.createBooking(buildBooking());
+      expect(bookingId, isNotEmpty);
+    });
+  });
+
+  group('BookingService - Flujo de aprobación de asistencia', () {
+    late FakeFirebaseFirestore fakeFirestore;
+    late BookingService bookingService;
+    late String bookingId;
+
+    setUp(() async {
+      fakeFirestore = FakeFirebaseFirestore();
+      bookingService = BookingService(firestore: fakeFirestore);
+
+      final ref = await fakeFirestore.collection('bookings').add({
+        'userId': 'user_1',
+        'userName': 'Test User',
+        'userEmail': 'test@test.com',
+        'scheduleId': 'schedule_1',
+        'scheduleTime': '07:00',
+        'scheduleType': 'Muay Thai',
+        'instructor': 'Francisco',
+        'classDate': Timestamp.fromDate(DateTime.now()),
+        'status': BookingStatus.confirmed.name,
+        'userConfirmedAttendance': false,
+        'createdAt': Timestamp.fromDate(DateTime.now()),
+      });
+      bookingId = ref.id;
+    });
+
+    test(
+        'confirmAttendance deja la reserva en pendingApproval '
+        '(no attended) con el flag activo', () async {
+      await bookingService.confirmAttendance(bookingId);
+
+      final doc =
+          await fakeFirestore.collection('bookings').doc(bookingId).get();
+      final data = doc.data()!;
+
+      // Con AppFlags.attendanceApprovalFlow == true la confirmación del
+      // alumno NO marca asistencia directa: queda esperando al admin.
+      expect(data['status'], BookingStatus.pendingApproval.name);
+      expect(data['userConfirmedAttendance'], true);
+      expect(data['attendanceConfirmedAt'], isNotNull);
+      expect(data['attendedAt'], isNull);
+    });
+
+    test('markAttendance (aprobación admin) marca attended con attendedBy',
+        () async {
+      await bookingService.confirmAttendance(bookingId);
+      await bookingService.markAttendance(bookingId, 'admin_1');
+
+      final doc =
+          await fakeFirestore.collection('bookings').doc(bookingId).get();
+      final data = doc.data()!;
+
+      expect(data['status'], BookingStatus.attended.name);
+      expect(data['attendedBy'], 'admin_1');
+      expect(data['attendedAt'], isNotNull);
     });
   });
 }

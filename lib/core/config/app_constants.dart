@@ -12,6 +12,13 @@
 /// sistema de membresías/pagos vuelve a funcionar tal como está implementado.
 class AppFlags {
   static const bool freeAccessPhase = true;
+
+  /// Flujo de aprobación de asistencia: cuando el alumno confirma su hora
+  /// por app, la reserva queda en `pendingApproval` hasta que el admin la
+  /// apruebe (→ attended, cuenta para el ranking) o rechace (→ rejected).
+  /// El check-in QR no pasa por aprobación: marca attended de inmediato.
+  /// Con `false` se vuelve al flujo antiguo (confirmar = attended directo).
+  static const bool attendanceApprovalFlow = true;
 }
 
 class BookingConstants {
