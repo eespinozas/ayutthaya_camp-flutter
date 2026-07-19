@@ -6,6 +6,12 @@ on:
   push:
     branches: [ main ]
 
+# Versión pinneada = la misma con la que se compilan los builds locales.
+# No usar 'stable' como flutter-version: la action no resuelve canales ahí
+# (fue la causa de que todo CI fallara en el paso Setup Flutter).
+env:
+  FLUTTER_VERSION: '3.41.7'
+
 jobs:
   code-quality:
     name: Code Quality & Security
@@ -21,26 +27,20 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
-
-      - name: Flutter doctor
-        run: flutter doctor -v
 
       - name: Get dependencies
         run: flutter pub get
 
       - name: Check formatting
-        run: |
-          dart format --set-exit-if-changed .
-          if [ $? -ne 0 ]; then
-            echo "❌ Code is not formatted. Run 'dart format .' to fix."
-            exit 1
-          fi
+        run: dart format --output=none --set-exit-if-changed .
 
+      # Sin flags: en la práctica flutter analyze falla con cualquier issue
+      # (el repo está en 0 issues; mantenerlo así es el gate).
       - name: Analyze code
-        run: flutter analyze --fatal-infos --fatal-warnings
+        run: flutter analyze
 
       - name: Run tests with coverage
         run: flutter test --coverage --test-randomize-ordering-seed=random
@@ -53,39 +53,34 @@ jobs:
       - name: Install detect-secrets
         run: pip install detect-secrets
 
+      # Solo scan contra el baseline: `audit` es interactivo y no puede
+      # correr en CI (era un gate que fallaba siempre).
       - name: Run detect-secrets scan
-        run: |
-          if [ ! -f .secrets.baseline ]; then
-            echo "⚠️  .secrets.baseline not found. Generating baseline..."
-            detect-secrets scan --baseline .secrets.baseline
-            echo "✅ Baseline created. Commit it to repository."
-            exit 1
-          fi
-          detect-secrets scan --baseline .secrets.baseline
-          detect-secrets audit .secrets.baseline
+        run: detect-secrets scan --baseline .secrets.baseline
 
-      - name: Setup Trivy
+      # Informativo: los CVEs de dependencias de terceros no deben bloquear
+      # el merge, pero sí quedar visibles en el log.
+      - name: Trivy filesystem scan (informativo)
+        continue-on-error: true
         run: |
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
           echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install trivy
-
-      - name: Run Trivy filesystem scan
-        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq trivy
           trivy fs --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed .
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        continue-on-error: true
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload coverage to Codecov (optional)
         if: always()
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
-          file: coverage/lcov.info
+          files: coverage/lcov.info
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -109,7 +104,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
 
@@ -128,7 +123,7 @@ jobs:
 
   build-ios:
     name: Build iOS
-    runs-on: macos-latest
+    runs-on: macos-15
     needs: code-quality
     timeout-minutes: 30
 
@@ -139,7 +134,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
 

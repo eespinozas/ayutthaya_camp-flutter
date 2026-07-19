@@ -221,11 +221,28 @@ platform :ios do
     )
 
     # 6. Commit ONLY the version bump, then tag the release.
-    Dir.chdir(FLUTTER_ROOT_DIR) do
-      sh("git add pubspec.yaml")
-      sh("git commit -m 'chore(ios): release #{v[:name]}+#{build} [skip ci]' || true")
-      sh("git tag ios/v#{v[:name]}-#{build} || true")
-      sh("git push origin HEAD --tags || true")
+    #    - En CI se omite: el runner no debe pushear, y el próximo run
+    #      vuelve a derivar el build number desde TestFlight igualmente.
+    #    - En local los fallos ya no se silencian con `|| true` (dos veces
+    #      dejaron el release sin commit/tag sin que nadie lo notara):
+    #      se avisa fuerte y se imprimen los comandos para cerrarlo a mano.
+    if ENV["CI"]
+      UI.important("CI detectado: se omite el commit/tag/push del bump de versión.")
+    else
+      Dir.chdir(FLUTTER_ROOT_DIR) do
+        begin
+          sh("git add pubspec.yaml")
+          sh("git commit -m 'chore(ios): release #{v[:name]}+#{build} [skip ci]'")
+          sh("git tag ios/v#{v[:name]}-#{build}")
+          sh("git push origin HEAD --tags")
+          UI.success("Release commit y tag ios/v#{v[:name]}-#{build} pusheados")
+        rescue => e
+          UI.important("⚠️  El upload a TestFlight FUNCIONÓ, pero falló el cierre git: #{e.message}")
+          UI.important("    Ciérralo a mano desde la raíz del repo:")
+          UI.important("      git add pubspec.yaml && git commit -m 'chore(ios): release #{v[:name]}+#{build} [skip ci]'")
+          UI.important("      git tag ios/v#{v[:name]}-#{build} && git push origin HEAD --tags")
+        end
+      end
     end
   end
 
