@@ -116,7 +116,7 @@ class BookingService {
 
         // Verificar si hay espacio disponible
         if (currentBookings >= maxCapacity) {
-          throw Exception('Esta clase está llena (${currentBookings}/${maxCapacity})');
+          throw Exception('Esta clase está llena ($currentBookings/$maxCapacity)');
         }
 
         // Crear la reserva
@@ -137,7 +137,7 @@ class BookingService {
           SetOptions(merge: true),
         );
 
-        debugPrint('✅ Booking creado: $bookingId (${currentBookings + 1}/${maxCapacity})');
+        debugPrint('✅ Booking creado: $bookingId (${currentBookings + 1}/$maxCapacity)');
       });
 
       if (bookingId == null) {
@@ -431,8 +431,6 @@ class BookingService {
   /// Procesar confirmaciones expiradas y marcarlas como no asistida
   Future<void> processExpiredConfirmations() async {
     try {
-      final now = DateTime.now();
-
       // Obtener todas las reservas confirmadas que no tienen confirmación de usuario
       final bookings = await _firestore
           .collection('bookings')
@@ -725,7 +723,7 @@ class BookingService {
             'startTime': classStartTime,
             'minutesSinceStart': minutesSinceStart,
           });
-          debugPrint('   ✅ Clase activa encontrada: ${data['type']} a las $classTime (${minutesSinceStart} min)');
+          debugPrint('   ✅ Clase activa encontrada: ${data['type']} a las $classTime ($minutesSinceStart min)');
         }
         // Clase que pasó hace poco: entre 21 minutos y hasta el final del día
         else if (minutesSinceStart > 20 && classStartTime.isBefore(now)) {
@@ -737,7 +735,7 @@ class BookingService {
             'startTime': classStartTime,
             'minutesSinceStart': minutesSinceStart,
           });
-          debugPrint('   ⏰ Clase pasada encontrada: ${data['type']} a las $classTime (hace ${minutesSinceStart} min)');
+          debugPrint('   ⏰ Clase pasada encontrada: ${data['type']} a las $classTime (hace $minutesSinceStart min)');
         }
       }
 

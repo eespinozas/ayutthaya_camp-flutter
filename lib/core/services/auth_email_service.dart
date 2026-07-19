@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -37,12 +38,12 @@ class AuthEmailService {
         throw Exception(message);
       }
 
-      print('✅ Email de verificación enviado: $message');
+      debugPrint('✅ Email de verificación enviado: $message');
     } on FirebaseFunctionsException catch (e) {
-      print('❌ Error: ${e.code} - ${e.message}');
+      debugPrint('❌ Error: ${e.code} - ${e.message}');
       throw Exception(_getErrorMessage(e.code));
     } catch (e) {
-      print('❌ Error inesperado: $e');
+      debugPrint('❌ Error inesperado: $e');
       throw Exception('Error al enviar email de verificación');
     }
   }
@@ -75,12 +76,12 @@ class AuthEmailService {
         throw Exception(message);
       }
 
-      print('✅ Email de recuperación enviado: $message');
+      debugPrint('✅ Email de recuperación enviado: $message');
     } on FirebaseFunctionsException catch (e) {
-      print('❌ Error: ${e.code} - ${e.message}');
+      debugPrint('❌ Error: ${e.code} - ${e.message}');
       throw Exception(_getErrorMessage(e.code));
     } catch (e) {
-      print('❌ Error inesperado: $e');
+      debugPrint('❌ Error inesperado: $e');
       throw Exception('Error al enviar email de recuperación');
     }
   }
@@ -110,12 +111,12 @@ class AuthEmailService {
         throw Exception(message);
       }
 
-      print('✅ Solicitud de eliminación enviada: $message');
+      debugPrint('✅ Solicitud de eliminación enviada: $message');
     } on FirebaseFunctionsException catch (e) {
-      print('❌ Error: ${e.code} - ${e.message}');
+      debugPrint('❌ Error: ${e.code} - ${e.message}');
       throw Exception(_getErrorMessage(e.code));
     } catch (e) {
-      print('❌ Error inesperado: $e');
+      debugPrint('❌ Error inesperado: $e');
       throw Exception('No se pudo procesar la solicitud. Intenta nuevamente');
     }
   }

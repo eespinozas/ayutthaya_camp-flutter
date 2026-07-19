@@ -2,6 +2,7 @@
 ///
 /// Las Exceptions representan errores técnicos en la capa de datos
 /// y se convierten en Failures antes de llegar al dominio.
+library;
 
 /// Excepción del servidor o API
 class ServerException implements Exception {

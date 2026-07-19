@@ -7,7 +7,7 @@
 /// - Espaciado
 /// - Animaciones
 /// - Widgets reutilizables
-library theme;
+library;
 
 // ============================================================================
 // CORE THEME

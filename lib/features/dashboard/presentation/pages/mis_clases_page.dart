@@ -129,7 +129,7 @@ class _MisClasesPageState extends State<MisClasesPage>
             'Para cancelar una clase debes hacerlo con al menos 24 horas de anticipación.\n\n'
             'Tu clase es el ${DateFormat('dd MMM yyyy', 'es_ES').format(booking.classDate)} '
             'a las ${_formatTime(booking.scheduleTime)}.\n\n'
-            'Faltan ${hoursUntilClass} horas para tu clase.',
+            'Faltan $hoursUntilClass horas para tu clase.',
             style: const TextStyle(color: Colors.white70),
           ),
           actions: [
@@ -137,7 +137,7 @@ class _MisClasesPageState extends State<MisClasesPage>
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Entendido',
-                style: TextStyle(color: const Color(0xFFFF6A00)),
+                style: TextStyle(color: Color(0xFFFF6A00)),
               ),
             ),
           ],
@@ -181,14 +181,14 @@ class _MisClasesPageState extends State<MisClasesPage>
       ),
     );
 
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
 
     // Mostrar loading
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(
-        child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+        child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
       ),
     );
 
@@ -233,7 +233,7 @@ class _MisClasesPageState extends State<MisClasesPage>
         ),
         body: const Center(
           child: CircularProgressIndicator(
-            color: const Color(0xFFFF6A00),
+            color: Color(0xFFFF6A00),
           ),
         ),
       );
@@ -297,7 +297,7 @@ class _MisClasesPageState extends State<MisClasesPage>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+            child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
           );
         }
 
@@ -344,7 +344,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                       'Necesitas crear un índice en Firestore.\nCopia el link del error y ábrelo en tu navegador.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: const Color(0xFFFF6A00),
+                        color: Color(0xFFFF6A00),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -431,7 +431,7 @@ class _MisClasesPageState extends State<MisClasesPage>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+            child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
           );
         }
 
@@ -478,7 +478,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                       'Necesitas crear un índice en Firestore.\nCopia el link del error y ábrelo en tu navegador.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: const Color(0xFFFF6A00),
+                        color: Color(0xFFFF6A00),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -593,7 +593,7 @@ class _MisClasesPageState extends State<MisClasesPage>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: statusColor.withOpacity(0.3),
+          color: statusColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -622,7 +622,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                       Text(
                         _formatTime(booking.scheduleTime),
                         style: const TextStyle(
-                          color: const Color(0xFFFF6A00),
+                          color: Color(0xFFFF6A00),
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -636,9 +636,9 @@ class _MisClasesPageState extends State<MisClasesPage>
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.2),
+                    color: statusColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: statusColor.withOpacity(0.5)),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.5)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -698,21 +698,21 @@ class _MisClasesPageState extends State<MisClasesPage>
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: booking.userConfirmedAttendance
-                      ? Colors.green.withOpacity(0.15)
+                      ? Colors.green.withValues(alpha: 0.15)
                       : booking.missedConfirmationWindow()
-                          ? Colors.red.withOpacity(0.15)
+                          ? Colors.red.withValues(alpha: 0.15)
                           : booking.canConfirmAttendance()
-                              ? Colors.orange.withOpacity(0.15)
-                              : Colors.grey.withOpacity(0.15),
+                              ? Colors.orange.withValues(alpha: 0.15)
+                              : Colors.grey.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: booking.userConfirmedAttendance
-                        ? Colors.green.withOpacity(0.4)
+                        ? Colors.green.withValues(alpha: 0.4)
                         : booking.missedConfirmationWindow()
-                            ? Colors.red.withOpacity(0.4)
+                            ? Colors.red.withValues(alpha: 0.4)
                             : booking.canConfirmAttendance()
-                                ? Colors.orange.withOpacity(0.4)
-                                : Colors.grey.withOpacity(0.4),
+                                ? Colors.orange.withValues(alpha: 0.4)
+                                : Colors.grey.withValues(alpha: 0.4),
                   ),
                 ),
                 child: Row(
@@ -776,7 +776,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                               final bookingVM = context.read<BookingViewModel>();
                               final success =
                                   await bookingVM.confirmAttendance(booking.id!);
-                              if (success && mounted) {
+                              if (success && context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(

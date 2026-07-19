@@ -63,14 +63,14 @@ class AdminPerfilPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6A00).withOpacity(0.2),
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFFFF6A00)),
                 ),
                 child: const Text(
                   'ADMINISTRADOR',
                   style: TextStyle(
-                    color: const Color(0xFFFF6A00),
+                    color: Color(0xFFFF6A00),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),

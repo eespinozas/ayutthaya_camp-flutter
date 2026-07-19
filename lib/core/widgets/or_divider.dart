@@ -6,7 +6,7 @@ class OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.outline.withOpacity(0.5);
+    final color = Theme.of(context).colorScheme.outline.withValues(alpha: 0.5);
     return Row(
       children: [
         Expanded(child: Divider(color: color, thickness: 1)),

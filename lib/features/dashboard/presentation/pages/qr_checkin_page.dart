@@ -42,7 +42,7 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Colors.orangeAccent.withOpacity(0.1),
+                color: Colors.orangeAccent.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -373,11 +373,11 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
                 ),
                 decoration: BoxDecoration(
                   color: action == 'marked_no_show' || action == 'created_no_show' || action == 'already_no_show'
-                      ? Colors.red.withOpacity(0.2)
-                      : Colors.orangeAccent.withOpacity(0.2),
+                      ? Colors.red.withValues(alpha: 0.2)
+                      : Colors.orangeAccent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                   border: action == 'marked_no_show' || action == 'created_no_show' || action == 'already_no_show'
-                      ? Border.all(color: Colors.red.withOpacity(0.3))
+                      ? Border.all(color: Colors.red.withValues(alpha: 0.3))
                       : null,
                 ),
                 child: Column(

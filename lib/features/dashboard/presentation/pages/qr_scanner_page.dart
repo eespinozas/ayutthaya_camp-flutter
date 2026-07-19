@@ -262,10 +262,10 @@ class _QRScannerPageState extends State<QRScannerPage> with SingleTickerProvider
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.7),
+                  Colors.black.withValues(alpha: 0.7),
                   Colors.transparent,
                   Colors.transparent,
-                  Colors.black.withOpacity(0.7),
+                  Colors.black.withValues(alpha: 0.7),
                 ],
                 stops: const [0.0, 0.3, 0.7, 1.0],
               ),

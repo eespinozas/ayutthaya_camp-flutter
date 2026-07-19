@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Utilidad para poblar la base de datos con datos iniciales
@@ -6,7 +7,7 @@ class SeedData {
 
   /// Agregar planes iniciales a Firestore
   static Future<void> seedPlans() async {
-    print('🔥 Iniciando seed de planes...');
+    debugPrint('🔥 Iniciando seed de planes...');
 
     final plans = [
       {
@@ -66,18 +67,18 @@ class SeedData {
       try {
         final docRef = await _firestore.collection('plans').add(plan);
         count++;
-        print('✅ Plan agregado: "${plan['name']}" con ID: ${docRef.id}');
+        debugPrint('✅ Plan agregado: "${plan['name']}" con ID: ${docRef.id}');
       } catch (e) {
-        print('❌ Error al agregar "${plan['name']}": $e');
+        debugPrint('❌ Error al agregar "${plan['name']}": $e');
       }
     }
 
-    print('🎉 Seed completado! Se agregaron $count planes.');
+    debugPrint('🎉 Seed completado! Se agregaron $count planes.');
   }
 
   /// Agregar horarios de clases iniciales a Firestore
   static Future<void> seedClassSchedules() async {
-    print('🔥 Iniciando seed de horarios de clases...');
+    debugPrint('🔥 Iniciando seed de horarios de clases...');
 
     final schedules = [
       // LUNES, MIÉRCOLES, VIERNES (días 1, 3, 5)
@@ -224,19 +225,19 @@ class SeedData {
       try {
         final docRef = await _firestore.collection('class_schedules').add(schedule);
         count++;
-        print('✅ Horario agregado: "${schedule['type']}" a las ${schedule['time']} con ID: ${docRef.id}');
+        debugPrint('✅ Horario agregado: "${schedule['type']}" a las ${schedule['time']} con ID: ${docRef.id}');
       } catch (e) {
-        print('❌ Error al agregar horario "${schedule['type']}": $e');
+        debugPrint('❌ Error al agregar horario "${schedule['type']}": $e');
       }
     }
 
-    print('🎉 Seed completado! Se agregaron $count horarios.');
+    debugPrint('🎉 Seed completado! Se agregaron $count horarios.');
   }
 
   /// Ejecutar todos los seeds
   static Future<void> seedAll() async {
     await seedPlans();
-    print('\n');
+    debugPrint('\n');
     await seedClassSchedules();
   }
 }

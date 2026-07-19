@@ -117,7 +117,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
 
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+              child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
             );
           }
 
@@ -250,7 +250,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                       status: 'registered',
                       createdAt: data['createdAt'] as Timestamp?,
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 24),
                 ],
 
@@ -275,7 +275,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                       status: 'pending',
                       onActivate: () => _goToPagosToActivate(data),
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 24),
                 ],
 
@@ -300,7 +300,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                       status: 'active',
                       expirationDate: data['expirationDate'],
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 24),
                 ],
 
@@ -325,7 +325,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                       status: 'inactive',
                       expirationDate: data['expirationDate'],
                     );
-                  }).toList(),
+                  }),
                 ],
               ],
             ),
@@ -411,7 +411,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Row(
           children: [
-            Icon(Icons.info_outline, color: const Color(0xFFFF6A00)),
+            Icon(Icons.info_outline, color: Color(0xFFFF6A00)),
             SizedBox(width: 12),
             Text(
               'Ir a Pagos',
@@ -431,9 +431,9 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6A00).withOpacity(0.1),
+                color: const Color(0xFFFF6A00).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFF6A00).withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFFFF6A00).withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,7 +441,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                   const Text(
                     'Para activar al usuario:',
                     style: TextStyle(
-                      color: const Color(0xFFFF6A00),
+                      color: Color(0xFFFF6A00),
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -559,7 +559,7 @@ class _UserCard extends StatelessWidget {
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF3B82F6).withOpacity(0.3),
+          color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -568,7 +568,7 @@ class _UserCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF3B82F6).withOpacity(0.2),
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.person_outline, color: Color(0xFF3B82F6)),
@@ -601,7 +601,7 @@ class _UserCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withOpacity(0.2),
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
@@ -641,7 +641,7 @@ class _UserCard extends StatelessWidget {
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.orange.withOpacity(0.3),
+          color: Colors.orange.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -650,7 +650,7 @@ class _UserCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.2),
+              color: Colors.orange.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.person_outline, color: Colors.orange),
@@ -681,7 +681,7 @@ class _UserCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.2),
+                    color: Colors.orange.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
@@ -735,7 +735,7 @@ class _UserCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.2),
+              color: Colors.green.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.check_circle, color: Colors.green),
@@ -791,7 +791,7 @@ class _UserCard extends StatelessWidget {
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.red.withOpacity(0.3),
+          color: Colors.red.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -800,7 +800,7 @@ class _UserCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.2),
+              color: Colors.red.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.cancel_outlined, color: Colors.red),
@@ -832,7 +832,7 @@ class _UserCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.2),
+                        color: Colors.red.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(

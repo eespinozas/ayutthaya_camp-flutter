@@ -432,7 +432,7 @@ class _PerfilPageState extends State<PerfilPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: const Color(0xFFFF6A00),
+              primary: Color(0xFFFF6A00),
               onPrimary: Colors.white,
               surface: Color(0xFF2A2A2A),
               onSurface: Colors.white,
@@ -563,7 +563,7 @@ class _PerfilPageState extends State<PerfilPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.camera_alt, color: const Color(0xFFFF6A00)),
+                  leading: const Icon(Icons.camera_alt, color: Color(0xFFFF6A00)),
                   title: const Text(
                     'Cámara',
                     style: TextStyle(color: Colors.white),
@@ -571,7 +571,7 @@ class _PerfilPageState extends State<PerfilPage> {
                   onTap: () => Navigator.pop(context, ImageSource.camera),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library, color: const Color(0xFFFF6A00)),
+                  leading: const Icon(Icons.photo_library, color: Color(0xFFFF6A00)),
                   title: const Text(
                     'Galería',
                     style: TextStyle(color: Colors.white),
@@ -715,7 +715,7 @@ class _PerfilPageState extends State<PerfilPage> {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: const Color(0xFFFF6A00),
+                  color: Color(0xFFFF6A00),
                 ),
               ),
             ),
@@ -724,7 +724,7 @@ class _PerfilPageState extends State<PerfilPage> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: const Color(0xFFFF6A00),
+                color: Color(0xFFFF6A00),
               ),
             )
           : RefreshIndicator(
@@ -750,7 +750,7 @@ class _PerfilPageState extends State<PerfilPage> {
                               decoration: BoxDecoration(
                                 gradient: _photoUrl == null
                                     ? const LinearGradient(
-                                        colors: [const Color(0xFFFF6A00), Color(0xFFFF8C42)],
+                                        colors: [Color(0xFFFF6A00), Color(0xFFFF8C42)],
                                       )
                                     : null,
                                 color: _photoUrl != null ? Colors.grey.shade300 : null,
@@ -1217,7 +1217,7 @@ class _PerfilPageState extends State<PerfilPage> {
                           : () async {
                               await context.read<AuthViewModel>().logout();
 
-                              if (mounted) {
+                              if (context.mounted) {
                                 Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
                                     builder: (_) => const LoginPage(),
@@ -1369,7 +1369,7 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: const Color(0xFFFF6A00), width: 2),
+          borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 2),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

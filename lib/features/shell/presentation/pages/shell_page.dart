@@ -22,7 +22,7 @@ class _ShellPageState extends State<ShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = Theme.of(context).colorScheme.outlineVariant.withOpacity(0.18);
+    final dividerColor = Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.18);
 
     return Scaffold(
       extendBody: true,

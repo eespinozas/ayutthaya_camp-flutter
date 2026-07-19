@@ -373,6 +373,8 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   _isProcessingPayment = false;
                 });
 
+                // El context del diálogo puede haberse desmontado tras el await
+                if (!context.mounted) return;
                 // Mostrar mensaje de éxito
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -393,6 +395,8 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   _isProcessingPayment = false;
                 });
 
+                // El context del diálogo puede haberse desmontado tras el await
+                if (!context.mounted) return;
                 // Mostrar error
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -494,6 +498,8 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   _isProcessingPayment = false;
                 });
 
+                // El context del diálogo puede haberse desmontado tras el await
+                if (!context.mounted) return;
                 // Mostrar mensaje
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -514,6 +520,8 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   _isProcessingPayment = false;
                 });
 
+                // El context del diálogo puede haberse desmontado tras el await
+                if (!context.mounted) return;
                 // Mostrar error
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -573,7 +581,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
         ),
         body: const Center(
           child: CircularProgressIndicator(
-            color: const Color(0xFFFF6A00),
+            color: Color(0xFFFF6A00),
           ),
         ),
       );
@@ -626,7 +634,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: const Color(0xFFFF6A00),
+                          color: Color(0xFFFF6A00),
                         ),
                       ),
                     ),
@@ -679,13 +687,13 @@ class _AdminPagosPageState extends State<AdminPagosPage>
             // Overlay de loading
             if (_isProcessingPayment)
               Container(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 child: const Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       CircularProgressIndicator(
-                        color: const Color(0xFFFF6A00),
+                        color: Color(0xFFFF6A00),
                       ),
                       SizedBox(height: 16),
                       Text(
@@ -716,7 +724,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+            child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
           );
         }
 
@@ -1086,7 +1094,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                       onPressed: () => _viewReceipt(payment),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFFFF6A00),
-                        side: const BorderSide(color: const Color(0xFFFF6A00)),
+                        side: const BorderSide(color: Color(0xFFFF6A00)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       icon: const Icon(Icons.receipt_long, size: 18),

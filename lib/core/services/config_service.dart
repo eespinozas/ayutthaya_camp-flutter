@@ -95,8 +95,8 @@ class ConfigService {
 
   /// Obtener precio de matrícula
   double get enrollmentPrice {
-    final price = getPaymentSetting('enrollment_price', defaultValue: 30000);
-    return (price is int) ? price.toDouble() : (price as double);
+    final price = getPaymentSetting<num>('enrollment_price', defaultValue: 30000);
+    return price?.toDouble() ?? 30000.0;
   }
 
   /// Obtener símbolo de moneda

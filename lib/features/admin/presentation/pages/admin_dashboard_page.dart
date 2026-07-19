@@ -38,7 +38,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
           child: CircularProgressIndicator(
-            color: const Color(0xFFFF6A00),
+            color: Color(0xFFFF6A00),
           ),
         ),
       );
@@ -56,7 +56,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             return Scaffold(
               backgroundColor: const Color(0xFF0F0F0F),
               body: const Center(
-                child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+                child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
               ),
             );
           }
@@ -253,7 +253,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   subtitle: '/${todayStats['capacidadTotalHoy']} capacidad',
                   icon: Icons.people_rounded,
                   gradientColors: const [Color(0xFF4F46E5), Color(0xFF6366F1)],
-                  percentage: (todayStats['capacidadTotalHoy'] as int?) != null && (todayStats['capacidadTotalHoy'] as int) > 0
+                  percentage: todayStats['capacidadTotalHoy'] != null && (todayStats['capacidadTotalHoy'] as int) > 0
                     ? (todayStats['totalAsistencias'] as int) / (todayStats['capacidadTotalHoy'] as int)
                     : 0.0,
                 ),
@@ -263,7 +263,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   subtitle: '/${todayStats['clasesTotales']} total',
                   icon: Icons.fitness_center,
                   gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
-                  percentage: (todayStats['clasesTotales'] as int?) != null && (todayStats['clasesTotales'] as int) > 0
+                  percentage: todayStats['clasesTotales'] != null && (todayStats['clasesTotales'] as int) > 0
                     ? (todayStats['clasesCompletadas'] as int) / (todayStats['clasesTotales'] as int)
                     : 0.0,
                 ),
@@ -274,7 +274,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   icon: Icons.person_add_rounded,
                   gradientColors: const [Color(0xFFF59E0B), Color(0xFFEF4444)],
                   showTrend: true,
-                  trendUp: (todayStats['alumnosNuevos'] as int?) != null && (todayStats['alumnosNuevos'] as int) > 0,
+                  trendUp: todayStats['alumnosNuevos'] != null && (todayStats['alumnosNuevos'] as int) > 0,
                 ),
                 _buildEnhancedKPICard(
                   label: 'Ingresos Hoy',
@@ -283,7 +283,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   icon: Icons.payments_rounded,
                   gradientColors: const [Color(0xFFFF6A00), Color(0xFFFF8534)],
                   showTrend: true,
-                  trendUp: (todayStats['pagosRecibidos'] as int?) != null && (todayStats['pagosRecibidos'] as int) > 0,
+                  trendUp: todayStats['pagosRecibidos'] != null && (todayStats['pagosRecibidos'] as int) > 0,
                 ),
               ],
             ),
@@ -424,7 +424,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   // TODO: Navegar a la sección correspondiente
                 },
               );
-            }).toList(),
+            }),
 
             const SizedBox(height: 24),
           ],

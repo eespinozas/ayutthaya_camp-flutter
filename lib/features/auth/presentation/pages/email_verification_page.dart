@@ -160,7 +160,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -306,7 +306,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                 TextButton(
                   onPressed: () async {
                     await _auth.signOut();
-                    if (mounted) {
+                    if (context.mounted) {
                       Navigator.pushReplacementNamed(context, '/login');
                     }
                   },

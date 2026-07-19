@@ -273,10 +273,10 @@ class AppTheme {
         ).copyWith(
           overlayColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.pressed)) {
-              return AppColors.tigerOrange.withOpacity(0.2);
+              return AppColors.tigerOrange.withValues(alpha: 0.2);
             }
             if (states.contains(WidgetState.hovered)) {
-              return AppColors.tigerOrange.withOpacity(0.1);
+              return AppColors.tigerOrange.withValues(alpha: 0.1);
             }
             return null;
           }),
@@ -307,7 +307,7 @@ class AppTheme {
               return AppColors.overlay;
             }
             if (states.contains(WidgetState.hovered)) {
-              return AppColors.overlay.withOpacity(0.05);
+              return AppColors.overlay.withValues(alpha: 0.05);
             }
             return null;
           }),

@@ -95,7 +95,7 @@ class _PagosPageState extends State<PagosPage> {
       barrierDismissible: false,
       builder: (context) => const Center(
         child: CircularProgressIndicator(
-          color: const Color(0xFFFF6A00),
+          color: Color(0xFFFF6A00),
         ),
       ),
     );
@@ -156,7 +156,7 @@ class _PagosPageState extends State<PagosPage> {
         ),
         body: const Center(
           child: CircularProgressIndicator(
-            color: const Color(0xFFFF6A00),
+            color: Color(0xFFFF6A00),
           ),
         ),
       );
@@ -232,7 +232,7 @@ class _PagosPageState extends State<PagosPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -258,7 +258,7 @@ class _PagosPageState extends State<PagosPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -314,7 +314,7 @@ class _PagosPageState extends State<PagosPage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.3),
+                          color: Colors.orange.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: Colors.orange.shade300,
@@ -472,7 +472,7 @@ class _PagosPageState extends State<PagosPage> {
                     padding: EdgeInsets.all(32.0),
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: const Color(0xFFFF6A00),
+                        color: Color(0xFFFF6A00),
                       ),
                     ),
                   );
@@ -623,7 +623,6 @@ class _PagosPageState extends State<PagosPage> {
 
   Widget _buildPaymentCard(Payment payment) {
     final isApproved = payment.status == PaymentStatus.approved;
-    final isPending = payment.status == PaymentStatus.pending;
     final isRejected = payment.status == PaymentStatus.rejected;
     final isFailed = payment.status == PaymentStatus.failed;
 
@@ -649,7 +648,7 @@ class _PagosPageState extends State<PagosPage> {
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: statusColor.withOpacity(0.3),
+          color: statusColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -729,13 +728,13 @@ class _PagosPageState extends State<PagosPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6A00).withOpacity(0.2),
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   payment.type == PaymentType.enrollment ? 'Matrícula' : 'Mensualidad',
                   style: const TextStyle(
-                    color: const Color(0xFFFF6A00),
+                    color: Color(0xFFFF6A00),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -748,10 +747,10 @@ class _PagosPageState extends State<PagosPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Colors.red.withOpacity(0.3),
+                  color: Colors.red.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -782,10 +781,10 @@ class _PagosPageState extends State<PagosPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Colors.orange.withOpacity(0.3),
+                  color: Colors.orange.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -819,7 +818,7 @@ class _PagosPageState extends State<PagosPage> {
                       onPressed: () => _deleteFailedPayment(payment.id!),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFFFF6A00),
-                        side: const BorderSide(color: const Color(0xFFFF6A00)),
+                        side: const BorderSide(color: Color(0xFFFF6A00)),
                         padding: const EdgeInsets.symmetric(vertical: 8),
                       ),
                       icon: const Icon(Icons.delete_outline, size: 16),
@@ -944,7 +943,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
 
     if (status.isPermanentlyDenied) {
       // Mostrar mensaje para abrir configuración
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Necesitas habilitar los permisos de almacenamiento en la configuración'),
@@ -973,7 +972,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
     final status = await Permission.camera.request();
 
     if (status.isPermanentlyDenied) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Necesitas habilitar los permisos de cámara en la configuración'),
@@ -1025,6 +1024,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al seleccionar imagen: $e'),
@@ -1067,6 +1067,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al tomar foto: $e'),
@@ -1118,6 +1119,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
             debugPrint('✅ Estado actualizado con bytes (${bytes.length} bytes)');
           } else {
             debugPrint('❌ ERROR: Bytes del archivo son null');
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Error: No se pudo leer el archivo'),
@@ -1142,6 +1144,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
             debugPrint('✅ Estado actualizado con File');
           } else {
             debugPrint('❌ ERROR: Path del archivo es null');
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Error: No se pudo obtener la ruta del archivo'),
@@ -1157,6 +1160,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
       debugPrint('❌ ERROR en _pickDocument: $e');
       debugPrint('StackTrace: $stackTrace');
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al seleccionar documento: $e'),
@@ -1166,20 +1170,6 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
     }
   }
 
-  String _getDurationText(int durationDays) {
-    switch (durationDays) {
-      case 30:
-        return 'Mensual';
-      case 90:
-        return 'Trimestral';
-      case 180:
-        return 'Semestral';
-      case 365:
-        return 'Anual';
-      default:
-        return '$durationDays días';
-    }
-  }
 
   Widget _buildReceiptPreview() {
     // Determinar si es PDF
@@ -1212,7 +1202,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
               const Icon(
                 Icons.picture_as_pdf,
                 size: 80,
-                color: const Color(0xFFFF6A00),
+                color: Color(0xFFFF6A00),
               ),
               const SizedBox(height: 12),
               const Text(
@@ -1369,13 +1359,13 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6A00).withOpacity(0.2),
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     widget.paymentType,
                     style: const TextStyle(
-                      color: const Color(0xFFFF6A00),
+                      color: Color(0xFFFF6A00),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1397,7 +1387,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                              color: const Color(0xFFFF6A00),
+                              color: Color(0xFFFF6A00),
                               strokeWidth: 2,
                             ),
                           ),
@@ -1471,7 +1461,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                                 ),
                                 child: const Center(
                                   child: CircularProgressIndicator(
-                                    color: const Color(0xFFFF6A00),
+                                    color: Color(0xFFFF6A00),
                                   ),
                                 ),
                               );
@@ -1521,11 +1511,11 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                             }
 
                             return DropdownButtonFormField<Plan>(
-                              value: currentSelectedPlan,
+                              initialValue: currentSelectedPlan,
                               decoration: InputDecoration(
                                 hintText: 'Seleccionar Plan',
                                 hintStyle: const TextStyle(color: Colors.white60),
-                                prefixIcon: const Icon(Icons.card_membership, color: const Color(0xFFFF6A00)),
+                                prefixIcon: const Icon(Icons.card_membership, color: Color(0xFFFF6A00)),
                                 filled: true,
                                 fillColor: const Color(0xFF1A1A1A),
                                 border: OutlineInputBorder(
@@ -1579,10 +1569,10 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFF6A00).withOpacity(0.1),
+                          color: const Color(0xFFFF6A00).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFFF6A00).withOpacity(0.3),
+                            color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
                             width: 2,
                           ),
                         ),
@@ -1643,7 +1633,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                                 Text(
                                   '\$${(_registrationPrice! + _selectedPlan!.price).toStringAsFixed(0)}',
                                   style: const TextStyle(
-                                    color: const Color(0xFFFF6A00),
+                                    color: Color(0xFFFF6A00),
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1657,10 +1647,10 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Colors.red.withOpacity(0.3),
+                          color: Colors.red.withValues(alpha: 0.3),
                         ),
                       ),
                       child: const Row(
@@ -1702,7 +1692,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                               ),
                               child: const Center(
                                 child: CircularProgressIndicator(
-                                  color: const Color(0xFFFF6A00),
+                                  color: Color(0xFFFF6A00),
                                 ),
                               ),
                             );
@@ -1760,11 +1750,11 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                           return Column(
                             children: [
                               DropdownButtonFormField<Plan>(
-                                value: currentSelectedPlan,
+                                initialValue: currentSelectedPlan,
                                 decoration: InputDecoration(
                                   hintText: 'Seleccionar Plan',
                                   hintStyle: const TextStyle(color: Colors.white60),
-                                  prefixIcon: const Icon(Icons.card_membership, color: const Color(0xFFFF6A00)),
+                                  prefixIcon: const Icon(Icons.card_membership, color: Color(0xFFFF6A00)),
                                   filled: true,
                                   fillColor: const Color(0xFF1A1A1A),
                                   border: OutlineInputBorder(
@@ -1808,10 +1798,10 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6A00).withOpacity(0.1),
+                                    color: const Color(0xFFFF6A00).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: const Color(0xFFFF6A00).withOpacity(0.3),
+                                      color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Row(
@@ -1828,7 +1818,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                                       Text(
                                         '\$${_selectedPlan!.price.toStringAsFixed(0)}',
                                         style: const TextStyle(
-                                          color: const Color(0xFFFF6A00),
+                                          color: Color(0xFFFF6A00),
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -1858,7 +1848,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                         return Theme(
                           data: ThemeData.dark().copyWith(
                             colorScheme: const ColorScheme.dark(
-                              primary: const Color(0xFFFF6A00),
+                              primary: Color(0xFFFF6A00),
                               onPrimary: Colors.black,
                               surface: Color(0xFF2A2A2A),
                               onSurface: Colors.white,
@@ -1882,7 +1872,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_today, color: const Color(0xFFFF6A00)),
+                        const Icon(Icons.calendar_today, color: Color(0xFFFF6A00)),
                         const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1933,7 +1923,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                               onPressed: _pickImage,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: const Color(0xFFFF6A00),
-                                side: const BorderSide(color: const Color(0xFFFF6A00)),
+                                side: const BorderSide(color: Color(0xFFFF6A00)),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -1949,7 +1939,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                               onPressed: _pickDocument,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: const Color(0xFFFF6A00),
-                                side: const BorderSide(color: const Color(0xFFFF6A00)),
+                                side: const BorderSide(color: Color(0xFFFF6A00)),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -1968,7 +1958,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                           onPressed: _takePhoto,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFFFF6A00),
-                            side: const BorderSide(color: const Color(0xFFFF6A00)),
+                            side: const BorderSide(color: Color(0xFFFF6A00)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

@@ -47,7 +47,7 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
         backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
           child: CircularProgressIndicator(
-            color: const Color(0xFFFF6A00),
+            color: Color(0xFFFF6A00),
           ),
         ),
       );
@@ -153,7 +153,7 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                           label: const Text('Ir a Hoy'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFFFF6A00),
-                            side: const BorderSide(color: const Color(0xFFFF6A00)),
+                            side: const BorderSide(color: Color(0xFFFF6A00)),
                           ),
                         ),
                       ],
@@ -168,7 +168,7 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(
-                          child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+                          child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
                         );
                       }
 
@@ -638,7 +638,7 @@ class _ClassCardState extends State<_ClassCard> {
                     children: [
                       const Icon(
                         Icons.people,
-                        color: const Color(0xFFFF6A00),
+                        color: Color(0xFFFF6A00),
                         size: 18,
                       ),
                       const SizedBox(width: 8),

@@ -32,10 +32,10 @@ class AppBadge extends StatelessWidget {
     return Container(
       padding: _getPadding(),
       decoration: BoxDecoration(
-        color: _getBackgroundColor().withOpacity(0.15),
+        color: _getBackgroundColor().withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppDesignTokens.radiusChip),
         border: Border.all(
-          color: _getBackgroundColor().withOpacity(0.3),
+          color: _getBackgroundColor().withValues(alpha: 0.3),
           width: 1,
         ),
       ),

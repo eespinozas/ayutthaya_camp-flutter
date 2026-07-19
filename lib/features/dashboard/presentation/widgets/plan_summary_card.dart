@@ -22,7 +22,7 @@ class PlanSummaryCard extends StatelessWidget {
     final valueStyle = Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: Colors.white);
 
     return Container(
-      decoration: BoxDecoration(color: Colors.black.withOpacity(0.70), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.70), borderRadius: BorderRadius.circular(16)),
       padding: const EdgeInsets.all(16),
       child: LayoutBuilder(builder: (context, c) {
         final cols = c.maxWidth < 420 ? 1 : (c.maxWidth < 840 ? 2 : 4);

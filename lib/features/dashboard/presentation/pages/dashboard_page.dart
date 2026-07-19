@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/config/app_constants.dart';
 import '../../../../core/services/attendance_window.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
@@ -123,9 +122,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final ultimos3Pagos = vm.ultimos3Pagos;
 
     // Estado de activación del alumno
-    // Si no tienes esto aún en el viewmodel, créalo:
-    // bool? estaActivo;
-    final bool estaActivo = vm.estaActivo ?? false;
+    final bool estaActivo = vm.estaActivo;
 
     // Debug logs
     debugPrint('📊 DASHBOARD - Estado actual:');
@@ -920,7 +917,7 @@ class _Ultimos3PagosCard extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
         ],
       ),
     );
@@ -931,28 +928,6 @@ class _Ultimos3PagosCard extends StatelessWidget {
 // PLACEHOLDER TEMPORAL PARA LA PANTALLA DE MATRÍCULA
 // (para que compile hasta que metas tu flujo real)
 // -----------------------------------------------------------------------------
-class _MatriculaPlaceholderPage extends StatelessWidget {
-  const _MatriculaPlaceholderPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E1E),
-        foregroundColor: Colors.white,
-        title: const Text('Activar membresía'),
-      ),
-      body: const Center(
-        child: Text(
-          'Seleccionar escuela / plan / subir comprobante',
-          style: TextStyle(color: Colors.white70),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-}
 
 // -----------------------------------------------------------------------------
 // WIDGET: MIS CLASES DE HOY
@@ -973,10 +948,6 @@ class _TodayClassesSection extends StatelessWidget {
     if (userId == null) {
       return const SizedBox.shrink();
     }
-
-    final today = DateTime.now();
-    final startOfToday = DateTime(today.year, today.month, today.day);
-    final endOfToday = startOfToday.add(const Duration(days: 1));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

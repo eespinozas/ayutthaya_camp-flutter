@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../core/config.dart';
@@ -25,7 +26,7 @@ class EscuelasRepositoryHttp {
   /// [{ "id":"abc123", "nombre":"Ayutthaya Camp Centro" }, ...]
   Future<List<Escuela>> fetchEscuelas() async {
     
-    print(" base url "+AppConfig.apiBaseUrl);
+    debugPrint(" base url ${AppConfig.apiBaseUrl}");
     final uri = Uri.parse('${AppConfig.apiBaseUrl}/api/escuelas');
     final res = await _client.get(uri, headers: {
       'Accept': 'application/json',

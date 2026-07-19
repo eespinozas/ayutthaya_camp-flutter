@@ -48,7 +48,7 @@ class _AdminReportesPageState extends State<AdminReportesPage>
         backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
           child: CircularProgressIndicator(
-            color: const Color(0xFFFF6A00),
+            color: Color(0xFFFF6A00),
           ),
         ),
       );
@@ -151,7 +151,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+            child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
           );
         }
 
@@ -236,7 +236,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                     label: const Text('Ir a Hoy'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFFF6A00),
-                      side: const BorderSide(color: const Color(0xFFFF6A00)),
+                      side: const BorderSide(color: Color(0xFFFF6A00)),
                     ),
                   ),
                 ],
@@ -343,14 +343,14 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6A00).withOpacity(0.2),
+                                    color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     clase['hora'],
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
-                                      color: const Color(0xFFFF6A00),
+                                      color: Color(0xFFFF6A00),
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -465,8 +465,8 @@ class _DailyReportTabState extends State<_DailyReportTab> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withOpacity(0.8),
-            color.withOpacity(0.6),
+            color.withValues(alpha: 0.8),
+            color.withValues(alpha: 0.6),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -474,7 +474,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -513,7 +513,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 10,
                   ),
                 ),
@@ -567,7 +567,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+            child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
           );
         }
 
@@ -646,7 +646,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                     label: const Text('Mes Actual'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFFF6A00),
-                      side: const BorderSide(color: const Color(0xFFFF6A00)),
+                      side: const BorderSide(color: Color(0xFFFF6A00)),
                     ),
                   ),
                 ],
@@ -760,7 +760,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                             Text(
                               '\$${NumberFormat('#,###', 'es_ES').format(data['ingresosTotal'])}',
                               style: const TextStyle(
-                                color: const Color(0xFFFF6A00),
+                                color: Color(0xFFFF6A00),
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -921,13 +921,13 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF6A00).withOpacity(0.2),
+                                color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 '${dia['asistencias']} asistencias',
                                 style: const TextStyle(
-                                  color: const Color(0xFFFF6A00),
+                                  color: Color(0xFFFF6A00),
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -961,8 +961,8 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withOpacity(0.8),
-            color.withOpacity(0.6),
+            color.withValues(alpha: 0.8),
+            color.withValues(alpha: 0.6),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -970,7 +970,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -1009,7 +1009,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 10,
                   ),
                 ),
@@ -1136,7 +1136,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: const Color(0xFFFF6A00)),
+            child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
           );
         }
 
@@ -1225,7 +1225,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                     label: const Text('Semana Actual'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFFF6A00),
-                      side: const BorderSide(color: const Color(0xFFFF6A00)),
+                      side: const BorderSide(color: Color(0xFFFF6A00)),
                     ),
                   ),
                 ],
@@ -1433,7 +1433,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                             width: 12,
                             height: 12,
                             decoration: const BoxDecoration(
-                              color: const Color(0xFFFF6A00),
+                              color: Color(0xFFFF6A00),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -1471,13 +1471,13 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.green.withOpacity(0.3),
-                        Colors.green.withOpacity(0.1),
+                        Colors.green.withValues(alpha: 0.3),
+                        Colors.green.withValues(alpha: 0.1),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.green.withOpacity(0.5),
+                      color: Colors.green.withValues(alpha: 0.5),
                       width: 1,
                     ),
                   ),
@@ -1549,13 +1549,13 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.orange.withOpacity(0.3),
-                        Colors.orange.withOpacity(0.1),
+                        Colors.orange.withValues(alpha: 0.3),
+                        Colors.orange.withValues(alpha: 0.1),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.orange.withOpacity(0.5),
+                      color: Colors.orange.withValues(alpha: 0.5),
                       width: 1,
                     ),
                   ),
@@ -1642,8 +1642,8 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withOpacity(0.8),
-            color.withOpacity(0.6),
+            color.withValues(alpha: 0.8),
+            color.withValues(alpha: 0.6),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1651,7 +1651,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -1690,7 +1690,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 10,
                   ),
                 ),

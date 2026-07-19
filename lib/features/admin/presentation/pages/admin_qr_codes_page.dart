@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
 import '../../../schedules/models/class_schedule.dart';
 import '../../../../core/services/chilean_holidays.dart';
 
@@ -48,15 +47,15 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFFFF6A00).withOpacity(0.2),
-                    const Color(0xFFFF6A00).withOpacity(0.05),
+                    const Color(0xFFFF6A00).withValues(alpha: 0.2),
+                    const Color(0xFFFF6A00).withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFFF6A00).withOpacity(0.3),
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -142,7 +141,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF6A00).withOpacity(0.3),
+                              color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),
@@ -198,7 +197,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                               foregroundColor: const Color(0xFFFF6A00),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               side: const BorderSide(
-                                color: const Color(0xFFFF6A00),
+                                color: Color(0xFFFF6A00),
                                 width: 2,
                               ),
                               shape: RoundedRectangleBorder(
@@ -220,10 +219,10 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6A00).withOpacity(0.1),
+                color: const Color(0xFFFF6A00).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFFF6A00).withOpacity(0.3),
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -234,14 +233,14 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                     children: const [
                       Icon(
                         Icons.info_outline,
-                        color: const Color(0xFFFF6A00),
+                        color: Color(0xFFFF6A00),
                         size: 24,
                       ),
                       SizedBox(width: 12),
                       Text(
                         'Cómo funciona',
                         style: TextStyle(
-                          color: const Color(0xFFFF6A00),
+                          color: Color(0xFFFF6A00),
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -283,7 +282,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(
-                      color: const Color(0xFFFF6A00),
+                      color: Color(0xFFFF6A00),
                     ),
                   );
                 }
@@ -474,7 +473,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFFFF6A00),
+                  color: Color(0xFFFF6A00),
                   letterSpacing: 4,
                 ),
               ),
@@ -518,7 +517,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
         ),
         title: Row(
           children: const [
-            Icon(Icons.print, color: const Color(0xFFFF6A00)),
+            Icon(Icons.print, color: Color(0xFFFF6A00)),
             SizedBox(width: 12),
             Text(
               'Instrucciones de Impresión',
@@ -555,10 +554,10 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Colors.green.withOpacity(0.3),
+                    color: Colors.green.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -586,7 +585,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
             child: const Text(
               'Entendido',
               style: TextStyle(
-                color: const Color(0xFFFF6A00),
+                color: Color(0xFFFF6A00),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),

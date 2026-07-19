@@ -277,7 +277,6 @@ void main() {
       // This is a private method, but we can test it indirectly
       // by verifying the capacity_tracking document IDs match expected format
 
-      final date = DateTime(2025, 1, 5);
       final expectedKey = '2025-01-05';
 
       // The service should create documents with this key
