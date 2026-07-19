@@ -24,14 +24,14 @@ class DashboardEntity {
   });
 
   factory DashboardEntity.empty() => DashboardEntity(
-        planName: 'sin_plan',
-        classesRemaining: 0,
-        vigenciaHasta: null,
-        membershipStatus: '—',
-        agendadas: 0,
-        asistidas: 0,
-        noAsistidas: 0,
-        lastAmountCents: 0,
-        lastStatus: '—',
-      );
+    planName: 'sin_plan',
+    classesRemaining: 0,
+    vigenciaHasta: null,
+    membershipStatus: '—',
+    agendadas: 0,
+    asistidas: 0,
+    noAsistidas: 0,
+    lastAmountCents: 0,
+    lastStatus: '—',
+  );
 }

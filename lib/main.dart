@@ -7,7 +7,6 @@ import 'app/app.dart';
 import 'core/services/config_service.dart';
 import 'core/services/notification_service.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -16,9 +15,7 @@ Future<void> main() async {
   };
 
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Inicializar servicio de notificaciones
   try {
@@ -42,15 +39,18 @@ Future<void> main() async {
     debugPrint('   La app continuará con valores por defecto');
   }
 
-  runZonedGuarded(() {
-    runApp(const App());
-  }, (error, stack) {
-    // Esto asegura log del error en web
-    // ignore: avoid_print
-    print('Uncaught zone error: $error');
-    // ignore: avoid_print
-    print(stack);
-  });
+  runZonedGuarded(
+    () {
+      runApp(const App());
+    },
+    (error, stack) {
+      // Esto asegura log del error en web
+      // ignore: avoid_print
+      print('Uncaught zone error: $error');
+      // ignore: avoid_print
+      print(stack);
+    },
+  );
 }
 
 /// App simple para modo mantenimiento
@@ -98,18 +98,12 @@ class MaintenanceApp extends StatelessWidget {
                 Text(
                   'Estamos realizando mejoras en la aplicación.\nVolveremos pronto.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey[400],
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.grey[400]),
                 ),
                 const SizedBox(height: 32),
                 Text(
                   'Soporte: $supportEmail',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),

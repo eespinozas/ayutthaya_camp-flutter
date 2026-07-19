@@ -108,8 +108,8 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                 child: isPendingUpload
                     ? _buildPendingUploadView()
                     : isPDF
-                        ? _buildPDFView(payment.receiptUrl)
-                        : _buildImageView(payment.receiptUrl),
+                    ? _buildPDFView(payment.receiptUrl)
+                    : _buildImageView(payment.receiptUrl),
               ),
             ),
             const SizedBox(height: 16),
@@ -135,11 +135,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.upload_file,
-              size: 80,
-              color: Colors.orange,
-            ),
+            Icon(Icons.upload_file, size: 80, color: Colors.orange),
             SizedBox(height: 16),
             Text(
               'Comprobante pendiente de subida',
@@ -170,11 +166,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.picture_as_pdf,
-              size: 100,
-              color: Colors.red,
-            ),
+            const Icon(Icons.picture_as_pdf, size: 100, color: Colors.red),
             const SizedBox(height: 24),
             const Text(
               'Comprobante PDF',
@@ -193,14 +185,19 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                 // Para móvil, podrías usar url_launcher package
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Copia la URL de la consola para abrir el PDF'),
+                    content: Text(
+                      'Copia la URL de la consola para abrir el PDF',
+                    ),
                     duration: Duration(seconds: 3),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               icon: const Icon(Icons.open_in_new),
               label: const Text('Abrir PDF'),
@@ -232,7 +229,9 @@ class _AdminPagosPageState extends State<AdminPagosPage>
           debugPrint('✅ Imagen cargada exitosamente');
           return child;
         }
-        debugPrint('⏳ Cargando imagen: ${loadingProgress.cumulativeBytesLoaded} / ${loadingProgress.expectedTotalBytes} bytes');
+        debugPrint(
+          '⏳ Cargando imagen: ${loadingProgress.cumulativeBytesLoaded} / ${loadingProgress.expectedTotalBytes} bytes',
+        );
         return Container(
           height: 400,
           padding: const EdgeInsets.all(24),
@@ -243,7 +242,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                 CircularProgressIndicator(
                   value: loadingProgress.expectedTotalBytes != null
                       ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
+                            loadingProgress.expectedTotalBytes!
                       : null,
                   color: const Color(0xFFFF6A00),
                 ),
@@ -278,11 +277,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 80,
-                  color: Colors.red,
-                ),
+                const Icon(Icons.error_outline, size: 80, color: Colors.red),
                 const SizedBox(height: 16),
                 const Text(
                   'Error al cargar el comprobante',
@@ -326,7 +321,9 @@ class _AdminPagosPageState extends State<AdminPagosPage>
   }
 
   void _approvePayment(Payment payment) {
-    final typeStr = payment.type == PaymentType.enrollment ? 'Matrícula' : 'Mensualidad';
+    final typeStr = payment.type == PaymentType.enrollment
+        ? 'Matrícula'
+        : 'Mensualidad';
 
     showDialog(
       context: context,
@@ -349,70 +346,69 @@ class _AdminPagosPageState extends State<AdminPagosPage>
             ),
           ),
           ElevatedButton(
-            onPressed: _isProcessingPayment ? null : () async {
-              // Cerrar el dialog de confirmación primero
-              Navigator.pop(context);
+            onPressed: _isProcessingPayment
+                ? null
+                : () async {
+                    // Cerrar el dialog de confirmación primero
+                    Navigator.pop(context);
 
-              // Activar el loading overlay
-              setState(() {
-                _isProcessingPayment = true;
-              });
+                    // Activar el loading overlay
+                    setState(() {
+                      _isProcessingPayment = true;
+                    });
 
-              try {
-                debugPrint('🔵 Iniciando aprobación de pago...');
-                await _viewModel.approvePayment(payment.id!);
-                debugPrint('🟢 Aprobación completada');
+                    try {
+                      debugPrint('🔵 Iniciando aprobación de pago...');
+                      await _viewModel.approvePayment(payment.id!);
+                      debugPrint('🟢 Aprobación completada');
 
-                if (!mounted) {
-                  debugPrint('⚠️ Widget no montado, saliendo...');
-                  return;
-                }
+                      if (!mounted) {
+                        debugPrint('⚠️ Widget no montado, saliendo...');
+                        return;
+                      }
 
-                // Desactivar loading
-                setState(() {
-                  _isProcessingPayment = false;
-                });
+                      // Desactivar loading
+                      setState(() {
+                        _isProcessingPayment = false;
+                      });
 
-                // El context del diálogo puede haberse desmontado tras el await
-                if (!context.mounted) return;
-                // Mostrar mensaje de éxito
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Pago de ${payment.userName} aprobado'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              } catch (e) {
-                debugPrint('🔴 Error al aprobar pago: $e');
+                      // El context del diálogo puede haberse desmontado tras el await
+                      if (!context.mounted) return;
+                      // Mostrar mensaje de éxito
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Pago de ${payment.userName} aprobado'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } catch (e) {
+                      debugPrint('🔴 Error al aprobar pago: $e');
 
-                if (!mounted) {
-                  debugPrint('⚠️ Widget no montado después de error, saliendo...');
-                  return;
-                }
+                      if (!mounted) {
+                        debugPrint(
+                          '⚠️ Widget no montado después de error, saliendo...',
+                        );
+                        return;
+                      }
 
-                // Desactivar loading
-                setState(() {
-                  _isProcessingPayment = false;
-                });
+                      // Desactivar loading
+                      setState(() {
+                        _isProcessingPayment = false;
+                      });
 
-                // El context del diálogo puede haberse desmontado tras el await
-                if (!context.mounted) return;
-                // Mostrar error
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error al aprobar el pago: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-            ),
-            child: const Text(
-              'Aprobar',
-              style: TextStyle(color: Colors.white),
-            ),
+                      // El context del diálogo puede haberse desmontado tras el await
+                      if (!context.mounted) return;
+                      // Mostrar error
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al aprobar el pago: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text('Aprobar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -421,7 +417,9 @@ class _AdminPagosPageState extends State<AdminPagosPage>
 
   void _rejectPayment(Payment payment) {
     final reasonController = TextEditingController();
-    final typeStr = payment.type == PaymentType.enrollment ? 'Matrícula' : 'Mensualidad';
+    final typeStr = payment.type == PaymentType.enrollment
+        ? 'Matrícula'
+        : 'Mensualidad';
 
     showDialog(
       context: context,
@@ -463,77 +461,81 @@ class _AdminPagosPageState extends State<AdminPagosPage>
             ),
           ),
           ElevatedButton(
-            onPressed: _isProcessingPayment ? null : () async {
-              final reason = reasonController.text.trim();
-              if (reason.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Por favor ingresa un motivo'),
-                    backgroundColor: Colors.orange,
-                  ),
-                );
-                return;
-              }
+            onPressed: _isProcessingPayment
+                ? null
+                : () async {
+                    final reason = reasonController.text.trim();
+                    if (reason.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Por favor ingresa un motivo'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      return;
+                    }
 
-              // Cerrar el dialog de rechazo primero
-              Navigator.pop(context);
+                    // Cerrar el dialog de rechazo primero
+                    Navigator.pop(context);
 
-              // Activar el loading overlay
-              setState(() {
-                _isProcessingPayment = true;
-              });
+                    // Activar el loading overlay
+                    setState(() {
+                      _isProcessingPayment = true;
+                    });
 
-              try {
-                debugPrint('🔵 Iniciando rechazo de pago...');
-                await _viewModel.rejectPayment(payment.id!, reason);
-                debugPrint('🟢 Rechazo completado');
+                    try {
+                      debugPrint('🔵 Iniciando rechazo de pago...');
+                      await _viewModel.rejectPayment(payment.id!, reason);
+                      debugPrint('🟢 Rechazo completado');
 
-                if (!mounted) {
-                  debugPrint('⚠️ Widget no montado, saliendo...');
-                  return;
-                }
+                      if (!mounted) {
+                        debugPrint('⚠️ Widget no montado, saliendo...');
+                        return;
+                      }
 
-                // Desactivar loading
-                setState(() {
-                  _isProcessingPayment = false;
-                });
+                      // Desactivar loading
+                      setState(() {
+                        _isProcessingPayment = false;
+                      });
 
-                // El context del diálogo puede haberse desmontado tras el await
-                if (!context.mounted) return;
-                // Mostrar mensaje
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Pago de ${payment.userName} rechazado'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              } catch (e) {
-                debugPrint('🔴 Error al rechazar pago: $e');
+                      // El context del diálogo puede haberse desmontado tras el await
+                      if (!context.mounted) return;
+                      // Mostrar mensaje
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Pago de ${payment.userName} rechazado',
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } catch (e) {
+                      debugPrint('🔴 Error al rechazar pago: $e');
 
-                if (!mounted) {
-                  debugPrint('⚠️ Widget no montado después de error, saliendo...');
-                  return;
-                }
+                      if (!mounted) {
+                        debugPrint(
+                          '⚠️ Widget no montado después de error, saliendo...',
+                        );
+                        return;
+                      }
 
-                // Desactivar loading
-                setState(() {
-                  _isProcessingPayment = false;
-                });
+                      // Desactivar loading
+                      setState(() {
+                        _isProcessingPayment = false;
+                      });
 
-                // El context del diálogo puede haberse desmontado tras el await
-                if (!context.mounted) return;
-                // Mostrar error
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error al rechazar el pago: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+                      // El context del diálogo puede haberse desmontado tras el await
+                      if (!context.mounted) return;
+                      // Mostrar error
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al rechazar el pago: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text(
               'Rechazar',
               style: TextStyle(color: Colors.white),
@@ -568,21 +570,26 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                     ),
                   ],
                 ),
-                child: const Icon(Icons.payments_rounded, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.payments_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               const Text(
                 'Gestión de Pagos',
-                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
           centerTitle: false,
         ),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF6A00),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
         ),
       );
     }
@@ -607,7 +614,10 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                     if (pendingCount > 0) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(12),
@@ -653,7 +663,10 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                           if (pendingCount > 0) ...[
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.red,
                                 borderRadius: BorderRadius.circular(10),
@@ -678,9 +691,18 @@ class _AdminPagosPageState extends State<AdminPagosPage>
               body: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildPaymentListStream(_viewModel.getPendingPayments(), 'pending'),
-                  _buildPaymentListStream(_viewModel.getApprovedPayments(), 'approved'),
-                  _buildPaymentListStream(_viewModel.getRejectedPayments(), 'rejected'),
+                  _buildPaymentListStream(
+                    _viewModel.getPendingPayments(),
+                    'pending',
+                  ),
+                  _buildPaymentListStream(
+                    _viewModel.getApprovedPayments(),
+                    'approved',
+                  ),
+                  _buildPaymentListStream(
+                    _viewModel.getRejectedPayments(),
+                    'rejected',
+                  ),
                 ],
               ),
             ),
@@ -692,16 +714,11 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(
-                        color: Color(0xFFFF6A00),
-                      ),
+                      CircularProgressIndicator(color: Color(0xFFFF6A00)),
                       SizedBox(height: 16),
                       Text(
                         'Procesando...',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ],
                   ),
@@ -744,9 +761,10 @@ class _AdminPagosPageState extends State<AdminPagosPage>
           debugPrint('');
 
           // Verificar si es error de índice
-          bool isIndexError = errorStr.contains('index') ||
-                              errorStr.contains('FAILED_PRECONDITION') ||
-                              errorStr.contains('requires an index');
+          bool isIndexError =
+              errorStr.contains('index') ||
+              errorStr.contains('FAILED_PRECONDITION') ||
+              errorStr.contains('requires an index');
 
           return Center(
             child: Padding(
@@ -775,10 +793,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   if (isIndexError) ...[
                     const Text(
                       'Necesitas crear un índice compuesto en Firestore.',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -874,11 +889,7 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          icon,
-                          size: 80,
-                          color: Colors.white24,
-                        ),
+                        Icon(icon, size: 80, color: Colors.white24),
                         const SizedBox(height: 16),
                         Text(
                           message,
@@ -928,7 +939,9 @@ class _AdminPagosPageState extends State<AdminPagosPage>
       borderColor = Colors.red.withValues(alpha: 0.5);
     }
 
-    final typeStr = payment.type == PaymentType.enrollment ? 'Matrícula' : 'Mensualidad';
+    final typeStr = payment.type == PaymentType.enrollment
+        ? 'Matrícula'
+        : 'Mensualidad';
     final isEnrollment = payment.type == PaymentType.enrollment;
 
     return Card(
@@ -971,7 +984,10 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: isEnrollment
                         ? Colors.purple.withValues(alpha: 0.2)
@@ -1014,7 +1030,10 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   child: _buildInfoRow(
                     icon: Icons.calendar_today,
                     label: 'Fecha',
-                    value: DateFormat('dd MMM', 'es_ES').format(payment.paymentDate),
+                    value: DateFormat(
+                      'dd MMM',
+                      'es_ES',
+                    ).format(payment.paymentDate),
                   ),
                 ),
               ],
@@ -1034,8 +1053,10 @@ class _AdminPagosPageState extends State<AdminPagosPage>
               _buildInfoRow(
                 icon: Icons.check_circle,
                 label: 'Aprobado',
-                value: DateFormat('dd MMM yyyy', 'es_ES')
-                    .format(payment.reviewedAt!),
+                value: DateFormat(
+                  'dd MMM yyyy',
+                  'es_ES',
+                ).format(payment.reviewedAt!),
                 color: Colors.green,
               ),
             ],
@@ -1046,8 +1067,10 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                 icon: Icons.cancel,
                 label: 'Rechazado',
                 value: payment.reviewedAt != null
-                    ? DateFormat('dd MMM yyyy', 'es_ES')
-                        .format(payment.reviewedAt!)
+                    ? DateFormat(
+                        'dd MMM yyyy',
+                        'es_ES',
+                      ).format(payment.reviewedAt!)
                     : '-',
                 color: Colors.red,
               ),
@@ -1058,7 +1081,9 @@ class _AdminPagosPageState extends State<AdminPagosPage>
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -1149,18 +1174,11 @@ class _AdminPagosPageState extends State<AdminPagosPage>
   }) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: color ?? Colors.white60,
-        ),
+        Icon(icon, size: 16, color: color ?? Colors.white60),
         const SizedBox(width: 6),
         Text(
           '$label: ',
-          style: TextStyle(
-            color: color ?? Colors.white60,
-            fontSize: 13,
-          ),
+          style: TextStyle(color: color ?? Colors.white60, fontSize: 13),
         ),
         Text(
           value,

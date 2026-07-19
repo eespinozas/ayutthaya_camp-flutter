@@ -105,38 +105,38 @@ class AppColors {
 
   /// Gradient para headers/banners
   static LinearGradient get headerGradient => const LinearGradient(
-        colors: primaryGradient,
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: primaryGradient,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   /// Gradient para botones primarios
   static LinearGradient get buttonGradient => const LinearGradient(
-        colors: primaryGradient,
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-      );
+    colors: primaryGradient,
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
 
   /// Gradient para stats/KPIs de éxito
   static LinearGradient get successCardGradient => const LinearGradient(
-        colors: successGradient,
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: successGradient,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   /// Gradient para stats/KPIs de advertencia
   static LinearGradient get warningCardGradient => const LinearGradient(
-        colors: warningGradient,
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: warningGradient,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   /// Gradient para stats/KPIs de info
   static LinearGradient get infoCardGradient => const LinearGradient(
-        colors: infoGradient,
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: infoGradient,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   // ============================================================================
   // SHADOWS
@@ -144,48 +144,48 @@ class AppColors {
 
   /// Shadow con glow naranja
   static List<BoxShadow> get primaryGlow => [
-        BoxShadow(
-          color: primary.withValues(alpha: 0.3),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-      ];
+    BoxShadow(
+      color: primary.withValues(alpha: 0.3),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
+    ),
+  ];
 
   /// Shadow con glow naranja fuerte
   static List<BoxShadow> get primaryGlowStrong => [
-        BoxShadow(
-          color: primary.withValues(alpha: 0.4),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ];
+    BoxShadow(
+      color: primary.withValues(alpha: 0.4),
+      blurRadius: 20,
+      offset: const Offset(0, 8),
+    ),
+  ];
 
   /// Shadow con glow de éxito
   static List<BoxShadow> get successGlow => [
-        BoxShadow(
-          color: success.withValues(alpha: 0.3),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-      ];
+    BoxShadow(
+      color: success.withValues(alpha: 0.3),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
+    ),
+  ];
 
   /// Shadow con glow de advertencia
   static List<BoxShadow> get warningGlow => [
-        BoxShadow(
-          color: warning.withValues(alpha: 0.3),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-      ];
+    BoxShadow(
+      color: warning.withValues(alpha: 0.3),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
+    ),
+  ];
 
   /// Shadow con glow de info
   static List<BoxShadow> get infoGlow => [
-        BoxShadow(
-          color: info.withValues(alpha: 0.3),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-      ];
+    BoxShadow(
+      color: info.withValues(alpha: 0.3),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
+    ),
+  ];
 
   // ============================================================================
   // BORDERS

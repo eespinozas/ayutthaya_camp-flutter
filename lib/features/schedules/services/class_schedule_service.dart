@@ -12,8 +12,10 @@ class ClassScheduleService {
         .orderBy('displayOrder')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => ClassSchedule.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => ClassSchedule.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Obtener horarios filtrados por día de la semana
@@ -25,8 +27,10 @@ class ClassScheduleService {
         .orderBy('displayOrder')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => ClassSchedule.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => ClassSchedule.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Obtener todos los horarios (admin)
@@ -36,14 +40,19 @@ class ClassScheduleService {
         .orderBy('displayOrder')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => ClassSchedule.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => ClassSchedule.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Obtener un horario por ID
   Future<ClassSchedule?> getScheduleById(String scheduleId) async {
     try {
-      final doc = await _firestore.collection('class_schedules').doc(scheduleId).get();
+      final doc = await _firestore
+          .collection('class_schedules')
+          .doc(scheduleId)
+          .get();
       if (doc.exists) {
         return ClassSchedule.fromFirestore(doc);
       }
@@ -56,7 +65,9 @@ class ClassScheduleService {
   /// Crear un horario de clase (admin)
   Future<String> createSchedule(ClassSchedule schedule) async {
     try {
-      final docRef = await _firestore.collection('class_schedules').add(schedule.toMap());
+      final docRef = await _firestore
+          .collection('class_schedules')
+          .add(schedule.toMap());
       return docRef.id;
     } catch (e) {
       throw Exception('Error al crear horario: $e');
@@ -64,7 +75,10 @@ class ClassScheduleService {
   }
 
   /// Actualizar un horario (admin)
-  Future<void> updateSchedule(String scheduleId, Map<String, dynamic> data) async {
+  Future<void> updateSchedule(
+    String scheduleId,
+    Map<String, dynamic> data,
+  ) async {
     try {
       await _firestore.collection('class_schedules').doc(scheduleId).update({
         ...data,
@@ -96,7 +110,9 @@ class ClassScheduleService {
           .orderBy('time')
           .get();
 
-      final schedules = snapshot.docs.map((doc) => ClassSchedule.fromFirestore(doc)).toList();
+      final schedules = snapshot.docs
+          .map((doc) => ClassSchedule.fromFirestore(doc))
+          .toList();
 
       final Map<String, List<ClassSchedule>> grouped = {};
       for (var schedule in schedules) {

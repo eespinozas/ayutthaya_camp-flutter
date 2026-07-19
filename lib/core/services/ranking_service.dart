@@ -110,7 +110,10 @@ class RankingService {
   /// Ventana de [count] rangos para mostrar como milestones: los próximos
   /// rangos a alcanzar y, cerca del tope, se completa hacia atrás con los
   /// últimos ya obtenidos (que la UI muestra iluminados).
-  static List<MuayThaiRank> ventanaDeRangos(int clasesTotales, {int count = 3}) {
+  static List<MuayThaiRank> ventanaDeRangos(
+    int clasesTotales, {
+    int count = 3,
+  }) {
     final actual = rangoDesdeClases(clasesTotales);
     final fin = (actual.index + count).clamp(0, indiceMaximo);
     final inicio = (fin - count + 1).clamp(0, indiceMaximo);

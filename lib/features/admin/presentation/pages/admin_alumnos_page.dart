@@ -6,10 +6,7 @@ import 'admin_alumno_historial_page.dart';
 class AdminAlumnosPage extends StatefulWidget {
   final VoidCallback onNavigateToPagos;
 
-  const AdminAlumnosPage({
-    super.key,
-    required this.onNavigateToPagos,
-  });
+  const AdminAlumnosPage({super.key, required this.onNavigateToPagos});
 
   @override
   State<AdminAlumnosPage> createState() => _AdminAlumnosPageState();
@@ -49,7 +46,6 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
@@ -71,12 +67,19 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.people_rounded, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.people_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             const Text(
               'Gestión de Alumnos',
-              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ],
         ),
@@ -182,154 +185,166 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                // Enhanced Stats Cards
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildEnhancedStatCard(
-                        label: 'Registrados',
-                        value: '${registeredUsers.length}',
-                        icon: Icons.person_add_alt_1_rounded,
-                        gradientColors: const [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                  // Enhanced Stats Cards
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildEnhancedStatCard(
+                          label: 'Registrados',
+                          value: '${registeredUsers.length}',
+                          icon: Icons.person_add_alt_1_rounded,
+                          gradientColors: const [
+                            Color(0xFF3B82F6),
+                            Color(0xFF2563EB),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildEnhancedStatCard(
+                          label: 'Pendientes',
+                          value: '${pendingUsers.length}',
+                          icon: Icons.pending_actions_rounded,
+                          gradientColors: const [
+                            Color(0xFFF59E0B),
+                            Color(0xFFEF4444),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildEnhancedStatCard(
+                          label: 'Activos',
+                          value: '${activeUsers.length}',
+                          icon: Icons.check_circle_rounded,
+                          gradientColors: const [
+                            Color(0xFF10B981),
+                            Color(0xFF059669),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildEnhancedStatCard(
+                          label: 'Inactivos',
+                          value: '${inactiveUsers.length}',
+                          icon: Icons.cancel_rounded,
+                          gradientColors: const [
+                            Color(0xFF6B7280),
+                            Color(0xFF4B5563),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Usuarios registrados sin membresía (incluye a los nuevos)
+                  if (registeredUsers.isNotEmpty) ...[
+                    const Text(
+                      'Registrados (sin membresía)',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildEnhancedStatCard(
-                        label: 'Pendientes',
-                        value: '${pendingUsers.length}',
-                        icon: Icons.pending_actions_rounded,
-                        gradientColors: const [Color(0xFFF59E0B), Color(0xFFEF4444)],
-                      ),
-                    ),
+                    const SizedBox(height: 12),
+                    ...registeredUsers.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+
+                      return _UserCard(
+                        userId: doc.id,
+                        name: _nameOf(data),
+                        email: data['email'] as String? ?? 'Sin email',
+                        status: 'registered',
+                        createdAt: data['createdAt'] as Timestamp?,
+                      );
+                    }),
+                    const SizedBox(height: 24),
                   ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildEnhancedStatCard(
-                        label: 'Activos',
-                        value: '${activeUsers.length}',
-                        icon: Icons.check_circle_rounded,
-                        gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
+
+                  // Usuarios pendientes
+                  if (pendingUsers.isNotEmpty) ...[
+                    const Text(
+                      'Usuarios Pendientes',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildEnhancedStatCard(
-                        label: 'Inactivos',
-                        value: '${inactiveUsers.length}',
-                        icon: Icons.cancel_rounded,
-                        gradientColors: const [Color(0xFF6B7280), Color(0xFF4B5563)],
-                      ),
-                    ),
+                    const SizedBox(height: 12),
+                    ...pendingUsers.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+
+                      return _UserCard(
+                        userId: doc.id,
+                        name: _nameOf(data),
+                        email: data['email'] as String? ?? 'Sin email',
+                        status: 'pending',
+                        onActivate: () => _goToPagosToActivate(data),
+                      );
+                    }),
+                    const SizedBox(height: 24),
                   ],
-                ),
 
-                const SizedBox(height: 24),
-
-                // Usuarios registrados sin membresía (incluye a los nuevos)
-                if (registeredUsers.isNotEmpty) ...[
-                  const Text(
-                    'Registrados (sin membresía)',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  // Usuarios activos
+                  if (activeUsers.isNotEmpty) ...[
+                    const Text(
+                      'Usuarios Activos',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...registeredUsers.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
+                    const SizedBox(height: 12),
+                    ...activeUsers.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
 
-                    return _UserCard(
-                      userId: doc.id,
-                      name: _nameOf(data),
-                      email: data['email'] as String? ?? 'Sin email',
-                      status: 'registered',
-                      createdAt: data['createdAt'] as Timestamp?,
-                    );
-                  }),
-                  const SizedBox(height: 24),
-                ],
+                      return _UserCard(
+                        userId: doc.id,
+                        name: _nameOf(data),
+                        email: data['email'] as String? ?? 'Sin email',
+                        status: 'active',
+                        expirationDate: data['expirationDate'],
+                      );
+                    }),
+                    const SizedBox(height: 24),
+                  ],
 
-                // Usuarios pendientes
-                if (pendingUsers.isNotEmpty) ...[
-                  const Text(
-                    'Usuarios Pendientes',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  // Usuarios inactivos
+                  if (inactiveUsers.isNotEmpty) ...[
+                    const Text(
+                      'Usuarios Inactivos',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...pendingUsers.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
+                    const SizedBox(height: 12),
+                    ...inactiveUsers.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
 
-                    return _UserCard(
-                      userId: doc.id,
-                      name: _nameOf(data),
-                      email: data['email'] as String? ?? 'Sin email',
-                      status: 'pending',
-                      onActivate: () => _goToPagosToActivate(data),
-                    );
-                  }),
-                  const SizedBox(height: 24),
+                      return _UserCard(
+                        userId: doc.id,
+                        name: _nameOf(data),
+                        email: data['email'] as String? ?? 'Sin email',
+                        status: 'inactive',
+                        expirationDate: data['expirationDate'],
+                      );
+                    }),
+                  ],
                 ],
-
-                // Usuarios activos
-                if (activeUsers.isNotEmpty) ...[
-                  const Text(
-                    'Usuarios Activos',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...activeUsers.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-
-                    return _UserCard(
-                      userId: doc.id,
-                      name: _nameOf(data),
-                      email: data['email'] as String? ?? 'Sin email',
-                      status: 'active',
-                      expirationDate: data['expirationDate'],
-                    );
-                  }),
-                  const SizedBox(height: 24),
-                ],
-
-                // Usuarios inactivos
-                if (inactiveUsers.isNotEmpty) ...[
-                  const Text(
-                    'Usuarios Inactivos',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...inactiveUsers.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-
-                    return _UserCard(
-                      userId: doc.id,
-                      name: _nameOf(data),
-                      email: data['email'] as String? ?? 'Sin email',
-                      status: 'inactive',
-                      expirationDate: data['expirationDate'],
-                    );
-                  }),
-                ],
-              ],
+              ),
             ),
-          ),
           );
         },
       ),
@@ -382,10 +397,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-            ),
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
       ),
@@ -413,10 +425,7 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
           children: [
             Icon(Icons.info_outline, color: Color(0xFFFF6A00)),
             SizedBox(width: 12),
-            Text(
-              'Ir a Pagos',
-              style: TextStyle(color: Colors.white),
-            ),
+            Text('Ir a Pagos', style: TextStyle(color: Colors.white)),
           ],
         ),
         content: Column(
@@ -433,7 +442,9 @@ class _AdminAlumnosPageState extends State<AdminAlumnosPage> {
               decoration: BoxDecoration(
                 color: const Color(0xFFFF6A00).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFF6A00).withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,17 +600,16 @@ class _UserCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   email,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 13,
-                  ),
+                  style: const TextStyle(color: Colors.white60, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
@@ -671,15 +681,14 @@ class _UserCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   email,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 13,
-                  ),
+                  style: const TextStyle(color: Colors.white60, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
@@ -703,7 +712,10 @@ class _UserCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFF6A00),
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
                 icon: const Icon(Icons.payment, size: 16),
                 label: const Text('Ver Pago', style: TextStyle(fontSize: 13)),
@@ -719,8 +731,7 @@ class _UserCard extends StatelessWidget {
     String expirationText = 'Sin vencimiento';
     if (expirationDate != null) {
       final date = expirationDate!.toDate();
-      expirationText =
-          '${date.day}/${date.month}/${date.year}';
+      expirationText = '${date.day}/${date.month}/${date.year}';
     }
 
     return Container(
@@ -756,18 +767,12 @@ class _UserCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   email,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 13,
-                  ),
+                  style: const TextStyle(color: Colors.white60, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Vence: $expirationText',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
@@ -790,10 +795,7 @@ class _UserCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.red.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         children: [
@@ -821,16 +823,16 @@ class _UserCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   email,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 13,
-                  ),
+                  style: const TextStyle(color: Colors.white60, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.red.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),

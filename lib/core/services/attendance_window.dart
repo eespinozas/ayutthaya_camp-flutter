@@ -30,10 +30,9 @@ class AttendanceWindow {
   static DateTime closesAt(
     DateTime inicioClase, {
     required bool esPrimeraClaseDelDia,
-  }) =>
-      inicioClase
-          .add(duracionClase(esPrimeraClaseDelDia: esPrimeraClaseDelDia))
-          .add(gracia);
+  }) => inicioClase
+      .add(duracionClase(esPrimeraClaseDelDia: esPrimeraClaseDelDia))
+      .add(gracia);
 
   /// ¿Está abierta la ventana de confirmación en [now]?
   static bool isOpen(
@@ -70,7 +69,10 @@ class AttendanceWindow {
   ///
   /// Con lista vacía se asume que NO es la primera (duración estándar de 90
   /// minutos): es el caso conservador mientras los horarios aún no cargan.
-  static bool esPrimeraClaseDelDia(String time, Iterable<String> horariosDelDia) {
+  static bool esPrimeraClaseDelDia(
+    String time,
+    Iterable<String> horariosDelDia,
+  ) {
     if (horariosDelDia.isEmpty) return false;
     final minutos = _aMinutos(time);
     return horariosDelDia.every((h) => _aMinutos(h) >= minutos);

@@ -47,24 +47,44 @@ class _PagosPageState extends State<PagosPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => PaymentReceiptModal(
         paymentType: paymentType,
-        onSubmit: (amount, date, file, bytes, fileName, planId, planName, enrollmentPlan) {
-          _handlePaymentSubmit(paymentType, amount, date, file, bytes,
-              fileName, planId, planName, enrollmentPlan);
-        },
+        onSubmit:
+            (
+              amount,
+              date,
+              file,
+              bytes,
+              fileName,
+              planId,
+              planName,
+              enrollmentPlan,
+            ) {
+              _handlePaymentSubmit(
+                paymentType,
+                amount,
+                date,
+                file,
+                bytes,
+                fileName,
+                planId,
+                planName,
+                enrollmentPlan,
+              );
+            },
       ),
     );
   }
 
   Future<void> _handlePaymentSubmit(
-      String type,
-      double amount,
-      DateTime date,
-      File? file,
-      Uint8List? bytes,
-      String? fileName,
-      String? planId,
-      String planName,
-      String? enrollmentPlan) async {
+    String type,
+    double amount,
+    DateTime date,
+    File? file,
+    Uint8List? bytes,
+    String? fileName,
+    String? planId,
+    String planName,
+    String? enrollmentPlan,
+  ) async {
     if (file == null && bytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -94,14 +114,13 @@ class _PagosPageState extends State<PagosPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFFF6A00),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
       ),
     );
 
-    final paymentType =
-        type == 'Matrícula' ? PaymentType.enrollment : PaymentType.monthly;
+    final paymentType = type == 'Matrícula'
+        ? PaymentType.enrollment
+        : PaymentType.monthly;
 
     final success = await paymentVM.createPayment(
       userId: user.uid,
@@ -124,7 +143,9 @@ class _PagosPageState extends State<PagosPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Comprobante de $type enviado exitosamente. Espera la aprobación del administrador.'),
+            content: Text(
+              'Comprobante de $type enviado exitosamente. Espera la aprobación del administrador.',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -133,7 +154,9 @@ class _PagosPageState extends State<PagosPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${paymentVM.error ?? "No se pudo enviar el pago"}'),
+            content: Text(
+              'Error: ${paymentVM.error ?? "No se pudo enviar el pago"}',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -155,9 +178,7 @@ class _PagosPageState extends State<PagosPage> {
           centerTitle: false,
         ),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF6A00),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
         ),
       );
     }
@@ -218,13 +239,13 @@ class _PagosPageState extends State<PagosPage> {
                     status == 'active'
                         ? Colors.green.shade700
                         : status == 'expired'
-                            ? Colors.red.shade700
-                            : Colors.orange.shade700,
+                        ? Colors.red.shade700
+                        : Colors.orange.shade700,
                     status == 'active'
                         ? Colors.green.shade900
                         : status == 'expired'
-                            ? Colors.red.shade900
-                            : Colors.orange.shade900,
+                        ? Colors.red.shade900
+                        : Colors.orange.shade900,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -267,8 +288,8 @@ class _PagosPageState extends State<PagosPage> {
                               status == 'active'
                                   ? Icons.check_circle
                                   : status == 'expired'
-                                      ? Icons.cancel
-                                      : Icons.pending,
+                                  ? Icons.cancel
+                                  : Icons.pending,
                               color: Colors.white,
                               size: 16,
                             ),
@@ -277,8 +298,8 @@ class _PagosPageState extends State<PagosPage> {
                               status == 'active'
                                   ? 'Activa'
                                   : status == 'expired'
-                                      ? 'Vencida'
-                                      : 'Pendiente',
+                                  ? 'Vencida'
+                                  : 'Pendiente',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -298,8 +319,8 @@ class _PagosPageState extends State<PagosPage> {
                       status == 'active'
                           ? 'Membresía Activa'
                           : status == 'expired'
-                              ? 'Membresía Expirada'
-                              : 'Pago Pendiente',
+                          ? 'Membresía Expirada'
+                          : 'Pago Pendiente',
                     ),
                     if (expiryDate != null) ...[
                       const SizedBox(height: 8),
@@ -403,10 +424,12 @@ class _PagosPageState extends State<PagosPage> {
                             ? () => _showPaymentModal('Mensualidad')
                             : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: (status == 'expired' || daysUntilExpiry <= 0)
+                          backgroundColor:
+                              (status == 'expired' || daysUntilExpiry <= 0)
                               ? const Color(0xFFFF6A00)
                               : Colors.grey.shade700,
-                          foregroundColor: (status == 'expired' || daysUntilExpiry <= 0)
+                          foregroundColor:
+                              (status == 'expired' || daysUntilExpiry <= 0)
                               ? Colors.black
                               : Colors.white38,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -548,10 +571,7 @@ class _PagosPageState extends State<PagosPage> {
         const SizedBox(width: 8),
         Text(
           '$label: ',
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
         ),
         Text(
           value,
@@ -605,7 +625,9 @@ class _PagosPageState extends State<PagosPage> {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Pago eliminado. Puedes intentar subir el comprobante nuevamente.'),
+              content: Text(
+                'Pago eliminado. Puedes intentar subir el comprobante nuevamente.',
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -647,10 +669,7 @@ class _PagosPageState extends State<PagosPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -711,18 +730,11 @@ class _PagosPageState extends State<PagosPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(
-                Icons.calendar_today,
-                color: Colors.white60,
-                size: 16,
-              ),
+              const Icon(Icons.calendar_today, color: Colors.white60, size: 16),
               const SizedBox(width: 6),
               Text(
                 DateFormat('dd MMM yyyy', 'es_ES').format(payment.paymentDate),
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(width: 16),
               Container(
@@ -732,7 +744,9 @@ class _PagosPageState extends State<PagosPage> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  payment.type == PaymentType.enrollment ? 'Matrícula' : 'Mensualidad',
+                  payment.type == PaymentType.enrollment
+                      ? 'Matrícula'
+                      : 'Mensualidad',
                   style: const TextStyle(
                     color: Color(0xFFFF6A00),
                     fontSize: 11,
@@ -757,19 +771,12 @@ class _PagosPageState extends State<PagosPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.info_outline,
-                    color: Colors.red,
-                    size: 16,
-                  ),
+                  const Icon(Icons.info_outline, color: Colors.red, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Motivo: ${payment.rejectionReason}',
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
                     ),
                   ),
                 ],
@@ -803,10 +810,7 @@ class _PagosPageState extends State<PagosPage> {
                       const Expanded(
                         child: Text(
                           'Hubo un problema al procesar este pago. Puedes eliminarlo e intentar nuevamente.',
-                          style: TextStyle(
-                            color: Colors.orange,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.orange, fontSize: 12),
                         ),
                       ),
                     ],
@@ -853,7 +857,8 @@ class PaymentReceiptModal extends StatefulWidget {
     String? planId,
     String planName,
     String? enrollmentPlan,
-  ) onSubmit;
+  )
+  onSubmit;
 
   const PaymentReceiptModal({
     super.key,
@@ -946,7 +951,9 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Necesitas habilitar los permisos de almacenamiento en la configuración'),
+            content: const Text(
+              'Necesitas habilitar los permisos de almacenamiento en la configuración',
+            ),
             action: SnackBarAction(
               label: 'Abrir',
               onPressed: () => openAppSettings(),
@@ -975,7 +982,9 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Necesitas habilitar los permisos de cámara en la configuración'),
+            content: const Text(
+              'Necesitas habilitar los permisos de cámara en la configuración',
+            ),
             action: SnackBarAction(
               label: 'Abrir',
               onPressed: () => openAppSettings(),
@@ -1099,7 +1108,9 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
       if (result != null) {
         debugPrint('Archivos seleccionados: ${result.files.length}');
         debugPrint('Primer archivo - Nombre: ${result.files.single.name}');
-        debugPrint('Primer archivo - Extension: ${result.files.single.extension}');
+        debugPrint(
+          'Primer archivo - Extension: ${result.files.single.extension}',
+        );
         debugPrint('Primer archivo - Size: ${result.files.single.size}');
 
         if (kIsWeb) {
@@ -1108,7 +1119,9 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
           debugPrint('Bytes disponibles: ${bytes != null}');
 
           if (bytes != null) {
-            debugPrint('✅ Archivo seleccionado exitosamente (web): ${result.files.single.name}');
+            debugPrint(
+              '✅ Archivo seleccionado exitosamente (web): ${result.files.single.name}',
+            );
 
             setState(() {
               _receiptBytes = bytes;
@@ -1116,7 +1129,9 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
               _receiptImage = null; // Limpiar el File
             });
 
-            debugPrint('✅ Estado actualizado con bytes (${bytes.length} bytes)');
+            debugPrint(
+              '✅ Estado actualizado con bytes (${bytes.length} bytes)',
+            );
           } else {
             debugPrint('❌ ERROR: Bytes del archivo son null');
             if (!mounted) return;
@@ -1170,7 +1185,6 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
     }
   }
 
-
   Widget _buildReceiptPreview() {
     // Determinar si es PDF
     bool isPdf = false;
@@ -1207,20 +1221,14 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
               const SizedBox(height: 12),
               const Text(
                 'Documento PDF seleccionado',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   fileName,
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 2,
@@ -1296,8 +1304,16 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
       final enrollmentPlan = isEnrollment ? _selectedPlan!.name : null;
 
       // Pasar tanto File como bytes, dependiendo de la plataforma
-      widget.onSubmit(amount, _selectedDate, _receiptImage, _receiptBytes,
-          _receiptFileName, planId, planName, enrollmentPlan);
+      widget.onSubmit(
+        amount,
+        _selectedDate,
+        _receiptImage,
+        _receiptBytes,
+        _receiptFileName,
+        planId,
+        planName,
+        enrollmentPlan,
+      );
       Navigator.pop(context);
     }
   }
@@ -1315,9 +1331,7 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
           topRight: Radius.circular(20),
         ),
       ),
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.95,
-      ),
+      constraints: BoxConstraints(maxHeight: screenHeight * 0.95),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1335,717 +1349,787 @@ class _PaymentReceiptModalState extends State<PaymentReceiptModal> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Subir Comprobante',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, color: Colors.white70),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    widget.paymentType,
-                    style: const TextStyle(
-                      color: Color(0xFFFF6A00),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Para matrícula: precio fijo + selector de plan
-                if (widget.paymentType == 'Matrícula') ...[
-                  if (_loadingRegistrationPrice)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Color(0xFFFF6A00),
-                              strokeWidth: 2,
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Text(
-                            'Cargando información...',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (_registrationPrice != null) ...[
-                    // Precio de matrícula (solo lectura)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.how_to_reg,
-                                color: const Color(0xFFFF6A00),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Matrícula',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            '\$${_registrationPrice!.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Selector de plan
-                    Consumer<PlanViewModel>(
-                      builder: (context, planVM, _) {
-                        return StreamBuilder<List<Plan>>(
-                          stream: planVM.getActivePlans(),
-                          builder: (context, snapshot) {
-                            debugPrint('=== SELECTOR DE PLANES (MATRÍCULA) ===');
-                            debugPrint('ConnectionState: ${snapshot.connectionState}');
-                            debugPrint('HasError: ${snapshot.hasError}');
-                            debugPrint('PlansCount: ${snapshot.data?.length ?? 0}');
-
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1A1A1A),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Color(0xFFFF6A00),
-                                  ),
-                                ),
-                              );
-                            }
-
-                            if (snapshot.hasError) {
-                              return Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1A1A1A),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  'Error al cargar planes: ${snapshot.error}',
-                                  style: const TextStyle(color: Colors.red),
-                                ),
-                              );
-                            }
-
-                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1A1A1A),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Text(
-                                  'No hay planes disponibles',
-                                  style: TextStyle(color: Colors.white70),
-                                ),
-                              );
-                            }
-
-                            final plans = snapshot.data!;
-
-                            // Asegurarnos de que el plan seleccionado sea del mismo stream
-                            // para evitar problemas de referencia
-                            Plan? currentSelectedPlan;
-                            if (_selectedPlan != null) {
-                              try {
-                                currentSelectedPlan = plans.firstWhere(
-                                  (p) => p.id == _selectedPlan!.id,
-                                );
-                              } catch (e) {
-                                currentSelectedPlan = null;
-                              }
-                            }
-
-                            return DropdownButtonFormField<Plan>(
-                              initialValue: currentSelectedPlan,
-                              decoration: InputDecoration(
-                                hintText: 'Seleccionar Plan',
-                                hintStyle: const TextStyle(color: Colors.white60),
-                                prefixIcon: const Icon(Icons.card_membership, color: Color(0xFFFF6A00)),
-                                filled: true,
-                                fillColor: const Color(0xFF1A1A1A),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                              dropdownColor: const Color(0xFF1A1A1A),
-                              style: const TextStyle(color: Colors.white),
-                              items: plans.map((plan) {
-                                return DropdownMenuItem<Plan>(
-                                  value: plan,
-                                  child: Text(
-                                    '${plan.name} - \$${plan.price.toStringAsFixed(0)}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (Plan? value) {
-                                debugPrint('Plan seleccionado: ${value?.name} - \$${value?.price}');
-                                setState(() {
-                                  _selectedPlan = value;
-                                  if (value != null) {
-                                    // Calcular total: matrícula + plan
-                                    final total = _registrationPrice! + value.price;
-                                    _amountController.text = total.toStringAsFixed(0);
-                                  } else {
-                                    _amountController.text = _registrationPrice!.toStringAsFixed(0);
-                                  }
-                                });
-                              },
-                              validator: (value) {
-                                if (value == null) {
-                                  return 'Por favor selecciona un plan';
-                                }
-                                return null;
-                              },
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Resumen del total
-                    if (_selectedPlan != null)
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF6A00).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
-                            width: 2,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            // Desglose
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Matrícula:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  '\$${_registrationPrice!.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '${_selectedPlan!.name}:',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  '\$${_selectedPlan!.price.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Divider(color: Colors.white24, height: 24),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'TOTAL A PAGAR:',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '\$${(_registrationPrice! + _selectedPlan!.price).toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                    color: Color(0xFFFF6A00),
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                  ] else
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.error_outline, color: Colors.red),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Error al cargar el precio de matrícula',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Para mensualidad: selector de plan
-                if (widget.paymentType == 'Mensualidad') ...[
-                  Consumer<PlanViewModel>(
-                    builder: (context, planVM, _) {
-                      return StreamBuilder<List<Plan>>(
-                        stream: planVM.getActivePlans(),
-                        builder: (context, snapshot) {
-                          debugPrint('=== SELECTOR DE PLANES ===');
-                          debugPrint('ConnectionState: ${snapshot.connectionState}');
-                          debugPrint('HasError: ${snapshot.hasError}');
-                          debugPrint('Error: ${snapshot.error}');
-                          debugPrint('HasData: ${snapshot.hasData}');
-                          debugPrint('PlansCount: ${snapshot.data?.length ?? 0}');
-
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1A1A1A),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFFFF6A00),
-                                ),
-                              ),
-                            );
-                          }
-
-                          if (snapshot.hasError) {
-                            debugPrint('ERROR cargando planes: ${snapshot.error}');
-                            return Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1A1A1A),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                'Error al cargar planes: ${snapshot.error}',
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            );
-                          }
-
-                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            debugPrint('No hay planes disponibles');
-                            return Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1A1A1A),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'No hay planes disponibles',
-                                style: TextStyle(color: Colors.white70),
-                              ),
-                            );
-                          }
-
-                          final plans = snapshot.data!;
-                          debugPrint('Planes encontrados: ${plans.length}');
-                          for (var plan in plans) {
-                            debugPrint('  - ${plan.name}: \$${plan.price}');
-                          }
-
-                          // Asegurarnos de que el plan seleccionado sea del mismo stream
-                          // para evitar problemas de referencia
-                          Plan? currentSelectedPlan;
-                          if (_selectedPlan != null) {
-                            try {
-                              currentSelectedPlan = plans.firstWhere(
-                                (p) => p.id == _selectedPlan!.id,
-                              );
-                            } catch (e) {
-                              currentSelectedPlan = null;
-                            }
-                          }
-
-                          return Column(
-                            children: [
-                              DropdownButtonFormField<Plan>(
-                                initialValue: currentSelectedPlan,
-                                decoration: InputDecoration(
-                                  hintText: 'Seleccionar Plan',
-                                  hintStyle: const TextStyle(color: Colors.white60),
-                                  prefixIcon: const Icon(Icons.card_membership, color: Color(0xFFFF6A00)),
-                                  filled: true,
-                                  fillColor: const Color(0xFF1A1A1A),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                ),
-                                dropdownColor: const Color(0xFF1A1A1A),
-                                style: const TextStyle(color: Colors.white),
-                                items: plans.map((plan) {
-                                  return DropdownMenuItem<Plan>(
-                                    value: plan,
-                                    child: Text(
-                                      '${plan.name} - \$${plan.price.toStringAsFixed(0)}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (Plan? value) {
-                                  debugPrint('Plan seleccionado: ${value?.name} - \$${value?.price}');
-                                  setState(() {
-                                    _selectedPlan = value;
-                                    if (value != null) {
-                                      _amountController.text = value.price.toStringAsFixed(0);
-                                    }
-                                  });
-                                },
-                                validator: (value) {
-                                  if (value == null) {
-                                    return 'Por favor selecciona un plan';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              if (_selectedPlan != null) ...[
-                                const SizedBox(height: 16),
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6A00).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'Total a pagar:',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      Text(
-                                        '\$${_selectedPlan!.price.toStringAsFixed(0)}',
-                                        style: const TextStyle(
-                                          color: Color(0xFFFF6A00),
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Selector de fecha
-                InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
-                      builder: (context, child) {
-                        return Theme(
-                          data: ThemeData.dark().copyWith(
-                            colorScheme: const ColorScheme.dark(
-                              primary: Color(0xFFFF6A00),
-                              onPrimary: Colors.black,
-                              surface: Color(0xFF2A2A2A),
-                              onSurface: Colors.white,
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _selectedDate = date;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.calendar_today, color: Color(0xFFFF6A00)),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Fecha del pago',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              DateFormat('dd MMMM yyyy', 'es_ES').format(_selectedDate),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'Subir Comprobante',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close, color: Colors.white70),
                         ),
                       ],
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        widget.paymentType,
+                        style: const TextStyle(
+                          color: Color(0xFFFF6A00),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                const SizedBox(height: 16),
-
-                // Comprobante
-                const Text(
-                  'Comprobante',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                if (_receiptImage == null && _receiptBytes == null) ...[
-                  Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _pickImage,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFFFF6A00),
-                                side: const BorderSide(color: Color(0xFFFF6A00)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                    // Para matrícula: precio fijo + selector de plan
+                    if (widget.paymentType == 'Matrícula') ...[
+                      if (_loadingRegistrationPrice)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1A1A),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFFF6A00),
+                                  strokeWidth: 2,
                                 ),
                               ),
-                              icon: const Icon(Icons.photo_library),
-                              label: const Text('Galería'),
+                              SizedBox(width: 16),
+                              Text(
+                                'Cargando información...',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ],
+                          ),
+                        )
+                      else if (_registrationPrice != null) ...[
+                        // Precio de matrícula (solo lectura)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1A1A),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.how_to_reg,
+                                    color: const Color(0xFFFF6A00),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Matrícula',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                '\$${_registrationPrice!.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Selector de plan
+                        Consumer<PlanViewModel>(
+                          builder: (context, planVM, _) {
+                            return StreamBuilder<List<Plan>>(
+                              stream: planVM.getActivePlans(),
+                              builder: (context, snapshot) {
+                                debugPrint(
+                                  '=== SELECTOR DE PLANES (MATRÍCULA) ===',
+                                );
+                                debugPrint(
+                                  'ConnectionState: ${snapshot.connectionState}',
+                                );
+                                debugPrint('HasError: ${snapshot.hasError}');
+                                debugPrint(
+                                  'PlansCount: ${snapshot.data?.length ?? 0}',
+                                );
+
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1A1A1A),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFFFF6A00),
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                if (snapshot.hasError) {
+                                  return Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1A1A1A),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      'Error al cargar planes: ${snapshot.error}',
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  );
+                                }
+
+                                if (!snapshot.hasData ||
+                                    snapshot.data!.isEmpty) {
+                                  return Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1A1A1A),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Text(
+                                      'No hay planes disponibles',
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                  );
+                                }
+
+                                final plans = snapshot.data!;
+
+                                // Asegurarnos de que el plan seleccionado sea del mismo stream
+                                // para evitar problemas de referencia
+                                Plan? currentSelectedPlan;
+                                if (_selectedPlan != null) {
+                                  try {
+                                    currentSelectedPlan = plans.firstWhere(
+                                      (p) => p.id == _selectedPlan!.id,
+                                    );
+                                  } catch (e) {
+                                    currentSelectedPlan = null;
+                                  }
+                                }
+
+                                return DropdownButtonFormField<Plan>(
+                                  initialValue: currentSelectedPlan,
+                                  decoration: InputDecoration(
+                                    hintText: 'Seleccionar Plan',
+                                    hintStyle: const TextStyle(
+                                      color: Colors.white60,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.card_membership,
+                                      color: Color(0xFFFF6A00),
+                                    ),
+                                    filled: true,
+                                    fillColor: const Color(0xFF1A1A1A),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  dropdownColor: const Color(0xFF1A1A1A),
+                                  style: const TextStyle(color: Colors.white),
+                                  items: plans.map((plan) {
+                                    return DropdownMenuItem<Plan>(
+                                      value: plan,
+                                      child: Text(
+                                        '${plan.name} - \$${plan.price.toStringAsFixed(0)}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (Plan? value) {
+                                    debugPrint(
+                                      'Plan seleccionado: ${value?.name} - \$${value?.price}',
+                                    );
+                                    setState(() {
+                                      _selectedPlan = value;
+                                      if (value != null) {
+                                        // Calcular total: matrícula + plan
+                                        final total =
+                                            _registrationPrice! + value.price;
+                                        _amountController.text = total
+                                            .toStringAsFixed(0);
+                                      } else {
+                                        _amountController.text =
+                                            _registrationPrice!.toStringAsFixed(
+                                              0,
+                                            );
+                                      }
+                                    });
+                                  },
+                                  validator: (value) {
+                                    if (value == null) {
+                                      return 'Por favor selecciona un plan';
+                                    }
+                                    return null;
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Resumen del total
+                        if (_selectedPlan != null)
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFFFF6A00,
+                              ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFFFF6A00,
+                                ).withValues(alpha: 0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                // Desglose
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Matrícula:',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      '\$${_registrationPrice!.toStringAsFixed(0)}',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '${_selectedPlan!.name}:',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      '\$${_selectedPlan!.price.toStringAsFixed(0)}',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(
+                                  color: Colors.white24,
+                                  height: 24,
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'TOTAL A PAGAR:',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '\$${(_registrationPrice! + _selectedPlan!.price).toStringAsFixed(0)}',
+                                      style: const TextStyle(
+                                        color: Color(0xFFFF6A00),
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
+                      ] else
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.red.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.error_outline, color: Colors.red),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Error al cargar el precio de matrícula',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Para mensualidad: selector de plan
+                    if (widget.paymentType == 'Mensualidad') ...[
+                      Consumer<PlanViewModel>(
+                        builder: (context, planVM, _) {
+                          return StreamBuilder<List<Plan>>(
+                            stream: planVM.getActivePlans(),
+                            builder: (context, snapshot) {
+                              debugPrint('=== SELECTOR DE PLANES ===');
+                              debugPrint(
+                                'ConnectionState: ${snapshot.connectionState}',
+                              );
+                              debugPrint('HasError: ${snapshot.hasError}');
+                              debugPrint('Error: ${snapshot.error}');
+                              debugPrint('HasData: ${snapshot.hasData}');
+                              debugPrint(
+                                'PlansCount: ${snapshot.data?.length ?? 0}',
+                              );
+
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1A1A1A),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFFFF6A00),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              if (snapshot.hasError) {
+                                debugPrint(
+                                  'ERROR cargando planes: ${snapshot.error}',
+                                );
+                                return Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1A1A1A),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'Error al cargar planes: ${snapshot.error}',
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                );
+                              }
+
+                              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                debugPrint('No hay planes disponibles');
+                                return Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1A1A1A),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'No hay planes disponibles',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                );
+                              }
+
+                              final plans = snapshot.data!;
+                              debugPrint('Planes encontrados: ${plans.length}');
+                              for (var plan in plans) {
+                                debugPrint('  - ${plan.name}: \$${plan.price}');
+                              }
+
+                              // Asegurarnos de que el plan seleccionado sea del mismo stream
+                              // para evitar problemas de referencia
+                              Plan? currentSelectedPlan;
+                              if (_selectedPlan != null) {
+                                try {
+                                  currentSelectedPlan = plans.firstWhere(
+                                    (p) => p.id == _selectedPlan!.id,
+                                  );
+                                } catch (e) {
+                                  currentSelectedPlan = null;
+                                }
+                              }
+
+                              return Column(
+                                children: [
+                                  DropdownButtonFormField<Plan>(
+                                    initialValue: currentSelectedPlan,
+                                    decoration: InputDecoration(
+                                      hintText: 'Seleccionar Plan',
+                                      hintStyle: const TextStyle(
+                                        color: Colors.white60,
+                                      ),
+                                      prefixIcon: const Icon(
+                                        Icons.card_membership,
+                                        color: Color(0xFFFF6A00),
+                                      ),
+                                      filled: true,
+                                      fillColor: const Color(0xFF1A1A1A),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                    dropdownColor: const Color(0xFF1A1A1A),
+                                    style: const TextStyle(color: Colors.white),
+                                    items: plans.map((plan) {
+                                      return DropdownMenuItem<Plan>(
+                                        value: plan,
+                                        child: Text(
+                                          '${plan.name} - \$${plan.price.toStringAsFixed(0)}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (Plan? value) {
+                                      debugPrint(
+                                        'Plan seleccionado: ${value?.name} - \$${value?.price}',
+                                      );
+                                      setState(() {
+                                        _selectedPlan = value;
+                                        if (value != null) {
+                                          _amountController.text = value.price
+                                              .toStringAsFixed(0);
+                                        }
+                                      });
+                                    },
+                                    validator: (value) {
+                                      if (value == null) {
+                                        return 'Por favor selecciona un plan';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  if (_selectedPlan != null) ...[
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFFFF6A00,
+                                        ).withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: const Color(
+                                            0xFFFF6A00,
+                                          ).withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'Total a pagar:',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            '\$${_selectedPlan!.price.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              color: Color(0xFFFF6A00),
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Selector de fecha
+                    InkWell(
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                          builder: (context, child) {
+                            return Theme(
+                              data: ThemeData.dark().copyWith(
+                                colorScheme: const ColorScheme.dark(
+                                  primary: Color(0xFFFF6A00),
+                                  onPrimary: Colors.black,
+                                  surface: Color(0xFF2A2A2A),
+                                  onSurface: Colors.white,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (date != null) {
+                          setState(() {
+                            _selectedDate = date;
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1A1A),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Color(0xFFFF6A00),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Fecha del pago',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  DateFormat(
+                                    'dd MMMM yyyy',
+                                    'es_ES',
+                                  ).format(_selectedDate),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Comprobante
+                    const Text(
+                      'Comprobante',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (_receiptImage == null && _receiptBytes == null) ...[
+                      Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _pickImage,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFFFF6A00),
+                                    side: const BorderSide(
+                                      color: Color(0xFFFF6A00),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.photo_library),
+                                  label: const Text('Galería'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _pickDocument,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFFFF6A00),
+                                    side: const BorderSide(
+                                      color: Color(0xFFFF6A00),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.description),
+                                  label: const Text('Documento'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
                             child: OutlinedButton.icon(
-                              onPressed: _pickDocument,
+                              onPressed: _takePhoto,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: const Color(0xFFFF6A00),
-                                side: const BorderSide(color: Color(0xFFFF6A00)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                side: const BorderSide(
+                                  color: Color(0xFFFF6A00),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              icon: const Icon(Icons.description),
-                              label: const Text('Documento'),
+                              icon: const Icon(Icons.camera_alt),
+                              label: const Text('Cámara'),
                             ),
                           ),
                         ],
                       ),
+                    ] else ...[
+                      // Mostrar archivo seleccionado (imagen o PDF)
+                      _buildReceiptPreview(),
                       const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _takePhoto,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFFF6A00),
-                            side: const BorderSide(color: Color(0xFFFF6A00)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(Icons.camera_alt),
-                          label: const Text('Cámara'),
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _receiptImage = null;
+                            _receiptBytes = null;
+                            _receiptFileName = null;
+                          });
+                        },
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        label: const Text(
+                          'Eliminar archivo',
+                          style: TextStyle(color: Colors.red),
                         ),
                       ),
                     ],
-                  ),
-                ] else ...[
-                  // Mostrar archivo seleccionado (imagen o PDF)
-                  _buildReceiptPreview(),
-                  const SizedBox(height: 12),
-                  TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _receiptImage = null;
-                        _receiptBytes = null;
-                        _receiptFileName = null;
-                      });
-                    },
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    label: const Text(
-                      'Eliminar archivo',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ],
 
-                const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                // Botón de enviar
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _isSubmitting ? Colors.grey : const Color(0xFFFF6A00),
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      disabledBackgroundColor: Colors.grey.shade700,
-                      disabledForegroundColor: Colors.white54,
-                    ),
-                    child: _isSubmitting
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                'Enviando...',
+                    // Botón de enviar
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isSubmitting
+                              ? Colors.grey
+                              : const Color(0xFFFF6A00),
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          disabledBackgroundColor: Colors.grey.shade700,
+                          disabledForegroundColor: Colors.white54,
+                        ),
+                        child: _isSubmitting
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Enviando...',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Text(
+                                'Enviar Comprobante',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
                                 ),
                               ),
-                            ],
-                          )
-                        : const Text(
-                            'Enviar Comprobante',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
-                ],
               ),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 }

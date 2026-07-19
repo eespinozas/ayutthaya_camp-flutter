@@ -63,9 +63,7 @@ class _AvatarTestScreenState extends State<AvatarTestScreen> {
               // Title
               Text(
                 'Rive Avatar Animation Test',
-                style: AppTextStyles.h2.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTextStyles.h2.copyWith(color: AppColors.textPrimary),
                 textAlign: TextAlign.center,
               ),
 
@@ -263,10 +261,7 @@ class _ControlButton extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: isEnabled
               ? LinearGradient(
-                  colors: [
-                    color,
-                    color.withValues(alpha: 0.7),
-                  ],
+                  colors: [color, color.withValues(alpha: 0.7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )
@@ -324,10 +319,7 @@ class _StateGuideRow extends StatelessWidget {
           Container(
             width: 12,
             height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -339,12 +331,7 @@ class _StateGuideRow extends StatelessWidget {
               ),
             ),
           ),
-          if (isActive)
-            Icon(
-              Icons.check_circle,
-              color: color,
-              size: 18,
-            ),
+          if (isActive) Icon(Icons.check_circle, color: color, size: 18),
         ],
       ),
     );

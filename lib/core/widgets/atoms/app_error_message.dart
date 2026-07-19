@@ -50,11 +50,7 @@ class AppErrorMessage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: errorColor,
-            size: 48,
-          ),
+          Icon(icon, color: errorColor, size: 48),
           const SizedBox(height: 16),
           Text(
             message,
@@ -71,9 +67,7 @@ class AppErrorMessage extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
               label: const Text('Reintentar'),
-              style: TextButton.styleFrom(
-                foregroundColor: errorColor,
-              ),
+              style: TextButton.styleFrom(foregroundColor: errorColor),
             ),
           ],
         ],
@@ -84,26 +78,21 @@ class AppErrorMessage extends StatelessWidget {
 
 /// Variante compacta para mostrar en SnackBar
 class AppErrorSnackBar extends SnackBar {
-  AppErrorSnackBar({
-    super.key,
-    required String message,
-  }) : super(
-          content: Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-        );
+  AppErrorSnackBar({super.key, required String message})
+    : super(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(message, style: const TextStyle(fontSize: 14)),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+      );
 }
 
 /// Variante para mostrar en Dialog
@@ -157,11 +146,8 @@ class AppErrorDialog extends StatelessWidget {
   }) {
     return showDialog(
       context: context,
-      builder: (context) => AppErrorDialog(
-        title: title,
-        message: message,
-        onRetry: onRetry,
-      ),
+      builder: (context) =>
+          AppErrorDialog(title: title, message: message, onRetry: onRetry),
     );
   }
 }

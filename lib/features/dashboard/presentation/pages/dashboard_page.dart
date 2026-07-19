@@ -16,10 +16,7 @@ import '../../../../core/services/chilean_holidays.dart';
 class DashboardPage extends StatefulWidget {
   final VoidCallback? onNavigateToPagos;
 
-  const DashboardPage({
-    super.key,
-    this.onNavigateToPagos,
-  });
+  const DashboardPage({super.key, this.onNavigateToPagos});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -43,7 +40,9 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final schedules = await context
           .read<ClassScheduleViewModel>()
-          .getSchedulesForDay(ChileanHolidays.effectiveDayOfWeek(DateTime.now()))
+          .getSchedulesForDay(
+            ChileanHolidays.effectiveDayOfWeek(DateTime.now()),
+          )
           .first;
       if (mounted) {
         setState(() {
@@ -91,9 +90,7 @@ class _DashboardPageState extends State<DashboardPage> {
       return const Scaffold(
         backgroundColor: Color(0xFF0F0F0F),
         body: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF6A00),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
         ),
       );
     }
@@ -160,7 +157,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.fitness_center, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.fitness_center,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 10),
             // Flexible + ellipsis evita que el texto del título se solape
@@ -214,9 +215,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const PerfilPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const PerfilPage()),
               );
             },
             tooltip: 'Mi Perfil',
@@ -232,72 +231,77 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundColor: const Color(0xFF1A1A1A),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 900),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // ================================
-                      // BANNER DE ACTIVACIÓN DE CUENTA
-                      // (oculto en Fase 1 de acceso libre)
-                      // ================================
-                      if (!AppFlags.freeAccessPhase && !estaActivo)
-                        _AccountActivationCard(
-                          onActivate: () {
-                            // Navega al tab de Pagos para matricularse
-                            widget.onNavigateToPagos?.call();
-                          },
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // ================================
+                        // BANNER DE ACTIVACIÓN DE CUENTA
+                        // (oculto en Fase 1 de acceso libre)
+                        // ================================
+                        if (!AppFlags.freeAccessPhase && !estaActivo)
+                          _AccountActivationCard(
+                            onActivate: () {
+                              // Navega al tab de Pagos para matricularse
+                              widget.onNavigateToPagos?.call();
+                            },
+                          ),
+
+                        // HEADER DEL PLAN (oculto en Fase 1 de acceso libre)
+                        if (!AppFlags.freeAccessPhase) ...[
+                          const SizedBox(height: 16),
+                          _PlanHeader(
+                            planNombre: planNombre,
+                            clasesRestantes: clasesRestantes,
+                            vigenciaHasta: vigenciaHasta,
+                          ),
+                        ],
+
+                        const SizedBox(height: 24),
+
+                        // RESUMEN CLASES (fila de 3)
+                        _ResumenClasesRow(
+                          agendadas: agendadas,
+                          asistidas: asistidas,
+                          noAsistidas: noAsistidas,
                         ),
 
-                      // HEADER DEL PLAN (oculto en Fase 1 de acceso libre)
-                      if (!AppFlags.freeAccessPhase) ...[
-                        const SizedBox(height: 16),
-                        _PlanHeader(
-                          planNombre: planNombre,
-                          clasesRestantes: clasesRestantes,
-                          vigenciaHasta: vigenciaHasta,
-                        ),
+                        const SizedBox(height: 24),
+
+                        // MIS CLASES DE HOY
+                        _TodayClassesSection(horariosHoy: _horariosHoy),
+
+                        const SizedBox(height: 24),
+
+                        // ÚLTIMOS 3 PAGOS (oculto en Fase 1 de acceso libre)
+                        if (!AppFlags.freeAccessPhase)
+                          Builder(
+                            builder: (context) {
+                              debugPrint(
+                                '🎨 Renderizando _Ultimos3PagosCard con ${ultimos3Pagos.length} pagos',
+                              );
+                              return _Ultimos3PagosCard(
+                                pagos: ultimos3Pagos,
+                                onVerTodos: () {
+                                  // Navega al tab de Pagos
+                                  widget.onNavigateToPagos?.call();
+                                },
+                              );
+                            },
+                          ),
+
+                        const SizedBox(height: 48),
                       ],
-
-                      const SizedBox(height: 24),
-
-                      // RESUMEN CLASES (fila de 3)
-                      _ResumenClasesRow(
-                        agendadas: agendadas,
-                        asistidas: asistidas,
-                        noAsistidas: noAsistidas,
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // MIS CLASES DE HOY
-                      _TodayClassesSection(horariosHoy: _horariosHoy),
-
-                      const SizedBox(height: 24),
-
-                      // ÚLTIMOS 3 PAGOS (oculto en Fase 1 de acceso libre)
-                      if (!AppFlags.freeAccessPhase)
-                        Builder(
-                          builder: (context) {
-                            debugPrint('🎨 Renderizando _Ultimos3PagosCard con ${ultimos3Pagos.length} pagos');
-                            return _Ultimos3PagosCard(
-                              pagos: ultimos3Pagos,
-                              onVerTodos: () {
-                                // Navega al tab de Pagos
-                                widget.onNavigateToPagos?.call();
-                              },
-                            );
-                          },
-                        ),
-
-                      const SizedBox(height: 48),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
             );
           },
         ),
@@ -357,19 +361,12 @@ class _MembershipStatusChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: textColor.withValues(alpha: 0.5),
-            width: 1,
-          ),
+          border: Border.all(color: textColor.withValues(alpha: 0.5), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: textColor,
-              size: 16,
-            ),
+            Icon(icon, color: textColor, size: 16),
             const SizedBox(width: 6),
             Text(
               statusText,
@@ -392,9 +389,7 @@ class _MembershipStatusChip extends StatelessWidget {
 class _AccountActivationCard extends StatelessWidget {
   final VoidCallback onActivate;
 
-  const _AccountActivationCard({
-    required this.onActivate,
-  });
+  const _AccountActivationCard({required this.onActivate});
 
   @override
   Widget build(BuildContext context) {
@@ -410,10 +405,7 @@ class _AccountActivationCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFFF6A00),
-          width: 2,
-        ),
+        border: Border.all(color: const Color(0xFFFF6A00), width: 2),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
@@ -463,10 +455,7 @@ class _AccountActivationCard extends StatelessWidget {
                     SizedBox(height: 4),
                     Text(
                       'Completa tu matrícula para empezar',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ],
                 ),
@@ -765,10 +754,7 @@ class _Ultimos3PagosCard extends StatelessWidget {
   final List<Map<String, dynamic>> pagos;
   final VoidCallback onVerTodos;
 
-  const _Ultimos3PagosCard({
-    required this.pagos,
-    required this.onVerTodos,
-  });
+  const _Ultimos3PagosCard({required this.pagos, required this.onVerTodos});
 
   @override
   Widget build(BuildContext context) {
@@ -835,10 +821,7 @@ class _Ultimos3PagosCard extends StatelessWidget {
                 padding: EdgeInsets.all(20.0),
                 child: Text(
                   'No hay pagos registrados',
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.white60, fontSize: 14),
                 ),
               ),
             )
@@ -848,8 +831,8 @@ class _Ultimos3PagosCard extends StatelessWidget {
               final statusColor = pago['statusColor'] == 'green'
                   ? Colors.green
                   : pago['statusColor'] == 'orange'
-                      ? Colors.orange
-                      : Colors.red;
+                  ? Colors.orange
+                  : Colors.red;
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
@@ -893,7 +876,10 @@ class _Ultimos3PagosCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [statusColor, statusColor.withValues(alpha: 0.8)],
+                          colors: [
+                            statusColor,
+                            statusColor.withValues(alpha: 0.8),
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
@@ -954,11 +940,7 @@ class _TodayClassesSection extends StatelessWidget {
       children: [
         Row(
           children: const [
-            Icon(
-              Icons.today,
-              color: Colors.orangeAccent,
-              size: 22,
-            ),
+            Icon(Icons.today, color: Colors.orangeAccent, size: 22),
             SizedBox(width: 8),
             Text(
               'Mis Clases de Hoy',
@@ -978,9 +960,7 @@ class _TodayClassesSection extends StatelessWidget {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24.0),
-                  child: CircularProgressIndicator(
-                    color: Colors.orangeAccent,
-                  ),
+                  child: CircularProgressIndicator(color: Colors.orangeAccent),
                 ),
               );
             }
@@ -1004,12 +984,14 @@ class _TodayClassesSection extends StatelessWidget {
             // Filtrar clases de hoy
             final todayBookings = allBookings.where((booking) {
               return booking.isToday() &&
-                     (booking.status == BookingStatus.confirmed ||
+                  (booking.status == BookingStatus.confirmed ||
                       booking.userConfirmedAttendance);
             }).toList();
 
             // Ordenar por hora
-            todayBookings.sort((a, b) => a.scheduleTime.compareTo(b.scheduleTime));
+            todayBookings.sort(
+              (a, b) => a.scheduleTime.compareTo(b.scheduleTime),
+            );
 
             if (todayBookings.isEmpty) {
               return Container(
@@ -1028,18 +1010,11 @@ class _TodayClassesSection extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(
-                          Icons.event_busy,
-                          size: 48,
-                          color: Colors.white24,
-                        ),
+                        Icon(Icons.event_busy, size: 48, color: Colors.white24),
                         SizedBox(height: 16),
                         Text(
                           'No tienes clases agendadas para hoy',
-                          style: TextStyle(
-                            color: Colors.white54,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white54, fontSize: 14),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -1058,7 +1033,9 @@ class _TodayClassesSection extends StatelessWidget {
                     horariosHoy,
                   ),
                   onConfirm: () async {
-                    final success = await bookingVM.confirmAttendance(booking.id!);
+                    final success = await bookingVM.confirmAttendance(
+                      booking.id!,
+                    );
                     if (success && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -1110,10 +1087,14 @@ class _TodayClassCard extends StatelessWidget {
     if (booking.status == BookingStatus.pendingApproval) return Colors.amber;
     if (booking.status == BookingStatus.rejected) return Colors.red;
     if (booking.userConfirmedAttendance) return Colors.green;
-    if (booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+    if (booking.canConfirmAttendance(
+      esPrimeraClaseDelDia: esPrimeraClaseDelDia,
+    )) {
       return Colors.orange;
     }
-    if (booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+    if (booking.missedConfirmationWindow(
+      esPrimeraClaseDelDia: esPrimeraClaseDelDia,
+    )) {
       return Colors.red;
     }
     return Colors.grey;
@@ -1125,10 +1106,14 @@ class _TodayClassCard extends StatelessWidget {
     }
     if (booking.status == BookingStatus.rejected) return Icons.block;
     if (booking.userConfirmedAttendance) return Icons.check_circle;
-    if (booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+    if (booking.canConfirmAttendance(
+      esPrimeraClaseDelDia: esPrimeraClaseDelDia,
+    )) {
       return Icons.schedule;
     }
-    if (booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClaseDelDia)) {
+    if (booking.missedConfirmationWindow(
+      esPrimeraClaseDelDia: esPrimeraClaseDelDia,
+    )) {
       return Icons.cancel;
     }
     return Icons.event;
@@ -1137,12 +1122,14 @@ class _TodayClassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor();
-    final canConfirm =
-        booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClaseDelDia);
+    final canConfirm = booking.canConfirmAttendance(
+      esPrimeraClaseDelDia: esPrimeraClaseDelDia,
+    );
     final confirmed = booking.userConfirmedAttendance;
     // Clase de hoy aún sin abrir su ventana: botón visible pero deshabilitado
     // indicando desde cuándo se puede confirmar.
-    final preVentana = !confirmed &&
+    final preVentana =
+        !confirmed &&
         booking.status == BookingStatus.confirmed &&
         !canConfirm &&
         !booking.missedConfirmationWindow(
@@ -1219,21 +1206,13 @@ class _TodayClassCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                _getStatusIcon(),
-                color: statusColor,
-                size: 28,
-              ),
+              Icon(_getStatusIcon(), color: statusColor, size: 28),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(
-                Icons.info_outline,
-                size: 16,
-                color: statusColor,
-              ),
+              Icon(Icons.info_outline, size: 16, color: statusColor),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -1255,14 +1234,15 @@ class _TodayClassCard extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: canConfirm ? onConfirm : null,
-                icon: Icon(canConfirm ? Icons.check : Icons.lock_clock, size: 20),
+                icon: Icon(
+                  canConfirm ? Icons.check : Icons.lock_clock,
+                  size: 20,
+                ),
                 label: Text(
                   canConfirm
                       ? 'Confirmar Asistencia'
                       : 'Disponible desde las ${_formatTime('${booking.confirmationOpensAt().hour.toString().padLeft(2, '0')}:${booking.confirmationOpensAt().minute.toString().padLeft(2, '0')}')}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orangeAccent,

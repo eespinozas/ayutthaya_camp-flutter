@@ -21,49 +21,56 @@ class PlanService {
         .collection('planes')
         .snapshots()
         .map((snapshot) {
-      debugPrint('Total documentos en "planes": ${snapshot.docs.length}');
+          debugPrint('Total documentos en "planes": ${snapshot.docs.length}');
 
-      if (snapshot.docs.isEmpty) {
-        debugPrint('❌ NO HAY DOCUMENTOS en la subcollección "planes"');
-        debugPrint('Verifica en Firebase Console que exista:');
-        debugPrint('  - Colección: $schoolsCollection');
-        debugPrint('  - Documento: $schoolId');
-        debugPrint('  - Subcolección: planes');
-        return <Plan>[];
-      }
+          if (snapshot.docs.isEmpty) {
+            debugPrint('❌ NO HAY DOCUMENTOS en la subcollección "planes"');
+            debugPrint('Verifica en Firebase Console que exista:');
+            debugPrint('  - Colección: $schoolsCollection');
+            debugPrint('  - Documento: $schoolId');
+            debugPrint('  - Subcolección: planes');
+            return <Plan>[];
+          }
 
-      final allPlans = snapshot.docs.map((doc) {
-        debugPrint('---');
-        debugPrint('Documento ID: ${doc.id}');
-        debugPrint('Datos completos: ${doc.data()}');
+          final allPlans = snapshot.docs.map((doc) {
+            debugPrint('---');
+            debugPrint('Documento ID: ${doc.id}');
+            debugPrint('Datos completos: ${doc.data()}');
 
-        try {
-          final plan = Plan.fromFirestore(doc);
-          debugPrint('✅ Plan parseado: ${plan.name} - \$${plan.price} - active: ${plan.active}');
-          return plan;
-        } catch (e) {
-          debugPrint('❌ ERROR al parsear plan: $e');
-          rethrow;
-        }
-      }).toList();
+            try {
+              final plan = Plan.fromFirestore(doc);
+              debugPrint(
+                '✅ Plan parseado: ${plan.name} - \$${plan.price} - active: ${plan.active}',
+              );
+              return plan;
+            } catch (e) {
+              debugPrint('❌ ERROR al parsear plan: $e');
+              rethrow;
+            }
+          }).toList();
 
-      // Filtrar solo los activos
-      final activePlans = allPlans.where((plan) => plan.active).toList();
-      debugPrint('Planes activos: ${activePlans.length} de ${allPlans.length}');
+          // Filtrar solo los activos
+          final activePlans = allPlans.where((plan) => plan.active).toList();
+          debugPrint(
+            'Planes activos: ${activePlans.length} de ${allPlans.length}',
+          );
 
-      // Ordenar por displayOrder
-      activePlans.sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+          // Ordenar por displayOrder
+          activePlans.sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
 
-      for (var plan in activePlans) {
-        debugPrint('  ✓ ${plan.name} (\$${plan.price}) - order: ${plan.displayOrder}');
-      }
+          for (var plan in activePlans) {
+            debugPrint(
+              '  ✓ ${plan.name} (\$${plan.price}) - order: ${plan.displayOrder}',
+            );
+          }
 
-      return activePlans;
-    }).handleError((error, stackTrace) {
-      debugPrint('❌ ERROR STREAM en getActivePlans: $error');
-      debugPrint('StackTrace: $stackTrace');
-      throw error;
-    });
+          return activePlans;
+        })
+        .handleError((error, stackTrace) {
+          debugPrint('❌ ERROR STREAM en getActivePlans: $error');
+          debugPrint('StackTrace: $stackTrace');
+          throw error;
+        });
   }
 
   /// Obtener todos los planes (admin)
@@ -75,8 +82,8 @@ class PlanService {
         .orderBy('displayOrder')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Plan.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs.map((doc) => Plan.fromFirestore(doc)).toList();
+        });
   }
 
   /// Obtener un plan por ID
@@ -119,10 +126,7 @@ class PlanService {
           .doc(schoolId)
           .collection('planes')
           .doc(planId)
-          .update({
-        ...data,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+          .update({...data, 'updatedAt': FieldValue.serverTimestamp()});
     } catch (e) {
       throw Exception('Error al actualizar plan: $e');
     }
@@ -136,10 +140,7 @@ class PlanService {
           .doc(schoolId)
           .collection('planes')
           .doc(planId)
-          .update({
-        'active': false,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+          .update({'active': false, 'updatedAt': FieldValue.serverTimestamp()});
     } catch (e) {
       throw Exception('Error al eliminar plan: $e');
     }
@@ -148,9 +149,14 @@ class PlanService {
   /// Obtener el precio de matrícula de la escuela
   Future<double> getRegistrationPrice() async {
     try {
-      debugPrint('PlanService.getRegistrationPrice - collection: $schoolsCollection, schoolId: $schoolId');
+      debugPrint(
+        'PlanService.getRegistrationPrice - collection: $schoolsCollection, schoolId: $schoolId',
+      );
 
-      final doc = await _firestore.collection(schoolsCollection).doc(schoolId).get();
+      final doc = await _firestore
+          .collection(schoolsCollection)
+          .doc(schoolId)
+          .get();
 
       if (!doc.exists) {
         debugPrint('ERROR: Documento de escuela no existe');

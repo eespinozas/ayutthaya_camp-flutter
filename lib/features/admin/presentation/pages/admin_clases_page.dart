@@ -46,9 +46,7 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
       return Scaffold(
         backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF6A00),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
         ),
       );
     }
@@ -59,8 +57,12 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
         builder: (context, viewModel, child) {
           final selectedDate = viewModel.selectedDate;
           final dayName = DateFormat('EEEE', 'es_ES').format(selectedDate);
-          final dateStr = DateFormat('dd MMM yyyy', 'es_ES').format(selectedDate);
-          final isToday = selectedDate.year == DateTime.now().year &&
+          final dateStr = DateFormat(
+            'dd MMM yyyy',
+            'es_ES',
+          ).format(selectedDate);
+          final isToday =
+              selectedDate.year == DateTime.now().year &&
               selectedDate.month == DateTime.now().month &&
               selectedDate.day == DateTime.now().day;
 
@@ -85,12 +87,19 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.fitness_center, color: Colors.white, size: 20),
+                    child: const Icon(
+                      Icons.fitness_center,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Text(
                     'Gestión de Clases',
-                    style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -104,10 +113,7 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                   decoration: const BoxDecoration(
                     color: Color(0xFF2A2A2A),
                     border: Border(
-                      bottom: BorderSide(
-                        color: Color(0xFF3A3A3A),
-                        width: 1,
-                      ),
+                      bottom: BorderSide(color: Color(0xFF3A3A3A), width: 1),
                     ),
                   ),
                   child: Column(
@@ -116,13 +122,17 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                         children: [
                           IconButton(
                             onPressed: () => viewModel.changeDate(-1),
-                            icon: const Icon(Icons.chevron_left, color: Colors.white),
+                            icon: const Icon(
+                              Icons.chevron_left,
+                              color: Colors.white,
+                            ),
                           ),
                           Expanded(
                             child: Column(
                               children: [
                                 Text(
-                                  dayName[0].toUpperCase() + dayName.substring(1),
+                                  dayName[0].toUpperCase() +
+                                      dayName.substring(1),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
@@ -141,7 +151,10 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                           ),
                           IconButton(
                             onPressed: () => viewModel.changeDate(1),
-                            icon: const Icon(Icons.chevron_right, color: Colors.white),
+                            icon: const Icon(
+                              Icons.chevron_right,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
@@ -168,7 +181,9 @@ class _AdminClasesPageState extends State<AdminClasesPage> {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(
-                          child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFFF6A00),
+                          ),
                         );
                       }
 
@@ -286,8 +301,10 @@ class _ClassCardState extends State<_ClassCard> {
   Future<void> _showDisableDialog() async {
     final reasonController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    final dateStr =
-        DateFormat('dd MMM yyyy', 'es_ES').format(widget.viewModel.selectedDate);
+    final dateStr = DateFormat(
+      'dd MMM yyyy',
+      'es_ES',
+    ).format(widget.viewModel.selectedDate);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -379,7 +396,8 @@ class _ClassCardState extends State<_ClassCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                'Clase de las ${widget.schedule.time} suspendida para el $dateStr'),
+              'Clase de las ${widget.schedule.time} suspendida para el $dateStr',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -398,8 +416,10 @@ class _ClassCardState extends State<_ClassCard> {
 
   /// Diálogo de confirmación para rehabilitar el horario.
   Future<void> _showEnableDialog() async {
-    final dateStr =
-        DateFormat('dd MMM yyyy', 'es_ES').format(widget.viewModel.selectedDate);
+    final dateStr = DateFormat(
+      'dd MMM yyyy',
+      'es_ES',
+    ).format(widget.viewModel.selectedDate);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -441,8 +461,7 @@ class _ClassCardState extends State<_ClassCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Clase de las ${widget.schedule.time} rehabilitada'),
+            content: Text('Clase de las ${widget.schedule.time} rehabilitada'),
             backgroundColor: Colors.green,
           ),
         );
@@ -462,16 +481,20 @@ class _ClassCardState extends State<_ClassCard> {
   @override
   Widget build(BuildContext context) {
     final status = widget.viewModel.getClassStatus(widget.schedule.time);
-    final statusColor =
-        widget.isDisabled ? Colors.red : _getStatusColor(status);
-    final statusText =
-        widget.isDisabled ? 'Suspendida' : _getStatusText(status);
+    final statusColor = widget.isDisabled
+        ? Colors.red
+        : _getStatusColor(status);
+    final statusText = widget.isDisabled
+        ? 'Suspendida'
+        : _getStatusText(status);
 
     return StreamBuilder<List<Booking>>(
       stream: widget.viewModel.getClassBookings(widget.schedule.id!),
       builder: (context, snapshot) {
         final bookings = snapshot.data ?? [];
-        final attended = bookings.where((b) => b.status == BookingStatus.attended).length;
+        final attended = bookings
+            .where((b) => b.status == BookingStatus.attended)
+            .length;
         final pendingApproval = bookings
             .where((b) => b.status == BookingStatus.pendingApproval)
             .length;
@@ -499,438 +522,469 @@ class _ClassCardState extends State<_ClassCard> {
                     children: [
                       Row(
                         children: [
-                      // Time and status
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              color: statusColor,
+                          // Time and status
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  color: statusColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  widget.schedule.time,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    statusText,
+                                    style: TextStyle(
+                                      color: statusColor,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Attendance count
+                          Row(
+                            children: [
+                              if (pendingApproval > 0) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '$pendingApproval por aprobar',
+                                    style: const TextStyle(
+                                      color: Colors.amber,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              Icon(
+                                isFull ? Icons.check_circle : Icons.people,
+                                color: isFull ? Colors.green : Colors.white70,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '$attended/$total',
+                                style: TextStyle(
+                                  color: isFull ? Colors.green : Colors.white70,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            onPressed: widget.isDisabled
+                                ? _showEnableDialog
+                                : _showDisableDialog,
+                            icon: Icon(
+                              widget.isDisabled
+                                  ? Icons.event_available
+                                  : Icons.event_busy,
+                              color: widget.isDisabled
+                                  ? Colors.green
+                                  : Colors.white38,
                               size: 20,
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.schedule.time,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            tooltip: widget.isDisabled
+                                ? 'Rehabilitar en esta fecha'
+                                : 'Suspender en esta fecha',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
                             ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: statusColor.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                statusText,
-                                style: TextStyle(
-                                  color: statusColor,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
+                          Icon(
+                            _expanded ? Icons.expand_less : Icons.expand_more,
+                            color: Colors.white70,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Progress bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: total > 0 ? attended / total : 0,
+                          minHeight: 6,
+                          backgroundColor: Colors.white12,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            isFull ? Colors.green : statusColor,
+                          ),
                         ),
                       ),
-                      // Attendance count
+                    ],
+                  ),
+                ),
+              ),
+              if (_expanded) ...[
+                const Divider(color: Color(0xFF3A3A3A), height: 1),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Row(
                         children: [
-                          if (pendingApproval > 0) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '$pendingApproval por aprobar',
-                                style: const TextStyle(
-                                  color: Colors.amber,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                          Icon(
-                            isFull ? Icons.check_circle : Icons.people,
-                            color: isFull ? Colors.green : Colors.white70,
+                          const Icon(
+                            Icons.people,
+                            color: Color(0xFFFF6A00),
                             size: 18,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '$attended/$total',
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Alumnos Inscritos',
                             style: TextStyle(
-                              color: isFull ? Colors.green : Colors.white70,
+                              color: Colors.white,
                               fontSize: 15,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(width: 4),
-                      IconButton(
-                        onPressed: widget.isDisabled
-                            ? _showEnableDialog
-                            : _showDisableDialog,
-                        icon: Icon(
-                          widget.isDisabled
-                              ? Icons.event_available
-                              : Icons.event_busy,
-                          color:
-                              widget.isDisabled ? Colors.green : Colors.white38,
-                          size: 20,
-                        ),
-                        tooltip: widget.isDisabled
-                            ? 'Rehabilitar en esta fecha'
-                            : 'Suspender en esta fecha',
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 32,
-                          minHeight: 32,
-                        ),
-                      ),
-                      Icon(
-                        _expanded ? Icons.expand_less : Icons.expand_more,
-                        color: Colors.white70,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Progress bar
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: total > 0 ? attended / total : 0,
-                      minHeight: 6,
-                      backgroundColor: Colors.white12,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isFull ? Colors.green : statusColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_expanded) ...[
-            const Divider(
-              color: Color(0xFF3A3A3A),
-              height: 1,
-            ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.people,
-                        color: Color(0xFFFF6A00),
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Alumnos Inscritos',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (bookings.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text(
-                        'No hay alumnos inscritos en esta clase',
-                        style: TextStyle(
-                          color: Colors.white38,
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  else
-                    ...bookings.map((booking) {
-                      final hasAttended = booking.status == BookingStatus.attended;
-                      final isPending =
-                          booking.status == BookingStatus.pendingApproval;
-                      final isRejected =
-                          booking.status == BookingStatus.rejected;
+                      const SizedBox(height: 12),
+                      if (bookings.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'No hay alumnos inscritos en esta clase',
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                      else
+                        ...bookings.map((booking) {
+                          final hasAttended =
+                              booking.status == BookingStatus.attended;
+                          final isPending =
+                              booking.status == BookingStatus.pendingApproval;
+                          final isRejected =
+                              booking.status == BookingStatus.rejected;
 
-                      final rowColor = hasAttended
-                          ? Colors.green
-                          : isPending
+                          final rowColor = hasAttended
+                              ? Colors.green
+                              : isPending
                               ? Colors.amber
                               : isRejected
-                                  ? Colors.red
-                                  : null;
+                              ? Colors.red
+                              : null;
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: rowColor?.withValues(alpha: 0.1) ??
-                              const Color(0xFF0F0F0F),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: rowColor?.withValues(alpha: 0.3) ??
-                                Colors.white10,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            if (isPending)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 12),
-                                child: Icon(
-                                  Icons.hourglass_top,
-                                  color: Colors.amber,
-                                  size: 22,
-                                ),
-                              )
-                            else
-                              Checkbox(
-                                value: hasAttended,
-                                onChanged: (_) async {
-                                  try {
-                                    await widget.viewModel
-                                        .toggleAttendance(booking);
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Error: $e'),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                                activeColor: Colors.green,
-                                checkColor: Colors.white,
-                              ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    booking.userName,
-                                    style: TextStyle(
-                                      color: hasAttended ? Colors.white : Colors.white70,
-                                      fontSize: 14,
-                                      fontWeight: hasAttended
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                    ),
-                                  ),
-                                  // Indicador de confirmación
-                                  if (booking.status == BookingStatus.confirmed)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            booking.userConfirmedAttendance
-                                                ? Icons.check_circle_outline
-                                                : Icons.schedule,
-                                            size: 12,
-                                            color: booking.userConfirmedAttendance
-                                                ? Colors.green
-                                                : Colors.orange,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            booking.userConfirmedAttendance
-                                                ? 'Confirmó asistencia'
-                                                : 'Sin confirmar',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: booking.userConfirmedAttendance
-                                                  ? Colors.green
-                                                  : Colors.orange,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  if (isPending)
-                                    const Padding(
-                                      padding: EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        'Confirmó por app — esperando aprobación',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.amber,
-                                        ),
-                                      ),
-                                    ),
-                                  if (isRejected)
-                                    const Padding(
-                                      padding: EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        'Confirmación rechazada',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.red,
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  rowColor?.withValues(alpha: 0.1) ??
+                                  const Color(0xFF0F0F0F),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color:
+                                    rowColor?.withValues(alpha: 0.3) ??
+                                    Colors.white10,
+                                width: 1,
                               ),
                             ),
-                            if (isPending) ...[
-                              IconButton(
-                                onPressed: () async {
-                                  try {
-                                    await widget.viewModel
-                                        .approveAttendance(booking.id!);
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Error: $e'),
-                                          backgroundColor: Colors.red,
+                            child: Row(
+                              children: [
+                                if (isPending)
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
+                                    child: Icon(
+                                      Icons.hourglass_top,
+                                      color: Colors.amber,
+                                      size: 22,
+                                    ),
+                                  )
+                                else
+                                  Checkbox(
+                                    value: hasAttended,
+                                    onChanged: (_) async {
+                                      try {
+                                        await widget.viewModel.toggleAttendance(
+                                          booking,
+                                        );
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    activeColor: Colors.green,
+                                    checkColor: Colors.white,
+                                  ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        booking.userName,
+                                        style: TextStyle(
+                                          color: hasAttended
+                                              ? Colors.white
+                                              : Colors.white70,
+                                          fontSize: 14,
+                                          fontWeight: hasAttended
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
                                         ),
-                                      );
-                                    }
-                                  }
-                                },
-                                icon: const Icon(Icons.check_circle,
-                                    color: Colors.green, size: 24),
-                                tooltip: 'Aprobar asistencia',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(
-                                  minWidth: 36,
-                                  minHeight: 36,
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () async {
-                                  try {
-                                    await widget.viewModel
-                                        .rejectAttendance(booking.id!);
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Error: $e'),
-                                          backgroundColor: Colors.red,
+                                      ),
+                                      // Indicador de confirmación
+                                      if (booking.status ==
+                                          BookingStatus.confirmed)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 4,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                booking.userConfirmedAttendance
+                                                    ? Icons.check_circle_outline
+                                                    : Icons.schedule,
+                                                size: 12,
+                                                color:
+                                                    booking
+                                                        .userConfirmedAttendance
+                                                    ? Colors.green
+                                                    : Colors.orange,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                booking.userConfirmedAttendance
+                                                    ? 'Confirmó asistencia'
+                                                    : 'Sin confirmar',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color:
+                                                      booking
+                                                          .userConfirmedAttendance
+                                                      ? Colors.green
+                                                      : Colors.orange,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      );
-                                    }
-                                  }
-                                },
-                                icon: const Icon(Icons.cancel,
-                                    color: Colors.red, size: 24),
-                                tooltip: 'Rechazar confirmación',
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(
-                                  minWidth: 36,
-                                  minHeight: 36,
+                                      if (isPending)
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 4),
+                                          child: Text(
+                                            'Confirmó por app — esperando aprobación',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.amber,
+                                            ),
+                                          ),
+                                        ),
+                                      if (isRejected)
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 4),
+                                          child: Text(
+                                            'Confirmación rechazada',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
+                                if (isPending) ...[
+                                  IconButton(
+                                    onPressed: () async {
+                                      try {
+                                        await widget.viewModel
+                                            .approveAttendance(booking.id!);
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    icon: const Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                      size: 24,
+                                    ),
+                                    tooltip: 'Aprobar asistencia',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                      minWidth: 36,
+                                      minHeight: 36,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () async {
+                                      try {
+                                        await widget.viewModel.rejectAttendance(
+                                          booking.id!,
+                                        );
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    icon: const Icon(
+                                      Icons.cancel,
+                                      color: Colors.red,
+                                      size: 24,
+                                    ),
+                                    tooltip: 'Rechazar confirmación',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                      minWidth: 36,
+                                      minHeight: 36,
+                                    ),
+                                  ),
+                                ] else if (hasAttended)
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 18,
+                                  ),
+                              ],
+                            ),
+                          );
+                        }),
+                      const SizedBox(height: 12),
+                      // Quick actions
+                      if (bookings.isNotEmpty)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton.icon(
+                              onPressed: () async {
+                                try {
+                                  await widget.viewModel.markAllAttended(
+                                    bookings,
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Todos marcados como asistidos',
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.done_all, size: 16),
+                              label: const Text('Marcar Todos'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.green,
                               ),
-                            ] else if (hasAttended)
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                                size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton.icon(
+                              onPressed: () async {
+                                try {
+                                  await widget.viewModel.unmarkAll(bookings);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Todos desmarcados'),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.remove_done, size: 16),
+                              label: const Text('Desmarcar Todos'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
                               ),
+                            ),
                           ],
                         ),
-                      );
-                    }),
-                  const SizedBox(height: 12),
-                  // Quick actions
-                  if (bookings.isNotEmpty)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton.icon(
-                          onPressed: () async {
-                            try {
-                              await widget.viewModel.markAllAttended(bookings);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Todos marcados como asistidos'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.done_all, size: 16),
-                          label: const Text('Marcar Todos'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.green,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton.icon(
-                          onPressed: () async {
-                            try {
-                              await widget.viewModel.unmarkAll(bookings);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Todos desmarcados'),
-                                    backgroundColor: Colors.orange,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.remove_done, size: 16),
-                          label: const Text('Desmarcar Todos'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-          ],
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         );

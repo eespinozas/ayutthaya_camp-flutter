@@ -47,9 +47,8 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
         id: 'alumnos',
         icon: Icons.people_outline,
         label: 'Alumnos',
-        pageBuilder: (_) => AdminAlumnosPage(
-          onNavigateToPagos: _navigateToPagos,
-        ),
+        pageBuilder: (_) =>
+            AdminAlumnosPage(onNavigateToPagos: _navigateToPagos),
       ),
       if (!isAdmin)
         _AdminNavItem(
@@ -98,9 +97,7 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
-      body: SafeArea(
-        child: currentPage,
-      ),
+      body: SafeArea(child: currentPage),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: (idx) {
@@ -116,10 +113,7 @@ class _AdminMainNavBarState extends State<AdminMainNavBar> {
         unselectedFontSize: 11,
         items: [
           for (final item in items)
-            BottomNavigationBarItem(
-              icon: Icon(item.icon),
-              label: item.label,
-            ),
+            BottomNavigationBarItem(icon: Icon(item.icon), label: item.label),
         ],
       ),
     );

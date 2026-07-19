@@ -19,7 +19,8 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
@@ -75,7 +76,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
       // 2) Validar verificación de email (excepto para admin o emails que empiezan con "admin")
       final user = authVM.currentUser;
-      if (user != null && !user.emailVerified && !authVM.isAdmin && !email.startsWith('admin')) {
+      if (user != null &&
+          !user.emailVerified &&
+          !authVM.isAdmin &&
+          !email.startsWith('admin')) {
         await authVM.logout();
         if (!mounted) return;
 
@@ -94,9 +98,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            authVM.isAdmin
-              ? 'Bienvenido Admin!'
-              : 'Inicio de sesión exitoso'
+            authVM.isAdmin ? 'Bienvenido Admin!' : 'Inicio de sesión exitoso',
           ),
           backgroundColor: const Color(0xFF10B981),
         ),
@@ -107,8 +109,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       final Widget destination = authVM.mustChangePassword
           ? const ForcePasswordChangePage()
           : authVM.isAdmin
-              ? const SessionGuard(child: AdminMainNavBar())
-              : const SessionGuard(child: MainNavBar());
+          ? const SessionGuard(child: AdminMainNavBar())
+          : const SessionGuard(child: MainNavBar());
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => destination),
@@ -178,7 +180,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Correo de verificación enviado. Revisa tu bandeja de entrada y spam.'),
+            content: Text(
+              'Correo de verificación enviado. Revisa tu bandeja de entrada y spam.',
+            ),
             backgroundColor: Color(0xFF10B981),
           ),
         );
@@ -281,10 +285,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           height: 140,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFFFF6A00),
-              width: 3,
-            ),
+            border: Border.all(color: const Color(0xFFFF6A00), width: 3),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFFFF6A00).withValues(alpha: 0.5),
@@ -357,12 +358,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             letterSpacing: 2,
             color: Color(0xFFFF6A00),
             height: 1.2,
-            shadows: [
-              Shadow(
-                color: Color(0xFFFF6A00),
-                blurRadius: 20,
-              ),
-            ],
+            shadows: [Shadow(color: Color(0xFFFF6A00), blurRadius: 20)],
           ),
         ),
         const SizedBox(height: 8),
@@ -488,7 +484,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 vertical: 16,
               ),
             ),
-            validator: (v) => (v == null || v.isEmpty) ? 'Ingresa tu email' : null,
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'Ingresa tu email' : null,
           ),
           const SizedBox(height: 20),
 
@@ -526,7 +523,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               ),
               suffixIcon: IconButton(
                 icon: Icon(
-                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   color: Colors.white.withValues(alpha: 0.5),
                   size: 22,
                 ),
@@ -578,7 +577,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 vertical: 16,
               ),
             ),
-            validator: (v) => (v == null || v.length < 6) ? 'Mínimo 6 caracteres' : null,
+            validator: (v) =>
+                (v == null || v.length < 6) ? 'Mínimo 6 caracteres' : null,
           ),
 
           // Olvidaste tu contraseña (dentro del card)
@@ -594,10 +594,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               ),
               child: const Text(
                 '¿Olvidaste tu contraseña?',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -612,7 +609,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF6A00),
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFFFF6A00).withValues(alpha: 0.5),
+                disabledBackgroundColor: const Color(
+                  0xFFFF6A00,
+                ).withValues(alpha: 0.5),
                 elevation: 0,
                 shadowColor: const Color(0xFFFF6A00).withValues(alpha: 0.5),
                 shape: RoundedRectangleBorder(
@@ -686,10 +685,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 : () => Navigator.pushNamed(context, '/register'),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFFF6A00),
-              side: const BorderSide(
-                color: Color(0xFFFF6A00),
-                width: 2,
-              ),
+              side: const BorderSide(color: Color(0xFFFF6A00), width: 2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -740,11 +736,7 @@ class _EmailNotVerifiedDialogState extends State<EmailNotVerifiedDialog> {
       ),
       title: const Row(
         children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            color: Color(0xFFFF6A00),
-            size: 28,
-          ),
+          Icon(Icons.warning_amber_rounded, color: Color(0xFFFF6A00), size: 28),
           SizedBox(width: 12),
           Text(
             'Verifica tu correo',
@@ -806,10 +798,7 @@ class _EmailNotVerifiedDialogState extends State<EmailNotVerifiedDialog> {
                 )
               : const Text(
                   'Reenviar verificación',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                 ),
         ),
       ],

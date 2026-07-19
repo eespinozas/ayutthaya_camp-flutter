@@ -54,10 +54,7 @@ class AppPrimaryButton extends StatelessWidget {
                     Icon(icon, size: _getIconSize()),
                     const SizedBox(width: AppDesignTokens.spaceSm),
                   ],
-                  Text(
-                    text,
-                    style: _getTextStyle(),
-                  ),
+                  Text(text, style: _getTextStyle()),
                 ],
               ),
       ),
@@ -160,10 +157,7 @@ class AppSecondaryButton extends StatelessWidget {
                     Icon(icon, size: _getIconSize()),
                     const SizedBox(width: AppDesignTokens.spaceSm),
                   ],
-                  Text(
-                    text,
-                    style: _getTextStyle(),
-                  ),
+                  Text(text, style: _getTextStyle()),
                 ],
               ),
       ),
@@ -248,10 +242,7 @@ class AppTextButton extends StatelessWidget {
             Icon(icon, size: _getIconSize()),
             const SizedBox(width: AppDesignTokens.spaceSm),
           ],
-          Text(
-            text,
-            style: _getTextStyle(),
-          ),
+          Text(text, style: _getTextStyle()),
         ],
       ),
     );
@@ -292,8 +283,4 @@ class AppTextButton extends StatelessWidget {
 }
 
 /// Button size enum
-enum AppButtonSize {
-  small,
-  medium,
-  large,
-}
+enum AppButtonSize { small, medium, large }

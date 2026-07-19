@@ -44,16 +44,19 @@ class _AdminCreateAdminPageState extends State<AdminCreateAdminPage> {
 
   Future<void> _loadSchools() async {
     try {
-      final snapshot =
-          await FirebaseFirestore.instance.collection('schools').get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('schools')
+          .get();
       if (!mounted) return;
       setState(() {
         _schools = snapshot.docs
-            .map((doc) => (
-                  id: doc.id,
-                  name: (doc.data()['name'] ?? doc.data()['nombre'] ?? doc.id)
-                      .toString(),
-                ))
+            .map(
+              (doc) => (
+                id: doc.id,
+                name: (doc.data()['name'] ?? doc.data()['nombre'] ?? doc.id)
+                    .toString(),
+              ),
+            )
             .toList();
         _selectedSchoolId = _schools.isNotEmpty ? _schools.first.id : null;
         _loadingSchools = false;
@@ -86,8 +89,9 @@ class _AdminCreateAdminPageState extends State<AdminCreateAdminPage> {
 
     setState(() => _creating = true);
     try {
-      final callable =
-          FirebaseFunctions.instance.httpsCallable('createAdminUser');
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'createAdminUser',
+      );
       final result = await callable.call<Map<String, dynamic>>({
         'nombre': _nombreCtrl.text.trim(),
         'apellido': _apellidoCtrl.text.trim(),
@@ -118,14 +122,19 @@ class _AdminCreateAdminPageState extends State<AdminCreateAdminPage> {
           _ => 'No se pudo crear el administrador. Intenta de nuevo.',
         };
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: const Color(0xFFEF4444)),
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No se pudo crear el administrador. Intenta de nuevo.'),
+            content: Text(
+              'No se pudo crear el administrador. Intenta de nuevo.',
+            ),
             backgroundColor: Color(0xFFEF4444),
           ),
         );
@@ -293,7 +302,11 @@ class _AdminCreateAdminPageState extends State<AdminCreateAdminPage> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.info_outline, color: Color(0xFFFF6A00), size: 20),
+                    Icon(
+                      Icons.info_outline,
+                      color: Color(0xFFFF6A00),
+                      size: 20,
+                    ),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -330,7 +343,10 @@ class _AdminCreateAdminPageState extends State<AdminCreateAdminPage> {
                 controller: _emailCtrl,
                 style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.emailAddress,
-                decoration: _decoration('correo@ejemplo.com', Icons.email_outlined),
+                decoration: _decoration(
+                  'correo@ejemplo.com',
+                  Icons.email_outlined,
+                ),
                 validator: Validators.validateEmail,
                 textInputAction: TextInputAction.done,
               ),
@@ -391,8 +407,9 @@ class _AdminCreateAdminPageState extends State<AdminCreateAdminPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF6A00),
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor:
-                        const Color(0xFFFF6A00).withValues(alpha: 0.5),
+                    disabledBackgroundColor: const Color(
+                      0xFFFF6A00,
+                    ).withValues(alpha: 0.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),

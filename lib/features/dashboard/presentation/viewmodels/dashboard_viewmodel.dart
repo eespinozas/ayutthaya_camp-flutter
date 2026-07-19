@@ -80,7 +80,9 @@ class DashboardViewModel extends ChangeNotifier {
     final newUid = user?.uid;
     if (newUid == _currentUid) return;
 
-    debugPrint('🔁 DashboardViewModel: usuario cambió ($_currentUid → $newUid)');
+    debugPrint(
+      '🔁 DashboardViewModel: usuario cambió ($_currentUid → $newUid)',
+    );
     _currentUid = newUid;
     _resetState();
 
@@ -120,7 +122,9 @@ class DashboardViewModel extends ChangeNotifier {
   // GETTER: ¿El usuario está ACTIVO?
   // ---------------------------------------------------------------------------
   bool get estaActivo {
-    debugPrint('🔍 DashboardViewModel.estaActivo - membershipStatus: $membershipStatus');
+    debugPrint(
+      '🔍 DashboardViewModel.estaActivo - membershipStatus: $membershipStatus',
+    );
     return membershipStatus == 'active';
   }
 
@@ -133,10 +137,14 @@ class DashboardViewModel extends ChangeNotifier {
       notifyListeners();
 
       final user = _auth.currentUser;
-      debugPrint('🔍 DashboardViewModel._cargarDashboard - user: ${user?.email}');
+      debugPrint(
+        '🔍 DashboardViewModel._cargarDashboard - user: ${user?.email}',
+      );
 
       if (user == null) {
-        debugPrint('❌ DashboardViewModel._cargarDashboard - No hay usuario autenticado');
+        debugPrint(
+          '❌ DashboardViewModel._cargarDashboard - No hay usuario autenticado',
+        );
         loading = false;
         errorMsg = 'Usuario no autenticado';
         notifyListeners();
@@ -154,7 +162,9 @@ class DashboardViewModel extends ChangeNotifier {
       } catch (e) {
         debugPrint('❌ Error al leer documento de usuario: $e');
         if (e.toString().contains('permission-denied')) {
-          debugPrint('   🔒 Error de permisos! Verifica las reglas de Firestore para la colección "users"');
+          debugPrint(
+            '   🔒 Error de permisos! Verifica las reglas de Firestore para la colección "users"',
+          );
         }
         loading = false;
         errorMsg = 'Error al cargar datos del usuario: $e';
@@ -168,7 +178,9 @@ class DashboardViewModel extends ChangeNotifier {
       }
 
       if (!userDoc.exists) {
-        debugPrint('⚠️ DashboardViewModel._cargarDashboard - Usuario no existe en Firestore');
+        debugPrint(
+          '⚠️ DashboardViewModel._cargarDashboard - Usuario no existe en Firestore',
+        );
         debugPrint('   UID buscado: ${user.uid}');
         debugPrint('   Email: ${user.email}');
         debugPrint('   Creando documento de usuario...');
@@ -181,12 +193,14 @@ class DashboardViewModel extends ChangeNotifier {
 
           await _firestore.collection('users').doc(user.uid).set({
             'email': userEmail,
-            'searchKey': userEmail.toLowerCase(), // Para búsquedas fáciles en Firebase Console
+            'searchKey': userEmail
+                .toLowerCase(), // Para búsquedas fáciles en Firebase Console
             'name': userName,
             'role': isAdmin ? 'admin' : 'student',
             // Fase de acceso libre: los alumnos también nacen activos.
-            'membershipStatus':
-                (isAdmin || AppFlags.freeAccessPhase) ? 'active' : 'none',
+            'membershipStatus': (isAdmin || AppFlags.freeAccessPhase)
+                ? 'active'
+                : 'none',
             'createdAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
           });
@@ -213,16 +227,20 @@ class DashboardViewModel extends ChangeNotifier {
       }
 
       final userData = userDoc.data() as Map<String, dynamic>;
-      debugPrint('📊 DashboardViewModel._cargarDashboard - userData: $userData');
+      debugPrint(
+        '📊 DashboardViewModel._cargarDashboard - userData: $userData',
+      );
 
       // Si el plan ya venció y todavía figura como active, actualizar a
       // inactive. Lo hacemos antes de pintar para que el listener del user
       // doc, configurado abajo, reciba el nuevo estado y no muestre "Activa"
       // por un instante.
       if (userData['expirationDate'] != null) {
-        final expirationDateTime = (userData['expirationDate'] as Timestamp).toDate();
+        final expirationDateTime = (userData['expirationDate'] as Timestamp)
+            .toDate();
         final currentStatus = userData['membershipStatus'] ?? 'none';
-        if (DateTime.now().isAfter(expirationDateTime) && currentStatus == 'active') {
+        if (DateTime.now().isAfter(expirationDateTime) &&
+            currentStatus == 'active') {
           debugPrint('⚠️ Plan vencido — marcando inactive');
           await _firestore.collection('users').doc(user.uid).update({
             'membershipStatus': 'inactive',
@@ -250,7 +268,6 @@ class DashboardViewModel extends ChangeNotifier {
       loading = false;
       errorMsg = null;
       notifyListeners();
-
     } catch (e) {
       debugPrint('❌ DashboardViewModel._cargarDashboard - Error: $e');
       loading = false;
@@ -262,7 +279,10 @@ class DashboardViewModel extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Calcular métricas de clases
   // ---------------------------------------------------------------------------
-  Future<void> _calcularMetricas(String userId, Map<String, dynamic> userData) async {
+  Future<void> _calcularMetricas(
+    String userId,
+    Map<String, dynamic> userData,
+  ) async {
     try {
       // Obtener todas las bookings del usuario
       final bookingsSnapshot = await _firestore
@@ -280,10 +300,15 @@ class DashboardViewModel extends ChangeNotifier {
         final status = data['status'] ?? 'confirmed';
         final classDate = (data['classDate'] as Timestamp).toDate();
         final scheduleTime = data['scheduleTime'] ?? '00:00';
-        final userConfirmedAttendance = data['userConfirmedAttendance'] ?? false;
+        final userConfirmedAttendance =
+            data['userConfirmedAttendance'] ?? false;
 
         // Normalizar fecha para comparación (solo año, mes, día)
-        final normalizedClassDate = DateTime(classDate.year, classDate.month, classDate.day);
+        final normalizedClassDate = DateTime(
+          classDate.year,
+          classDate.month,
+          classDate.day,
+        );
         final today = DateTime(now.year, now.month, now.day);
 
         // Combinar fecha con hora para obtener el DateTime completo de la clase
@@ -297,7 +322,9 @@ class DashboardViewModel extends ChangeNotifier {
         );
 
         // Ventana de confirmación: 30 min después de la clase
-        final confirmationWindowEnd = classDateTime.add(const Duration(minutes: 30));
+        final confirmationWindowEnd = classDateTime.add(
+          const Duration(minutes: 30),
+        );
         final missedConfirmation = now.isAfter(confirmationWindowEnd);
 
         if (status == 'confirmed') {
@@ -309,7 +336,8 @@ class DashboardViewModel extends ChangeNotifier {
               'status': 'noShow',
               'updatedAt': FieldValue.serverTimestamp(),
             });
-          } else if (normalizedClassDate.isAfter(today) || normalizedClassDate.isAtSameMomentAs(today)) {
+          } else if (normalizedClassDate.isAfter(today) ||
+              normalizedClassDate.isAtSameMomentAs(today)) {
             // Clase de hoy o futura confirmada = agendada
             agendadas++;
           }
@@ -338,7 +366,9 @@ class DashboardViewModel extends ChangeNotifier {
 
       debugPrint('📊 Calculando clases restantes:');
       debugPrint('   - classesPerMonth en doc: $classesPerMonthRaw');
-      debugPrint('   - Total de bookings en DB: ${bookingsSnapshot.docs.length}');
+      debugPrint(
+        '   - Total de bookings en DB: ${bookingsSnapshot.docs.length}',
+      );
 
       int clasesUsadas = 0;
       for (var doc in bookingsSnapshot.docs) {
@@ -361,13 +391,14 @@ class DashboardViewModel extends ChangeNotifier {
       }
 
       debugPrint('📊 Métricas calculadas:');
-      debugPrint('   - Clases Totales (limit): ${classesPerMonthRaw ?? "ilimitado"}');
+      debugPrint(
+        '   - Clases Totales (limit): ${classesPerMonthRaw ?? "ilimitado"}',
+      );
       debugPrint('   - Clases Usadas: $clasesUsadas');
       debugPrint('   - Clases Restantes: ${clasesRestantes ?? "∞"}');
       debugPrint('   - Agendadas: $agendadas');
       debugPrint('   - Asistidas: $asistidas');
       debugPrint('   - No Asistidas: $noAsistidas');
-
     } catch (e) {
       debugPrint('❌ Error calculando métricas: $e');
       // Si hay error, usar valores por defecto
@@ -450,7 +481,8 @@ class DashboardViewModel extends ChangeNotifier {
     // mensualidad. planName es el fallback para usuarios viejos. Si no hay
     // ninguno (típico tras pagar sólo matrícula), dejamos null y la UI
     // pinta "Sin plan".
-    planNombre = (userData['planDisplayName'] as String?) ??
+    planNombre =
+        (userData['planDisplayName'] as String?) ??
         (userData['planName'] as String?);
 
     final docs = _lastBookingsDocs;
@@ -468,13 +500,15 @@ class DashboardViewModel extends ChangeNotifier {
         .where('userId', isEqualTo: userId)
         .snapshots()
         .listen((snapshot) {
-      debugPrint('🔄 Bookings actualizadas (${snapshot.docs.length}) — recalculando');
-      _lastBookingsDocs = snapshot.docs;
-      final userData = _lastUserData;
-      if (userData != null) {
-        _calcularMetricasSync(snapshot.docs, userData);
-      }
-    });
+          debugPrint(
+            '🔄 Bookings actualizadas (${snapshot.docs.length}) — recalculando',
+          );
+          _lastBookingsDocs = snapshot.docs;
+          final userData = _lastUserData;
+          if (userData != null) {
+            _calcularMetricasSync(snapshot.docs, userData);
+          }
+        });
   }
 
   /// Escucha cambios del documento del usuario. Se dispara cuando un admin
@@ -490,18 +524,21 @@ class DashboardViewModel extends ChangeNotifier {
         .doc(userId)
         .snapshots()
         .listen((snapshot) {
-      if (!snapshot.exists) return;
-      final data = snapshot.data() as Map<String, dynamic>;
-      debugPrint('🔄 User doc actualizado — refrescando estado');
-      _applyUserData(data);
-      _cargarUltimosPagos(userId).then((_) => notifyListeners());
-    });
+          if (!snapshot.exists) return;
+          final data = snapshot.data() as Map<String, dynamic>;
+          debugPrint('🔄 User doc actualizado — refrescando estado');
+          _applyUserData(data);
+          _cargarUltimosPagos(userId).then((_) => notifyListeners());
+        });
   }
 
   // ---------------------------------------------------------------------------
   // Calcular métricas de forma sincrónica (para el listener)
   // ---------------------------------------------------------------------------
-  void _calcularMetricasSync(List<QueryDocumentSnapshot> docs, Map<String, dynamic> userData) {
+  void _calcularMetricasSync(
+    List<QueryDocumentSnapshot> docs,
+    Map<String, dynamic> userData,
+  ) {
     try {
       final now = DateTime.now();
       int agendadas = 0;
@@ -517,10 +554,15 @@ class DashboardViewModel extends ChangeNotifier {
         final status = data['status'] ?? 'confirmed';
         final classDate = (data['classDate'] as Timestamp).toDate();
         final scheduleTime = data['scheduleTime'] ?? '00:00';
-        final userConfirmedAttendance = data['userConfirmedAttendance'] ?? false;
+        final userConfirmedAttendance =
+            data['userConfirmedAttendance'] ?? false;
 
         // Normalizar fecha para comparación
-        final normalizedClassDate = DateTime(classDate.year, classDate.month, classDate.day);
+        final normalizedClassDate = DateTime(
+          classDate.year,
+          classDate.month,
+          classDate.day,
+        );
         final today = DateTime(now.year, now.month, now.day);
 
         // Combinar fecha con hora para obtener el DateTime completo de la clase
@@ -534,14 +576,17 @@ class DashboardViewModel extends ChangeNotifier {
         );
 
         // Ventana de confirmación: 30 min después de la clase
-        final confirmationWindowEnd = classDateTime.add(const Duration(minutes: 30));
+        final confirmationWindowEnd = classDateTime.add(
+          const Duration(minutes: 30),
+        );
         final missedConfirmation = now.isAfter(confirmationWindowEnd);
 
         if (status == 'confirmed') {
           // Verificar si pasó la ventana de confirmación sin confirmar
           if (missedConfirmation && !userConfirmedAttendance) {
             noAsistidas++;
-          } else if (normalizedClassDate.isAfter(today) || normalizedClassDate.isAtSameMomentAs(today)) {
+          } else if (normalizedClassDate.isAfter(today) ||
+              normalizedClassDate.isAtSameMomentAs(today)) {
             agendadas++;
           }
           clasesUsadas++;
@@ -577,7 +622,9 @@ class DashboardViewModel extends ChangeNotifier {
       }
 
       debugPrint('📊 Métricas actualizadas:');
-      debugPrint('   - Clases Totales (limit): ${classesPerMonthRaw ?? "ilimitado"}');
+      debugPrint(
+        '   - Clases Totales (limit): ${classesPerMonthRaw ?? "ilimitado"}',
+      );
       debugPrint('   - Clases Usadas: $clasesUsadas');
       debugPrint('   - Clases Restantes: ${clasesRestantes ?? "∞"}');
       debugPrint('   - Agendadas: $agendadas');

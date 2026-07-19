@@ -69,7 +69,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '611359423677',
     projectId: 'ayuthaya-camp',
     storageBucket: 'ayuthaya-camp.firebasestorage.app',
-    iosClientId: '611359423677-gf9bcst1m6qsdmqbukajfblkc6l4982p.apps.googleusercontent.com',
+    iosClientId:
+        '611359423677-gf9bcst1m6qsdmqbukajfblkc6l4982p.apps.googleusercontent.com',
     iosBundleId: 'com.ayutthaya.ayutthayaCamp',
   );
 }

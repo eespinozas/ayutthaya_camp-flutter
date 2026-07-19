@@ -46,8 +46,7 @@ void main() {
         expect(map['type'], 'enrollment');
         expect(map['amount'], 50000.0);
         expect(map['plan'], 'Mensual');
-        expect(map['receiptUrl'],
-            'https://storage.googleapis.com/receipt.jpg');
+        expect(map['receiptUrl'], 'https://storage.googleapis.com/receipt.jpg');
         expect(map['status'], 'pending');
         expect(map['paymentDate'], isA<Timestamp>());
         expect(map['createdAt'], isA<Timestamp>());

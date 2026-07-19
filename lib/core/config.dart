@@ -10,7 +10,9 @@ class AppConfig {
     if (_fromDefine.isNotEmpty) return _normalize(_fromDefine);
 
     if (kIsWeb) return _normalize('http://localhost:3000'); // web usa localhost
-    if (Platform.isAndroid) return _normalize('http://10.0.2.2:3000'); // emu Android
+    if (Platform.isAndroid) {
+      return _normalize('http://10.0.2.2:3000'); // emu Android
+    }
     return _normalize('http://localhost:3000'); // iOS sim / desktop
   }
 

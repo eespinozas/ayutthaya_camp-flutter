@@ -50,18 +50,22 @@ class MembershipGuard extends StatelessWidget {
       icon = Icons.how_to_reg;
       iconColor = Colors.orangeAccent;
       title = 'Matrícula Requerida';
-      message = 'Para acceder a $pageName necesitas estar matriculado.\n\n'
+      message =
+          'Para acceder a $pageName necesitas estar matriculado.\n\n'
           'Usa la barra de navegación inferior para ir a "Pagos" y completa tu matrícula para empezar a entrenar.';
     } else if (authVM.isMembershipExpired) {
       // Membresía expirada
       icon = Icons.event_busy;
       iconColor = Colors.red;
       title = 'Membresía Expirada';
-      message = 'Tu membresía ha expirado.\n\n'
+      message =
+          'Tu membresía ha expirado.\n\n'
           'Usa la barra de navegación inferior para ir a "Pagos" y renovar tu plan para continuar entrenando.';
 
       if (authVM.expirationDate != null) {
-        final formattedDate = DateFormat('dd/MM/yyyy').format(authVM.expirationDate!);
+        final formattedDate = DateFormat(
+          'dd/MM/yyyy',
+        ).format(authVM.expirationDate!);
         message += '\n\nExpiró el: $formattedDate';
       }
     } else if (authVM.membershipStatus == 'pending') {
@@ -69,14 +73,16 @@ class MembershipGuard extends StatelessWidget {
       icon = Icons.pending_actions;
       iconColor = Colors.orange;
       title = 'Pago Pendiente';
-      message = 'Tu pago está siendo verificado.\n\n'
+      message =
+          'Tu pago está siendo verificado.\n\n'
           'Una vez aprobado por el administrador, podrás acceder a todas las funciones.';
     } else {
       // Frozen u otro estado
       icon = Icons.block;
       iconColor = Colors.grey;
       title = 'Acceso Restringido';
-      message = 'Tu membresía está en estado: ${authVM.membershipStatus}.\n\n'
+      message =
+          'Tu membresía está en estado: ${authVM.membershipStatus}.\n\n'
           'Contacta al administrador para más información.';
     }
 
@@ -107,11 +113,7 @@ class MembershipGuard extends StatelessWidget {
                     width: 2,
                   ),
                 ),
-                child: Icon(
-                  icon,
-                  size: 80,
-                  color: iconColor,
-                ),
+                child: Icon(icon, size: 80, color: iconColor),
               ),
 
               const SizedBox(height: 32),
@@ -177,10 +179,7 @@ class MembershipGuard extends StatelessWidget {
                   icon: const Icon(Icons.refresh),
                   label: const Text(
                     'Actualizar Estado',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

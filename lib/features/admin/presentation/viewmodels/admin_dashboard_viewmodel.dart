@@ -55,10 +55,9 @@ class AdminDashboardViewModel extends ChangeNotifier {
     notifyListeners();
 
     // Listener para usuarios
-    _usersSubscription = _firestore
-        .collection('users')
-        .snapshots()
-        .listen((snapshot) {
+    _usersSubscription = _firestore.collection('users').snapshots().listen((
+      snapshot,
+    ) {
       _processUsersData(snapshot.docs);
       _checkIfAllDataLoaded();
     });
@@ -68,27 +67,27 @@ class AdminDashboardViewModel extends ChangeNotifier {
         .collection('bookings')
         .snapshots()
         .listen((snapshot) {
-      _processBookingsData(snapshot.docs);
-      _checkIfAllDataLoaded();
-    });
+          _processBookingsData(snapshot.docs);
+          _checkIfAllDataLoaded();
+        });
 
     // Listener para payments
     _paymentsSubscription = _firestore
         .collection('payments')
         .snapshots()
         .listen((snapshot) {
-      _processPaymentsData(snapshot.docs);
-      _checkIfAllDataLoaded();
-    });
+          _processPaymentsData(snapshot.docs);
+          _checkIfAllDataLoaded();
+        });
 
     // Listener para schedules
     _schedulesSubscription = _firestore
         .collection('class_schedules')
         .snapshots()
         .listen((snapshot) {
-      _processSchedulesData(snapshot.docs);
-      _checkIfAllDataLoaded();
-    });
+          _processSchedulesData(snapshot.docs);
+          _checkIfAllDataLoaded();
+        });
   }
 
   // ---------------------------------------------------------------------------
@@ -281,7 +280,9 @@ class AdminDashboardViewModel extends ChangeNotifier {
           if (data['createdAt'] is Timestamp) {
             createdAt = (data['createdAt'] as Timestamp).toDate();
           } else {
-            debugPrint('⚠️ Pago ${doc.id}: createdAt no es Timestamp, es ${data['createdAt'].runtimeType}');
+            debugPrint(
+              '⚠️ Pago ${doc.id}: createdAt no es Timestamp, es ${data['createdAt'].runtimeType}',
+            );
           }
         }
 
@@ -290,7 +291,9 @@ class AdminDashboardViewModel extends ChangeNotifier {
           if (data['reviewedAt'] is Timestamp) {
             reviewedAt = (data['reviewedAt'] as Timestamp).toDate();
           } else {
-            debugPrint('⚠️ Pago ${doc.id}: reviewedAt no es Timestamp, es ${data['reviewedAt'].runtimeType}');
+            debugPrint(
+              '⚠️ Pago ${doc.id}: reviewedAt no es Timestamp, es ${data['reviewedAt'].runtimeType}',
+            );
           }
         }
 

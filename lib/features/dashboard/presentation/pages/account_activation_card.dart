@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class AccountActivationCard extends StatelessWidget {
   final VoidCallback onActivate;
 
-  const AccountActivationCard({
-    super.key,
-    required this.onActivate,
-  });
+  const AccountActivationCard({super.key, required this.onActivate});
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +48,7 @@ class AccountActivationCard extends StatelessWidget {
           // descripción
           Text(
             'Para poder reservar clases y completar tu perfil, primero debes matricularte y subir tu comprobante de pago.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.4,
-              color: textColor,
-            ),
+            style: TextStyle(fontSize: 14, height: 1.4, color: textColor),
           ),
 
           const SizedBox(height: 16),
@@ -75,10 +68,7 @@ class AccountActivationCard extends StatelessWidget {
               onPressed: onActivate,
               child: const Text(
                 'Matricularme ahora',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
             ),
           ),

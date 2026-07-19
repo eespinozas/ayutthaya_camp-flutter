@@ -75,7 +75,9 @@ Future<void> main() async {
     try {
       final docRef = await plansCollection.add(plan);
       count++;
-      print('✅ Plan ${count}/${plans.length}: "${plan['name']}" agregado con ID: ${docRef.id}');
+      print(
+        '✅ Plan $count/${plans.length}: "${plan['name']}" agregado con ID: ${docRef.id}',
+      );
     } catch (e) {
       print('❌ Error al agregar "${plan['name']}": $e');
     }
@@ -83,7 +85,9 @@ Future<void> main() async {
 
   print('\n🎉 Seed completado! Se agregaron $count planes.\n');
   print('Puedes verificarlos en Firebase Console:');
-  print('https://console.firebase.google.com/project/YOUR_PROJECT/firestore/data/plans');
+  print(
+    'https://console.firebase.google.com/project/YOUR_PROJECT/firestore/data/plans',
+  );
 
   // Cerrar la app
   print('\n✋ Presiona Ctrl+C para salir.');

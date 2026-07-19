@@ -74,38 +74,22 @@ class AppDesignTokens {
 
   // Subtle Shadow (cards, inputs)
   static const List<BoxShadow> shadowSm = [
-    BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 4,
-      offset: Offset(0, 1),
-    ),
+    BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
   ];
 
   // Standard Shadow (elevated cards)
   static const List<BoxShadow> shadowMd = [
-    BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 8,
-      offset: Offset(0, 2),
-    ),
+    BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 2)),
   ];
 
   // Prominent Shadow (modals, floating buttons)
   static const List<BoxShadow> shadowLg = [
-    BoxShadow(
-      color: Color(0x1F000000),
-      blurRadius: 16,
-      offset: Offset(0, 4),
-    ),
+    BoxShadow(color: Color(0x1F000000), blurRadius: 16, offset: Offset(0, 4)),
   ];
 
   // Dramatic Shadow (dialogs, important overlays)
   static const List<BoxShadow> shadowXl = [
-    BoxShadow(
-      color: Color(0x29000000),
-      blurRadius: 24,
-      offset: Offset(0, 8),
-    ),
+    BoxShadow(color: Color(0x29000000), blurRadius: 24, offset: Offset(0, 8)),
   ];
 
   // Tiger Orange Glow (for accent elements)

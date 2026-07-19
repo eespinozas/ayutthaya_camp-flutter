@@ -61,8 +61,7 @@ void main() {
     });
 
     group('Attendance Confirmation', () {
-      test('canConfirmAttendance should return true within 30min window',
-          () {
+      test('canConfirmAttendance should return true within 30min window', () {
         final now = DateTime.now();
 
         // Class starting in 15 minutes
@@ -75,32 +74,34 @@ void main() {
       });
 
       test(
-          'canConfirmAttendance should return false if already user confirmed',
-          () {
-        final now = DateTime.now();
-        final confirmedBooking = testBooking.copyWith(
-          classDate: DateTime(now.year, now.month, now.day),
-          scheduleTime: '${now.hour}:${now.minute}',
-          userConfirmedAttendance: true,
-        );
+        'canConfirmAttendance should return false if already user confirmed',
+        () {
+          final now = DateTime.now();
+          final confirmedBooking = testBooking.copyWith(
+            classDate: DateTime(now.year, now.month, now.day),
+            scheduleTime: '${now.hour}:${now.minute}',
+            userConfirmedAttendance: true,
+          );
 
-        expect(confirmedBooking.canConfirmAttendance(), false);
-      });
-
-      test('canConfirmAttendance should return false if not confirmed status',
-          () {
-        final now = DateTime.now();
-        final cancelledBooking = testBooking.copyWith(
-          classDate: DateTime(now.year, now.month, now.day),
-          scheduleTime: '${now.hour}:${now.minute}',
-          status: BookingStatus.cancelled,
-        );
-
-        expect(cancelledBooking.canConfirmAttendance(), false);
-      });
+          expect(confirmedBooking.canConfirmAttendance(), false);
+        },
+      );
 
       test(
-          'missedConfirmationWindow: cerrada tras término + gracia '
+        'canConfirmAttendance should return false if not confirmed status',
+        () {
+          final now = DateTime.now();
+          final cancelledBooking = testBooking.copyWith(
+            classDate: DateTime(now.year, now.month, now.day),
+            scheduleTime: '${now.hour}:${now.minute}',
+            status: BookingStatus.cancelled,
+          );
+
+          expect(cancelledBooking.canConfirmAttendance(), false);
+        },
+      );
+
+      test('missedConfirmationWindow: cerrada tras término + gracia '
           '(90 + 15 min para clase normal)', () {
         // Clase de las 10:00 de ayer: ventana cerró a las 11:45 de ayer.
         final ayer = DateTime.now().subtract(const Duration(days: 1));
@@ -113,8 +114,7 @@ void main() {
         expect(pastBooking.missedConfirmationWindow(), true);
       });
 
-      test(
-          'missedConfirmationWindow: sigue abierta 30 min después del inicio '
+      test('missedConfirmationWindow: sigue abierta 30 min después del inicio '
           '(dentro de la clase)', () {
         final inicio = DateTime.now().subtract(const Duration(minutes: 30));
         final duranteClase = testBooking.copyWith(

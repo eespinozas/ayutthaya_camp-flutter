@@ -11,7 +11,7 @@ class BookingService {
 
   /// [firestore] inyectable para tests (default: instancia real).
   BookingService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Generar clave única para tracking de capacidad (formato: YYYY-MM-DD)
   String _getDateKey(DateTime date) {
@@ -23,7 +23,8 @@ class BookingService {
     try {
       // Verificar que no sea una hora pasada
       final now = DateTime.now();
-      final isToday = booking.classDate.year == now.year &&
+      final isToday =
+          booking.classDate.year == now.year &&
           booking.classDate.month == now.month &&
           booking.classDate.day == now.day;
 
@@ -67,7 +68,9 @@ class BookingService {
         if (existingDate.year == booking.classDate.year &&
             existingDate.month == booking.classDate.month &&
             existingDate.day == booking.classDate.day) {
-          throw Exception('Ya tienes una reserva para esta clase en esta fecha');
+          throw Exception(
+            'Ya tienes una reserva para esta clase en esta fecha',
+          );
         }
       }
 
@@ -76,7 +79,9 @@ class BookingService {
 
       await _firestore.runTransaction((transaction) async {
         // Obtener referencia al schedule para capacidad máxima
-        final scheduleRef = _firestore.collection('class_schedules').doc(booking.scheduleId);
+        final scheduleRef = _firestore
+            .collection('class_schedules')
+            .doc(booking.scheduleId);
         final scheduleSnapshot = await transaction.get(scheduleRef);
 
         if (!scheduleSnapshot.exists) {
@@ -88,12 +93,15 @@ class BookingService {
         // transacción para cubrir también apps con UI desactualizada.
         final overrideRef = _firestore
             .collection('schedule_overrides')
-            .doc(ScheduleOverride.docIdFor(booking.scheduleId, booking.classDate));
+            .doc(
+              ScheduleOverride.docIdFor(booking.scheduleId, booking.classDate),
+            );
         final overrideSnapshot = await transaction.get(overrideRef);
         if (overrideSnapshot.exists &&
             (overrideSnapshot.data()?['disabled'] ?? false) == true) {
           throw Exception(
-              'Esta clase no está disponible para esta fecha (horario suspendido)');
+            'Esta clase no está disponible para esta fecha (horario suspendido)',
+          );
         }
 
         final maxCapacity = scheduleSnapshot.data()?['capacity'] ?? 30;
@@ -116,7 +124,9 @@ class BookingService {
 
         // Verificar si hay espacio disponible
         if (currentBookings >= maxCapacity) {
-          throw Exception('Esta clase está llena ($currentBookings/$maxCapacity)');
+          throw Exception(
+            'Esta clase está llena ($currentBookings/$maxCapacity)',
+          );
         }
 
         // Crear la reserva
@@ -125,19 +135,17 @@ class BookingService {
         bookingId = bookingRef.id;
 
         // Incrementar contador de capacidad
-        transaction.set(
-          capacityRef,
-          {
-            'currentBookings': currentBookings + 1,
-            'maxCapacity': maxCapacity,
-            'lastUpdated': FieldValue.serverTimestamp(),
-            'scheduleId': booking.scheduleId,
-            'classDate': Timestamp.fromDate(booking.classDate),
-          },
-          SetOptions(merge: true),
-        );
+        transaction.set(capacityRef, {
+          'currentBookings': currentBookings + 1,
+          'maxCapacity': maxCapacity,
+          'lastUpdated': FieldValue.serverTimestamp(),
+          'scheduleId': booking.scheduleId,
+          'classDate': Timestamp.fromDate(booking.classDate),
+        }, SetOptions(merge: true));
 
-        debugPrint('✅ Booking creado: $bookingId (${currentBookings + 1}/$maxCapacity)');
+        debugPrint(
+          '✅ Booking creado: $bookingId (${currentBookings + 1}/$maxCapacity)',
+        );
       });
 
       if (bookingId == null) {
@@ -173,10 +181,12 @@ class BookingService {
         debugPrint('✅ Recordatorios programados para booking: ${docRef.id}');
 
         // Notificar a admins sobre nueva reserva
-        final formattedDate = '${booking.classDate.day}/${booking.classDate.month}/${booking.classDate.year}';
+        final formattedDate =
+            '${booking.classDate.day}/${booking.classDate.month}/${booking.classDate.year}';
         await notificationService.sendNotificationToAdmins(
           title: '📅 Nueva Reserva de Clase',
-          body: '${booking.userName} se registró a ${booking.scheduleType} - $formattedDate a las ${booking.scheduleTime}',
+          body:
+              '${booking.userName} se registró a ${booking.scheduleType} - $formattedDate a las ${booking.scheduleTime}',
           data: {
             'type': 'new_booking',
             'bookingId': docRef.id,
@@ -188,7 +198,9 @@ class BookingService {
         );
         debugPrint('✅ Notificación de nueva reserva enviada a admins');
       } catch (e) {
-        debugPrint('⚠️ Error programando recordatorios o enviando notificaciones: $e');
+        debugPrint(
+          '⚠️ Error programando recordatorios o enviando notificaciones: $e',
+        );
         // No lanzar error, la reserva ya se creó
       }
 
@@ -199,9 +211,15 @@ class BookingService {
   }
 
   /// Obtener capacidad disponible para una clase (usando contador optimizado)
-  Future<int> _getAvailableCapacity(String scheduleId, DateTime classDate) async {
+  Future<int> _getAvailableCapacity(
+    String scheduleId,
+    DateTime classDate,
+  ) async {
     // Obtener el horario para saber la capacidad máxima
-    final scheduleDoc = await _firestore.collection('class_schedules').doc(scheduleId).get();
+    final scheduleDoc = await _firestore
+        .collection('class_schedules')
+        .doc(scheduleId)
+        .get();
     if (!scheduleDoc.exists) {
       throw Exception('Horario no encontrado');
     }
@@ -250,8 +268,10 @@ class BookingService {
         .orderBy('classDate', descending: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Booking.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => Booking.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Obtener reservas futuras de un usuario
@@ -262,18 +282,26 @@ class BookingService {
     return _firestore
         .collection('bookings')
         .where('userId', isEqualTo: userId)
-        .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .where(
+          'classDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday),
+        )
         .where('status', isEqualTo: BookingStatus.confirmed.name)
         .orderBy('classDate', descending: false)
         .orderBy('scheduleTime', descending: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Booking.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => Booking.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Obtener reservas de una clase específica (para admin)
-  Stream<List<Booking>> getClassBookings(String scheduleId, DateTime classDate) {
+  Stream<List<Booking>> getClassBookings(
+    String scheduleId,
+    DateTime classDate,
+  ) {
     return _firestore
         .collection('bookings')
         .where('scheduleId', isEqualTo: scheduleId)
@@ -281,8 +309,10 @@ class BookingService {
         .orderBy('userName', descending: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Booking.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => Booking.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Obtener todas las reservas de un día (para admin)
@@ -292,14 +322,19 @@ class BookingService {
 
     return _firestore
         .collection('bookings')
-        .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where(
+          'classDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
         .where('classDate', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
         .orderBy('classDate', descending: false)
         .orderBy('scheduleTime', descending: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Booking.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => Booking.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Cancelar una reserva (usuario) con decremento atómico del contador
@@ -345,7 +380,8 @@ class BookingService {
 
         // Escritura 2: decrementar contador de capacidad
         if (capacitySnapshot.exists) {
-          final currentBookings = capacitySnapshot.data()?['currentBookings'] ?? 0;
+          final currentBookings =
+              capacitySnapshot.data()?['currentBookings'] ?? 0;
 
           // Evitar números negativos
           final newCount = currentBookings > 0 ? currentBookings - 1 : 0;
@@ -449,7 +485,9 @@ class BookingService {
             'updatedAt': FieldValue.serverTimestamp(),
           });
 
-          debugPrint('📌 Booking ${doc.id} marcada como no asistida (no confirmó)');
+          debugPrint(
+            '📌 Booking ${doc.id} marcada como no asistida (no confirmó)',
+          );
         }
       }
     } catch (e) {
@@ -458,7 +496,11 @@ class BookingService {
   }
 
   /// Verificar si un usuario ya tiene reserva para una clase
-  Future<bool> hasBookingForClass(String userId, String scheduleId, DateTime classDate) async {
+  Future<bool> hasBookingForClass(
+    String userId,
+    String scheduleId,
+    DateTime classDate,
+  ) async {
     // Buscar todas las reservas del usuario para ese scheduleId
     final bookings = await _firestore
         .collection('bookings')
@@ -542,7 +584,10 @@ class BookingService {
       }
 
       // Contar clases agendadas en el mes actual
-      final bookedThisMonth = await getUserBookedClassesThisMonth(userId, classDate);
+      final bookedThisMonth = await getUserBookedClassesThisMonth(
+        userId,
+        classDate,
+      );
 
       debugPrint('🔍 Verificando límite de clases:');
       debugPrint('   - Plan permite: $classesPerMonth clases/mes');
@@ -552,7 +597,7 @@ class BookingService {
       if (bookedThisMonth >= classesPerMonth) {
         throw Exception(
           'Has alcanzado el límite de $classesPerMonth clases de tu plan. '
-          'Ya has agendado $bookedThisMonth clases este mes.'
+          'Ya has agendado $bookedThisMonth clases este mes.',
         );
       }
     } catch (e) {
@@ -566,11 +611,25 @@ class BookingService {
   }
 
   /// Contar cuántas clases ha agendado el usuario en el mes de la fecha dada
-  Future<int> getUserBookedClassesThisMonth(String userId, DateTime referenceDate) async {
+  Future<int> getUserBookedClassesThisMonth(
+    String userId,
+    DateTime referenceDate,
+  ) async {
     try {
       // Obtener primer y último día del mes
-      final firstDayOfMonth = DateTime(referenceDate.year, referenceDate.month, 1);
-      final lastDayOfMonth = DateTime(referenceDate.year, referenceDate.month + 1, 0, 23, 59, 59);
+      final firstDayOfMonth = DateTime(
+        referenceDate.year,
+        referenceDate.month,
+        1,
+      );
+      final lastDayOfMonth = DateTime(
+        referenceDate.year,
+        referenceDate.month + 1,
+        0,
+        23,
+        59,
+        59,
+      );
 
       debugPrint('📅 Contando clases del mes:');
       debugPrint('   - Desde: $firstDayOfMonth');
@@ -580,8 +639,14 @@ class BookingService {
       final bookings = await _firestore
           .collection('bookings')
           .where('userId', isEqualTo: userId)
-          .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(firstDayOfMonth))
-          .where('classDate', isLessThanOrEqualTo: Timestamp.fromDate(lastDayOfMonth))
+          .where(
+            'classDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(firstDayOfMonth),
+          )
+          .where(
+            'classDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(lastDayOfMonth),
+          )
           .where('status', isEqualTo: BookingStatus.confirmed.name)
           .get();
 
@@ -645,7 +710,8 @@ class BookingService {
             if (classesThisMonth >= limit) {
               return {
                 'success': false,
-                'message': 'Has alcanzado tu límite de $limit clases este mes.\n\n'
+                'message':
+                    'Has alcanzado tu límite de $limit clases este mes.\n\n'
                     'Actualiza tu plan para continuar entrenando.',
                 'action': 'limit_reached',
                 'classesUsed': classesThisMonth,
@@ -665,7 +731,9 @@ class BookingService {
 
       debugPrint('🔍 Procesando QR Check-in genérico:');
       debugPrint('   - Usuario: $userName ($userId)');
-      debugPrint('   - Hora actual: ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+      debugPrint(
+        '   - Hora actual: ${now.hour}:${now.minute.toString().padLeft(2, '0')}',
+      );
       debugPrint('   - Día: $currentDayOfWeek');
 
       // PASO 1: Buscar todas las clases de hoy
@@ -707,7 +775,13 @@ class BookingService {
         final hour = int.parse(parts[0]);
         final minute = int.parse(parts[1]);
 
-        final classStartTime = DateTime(now.year, now.month, now.day, hour, minute);
+        final classStartTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          hour,
+          minute,
+        );
         final minutesSinceStart = now.difference(classStartTime).inMinutes;
 
         // Clase activa: desde 15 min antes del inicio (llegada temprana,
@@ -723,7 +797,9 @@ class BookingService {
             'startTime': classStartTime,
             'minutesSinceStart': minutesSinceStart,
           });
-          debugPrint('   ✅ Clase activa encontrada: ${data['type']} a las $classTime ($minutesSinceStart min)');
+          debugPrint(
+            '   ✅ Clase activa encontrada: ${data['type']} a las $classTime ($minutesSinceStart min)',
+          );
         }
         // Clase que pasó hace poco: entre 21 minutos y hasta el final del día
         else if (minutesSinceStart > 20 && classStartTime.isBefore(now)) {
@@ -735,17 +811,23 @@ class BookingService {
             'startTime': classStartTime,
             'minutesSinceStart': minutesSinceStart,
           });
-          debugPrint('   ⏰ Clase pasada encontrada: ${data['type']} a las $classTime (hace $minutesSinceStart min)');
+          debugPrint(
+            '   ⏰ Clase pasada encontrada: ${data['type']} a las $classTime (hace $minutesSinceStart min)',
+          );
         }
       }
 
       // CASO 1: HAY CLASE(S) ACTIVA(S) - Registrar asistencia
       if (activeClasses.isNotEmpty) {
-        debugPrint('📍 ${activeClasses.length} clase(s) activa(s) encontrada(s)');
+        debugPrint(
+          '📍 ${activeClasses.length} clase(s) activa(s) encontrada(s)',
+        );
 
         // Ordenar por tiempo más reciente (la que empezó más recientemente)
-        activeClasses.sort((a, b) =>
-          (b['minutesSinceStart'] as int).compareTo(a['minutesSinceStart'] as int)
+        activeClasses.sort(
+          (a, b) => (b['minutesSinceStart'] as int).compareTo(
+            a['minutesSinceStart'] as int,
+          ),
         );
 
         final targetClass = activeClasses.first;
@@ -754,7 +836,9 @@ class BookingService {
         final scheduleType = targetClass['type'] as String;
         final instructor = targetClass['instructor'] as String;
 
-        debugPrint('   → Registrando asistencia en: $scheduleType a las $scheduleTime');
+        debugPrint(
+          '   → Registrando asistencia en: $scheduleType a las $scheduleTime',
+        );
 
         // Verificar si ya tiene booking para esta clase
         final existingBooking = await _firestore
@@ -773,7 +857,8 @@ class BookingService {
           if (currentStatus == BookingStatus.attended.name) {
             return {
               'success': true,
-              'message': 'Ya tienes registrada tu asistencia a $scheduleType de las $scheduleTime',
+              'message':
+                  'Ya tienes registrada tu asistencia a $scheduleType de las $scheduleTime',
               'action': 'already_attended',
               'classTime': scheduleTime,
               'classType': scheduleType,
@@ -803,7 +888,9 @@ class BookingService {
           // Verificar capacidad
           final capacity = await _getAvailableCapacity(scheduleId, today);
           if (capacity <= 0) {
-            throw Exception('La clase de $scheduleType a las $scheduleTime está llena');
+            throw Exception(
+              'La clase de $scheduleType a las $scheduleTime está llena',
+            );
           }
 
           final booking = Booking(
@@ -822,7 +909,9 @@ class BookingService {
             attendedAt: now,
           );
 
-          final docRef = await _firestore.collection('bookings').add(booking.toMap());
+          final docRef = await _firestore
+              .collection('bookings')
+              .add(booking.toMap());
           debugPrint('✅ Booking creado y marcado como attended: ${docRef.id}');
 
           return {
@@ -837,11 +926,15 @@ class BookingService {
 
       // CASO 2: NO HAY CLASES ACTIVAS - Buscar clase más reciente que haya pasado
       if (recentlyPassedClasses.isNotEmpty) {
-        debugPrint('⚠️ No hay clases activas. Buscando clase más reciente que pasó...');
+        debugPrint(
+          '⚠️ No hay clases activas. Buscando clase más reciente que pasó...',
+        );
 
         // Ordenar por la que pasó más recientemente
-        recentlyPassedClasses.sort((a, b) =>
-          (a['minutesSinceStart'] as int).compareTo(b['minutesSinceStart'] as int)
+        recentlyPassedClasses.sort(
+          (a, b) => (a['minutesSinceStart'] as int).compareTo(
+            b['minutesSinceStart'] as int,
+          ),
         );
 
         final mostRecentClass = recentlyPassedClasses.first;
@@ -849,7 +942,9 @@ class BookingService {
         final scheduleTime = mostRecentClass['time'] as String;
         final scheduleType = mostRecentClass['type'] as String;
 
-        debugPrint('   → Clase más reciente: $scheduleType a las $scheduleTime (hace ${mostRecentClass['minutesSinceStart']} min)');
+        debugPrint(
+          '   → Clase más reciente: $scheduleType a las $scheduleTime (hace ${mostRecentClass['minutesSinceStart']} min)',
+        );
 
         // Buscar o crear booking para esta clase y marcarlo como noShow
         final existingBooking = await _firestore
@@ -868,7 +963,8 @@ class BookingService {
           if (currentStatus == BookingStatus.noShow.name) {
             return {
               'success': true,
-              'message': 'Esta clase de $scheduleType ($scheduleTime) ya está marcada como no asistida',
+              'message':
+                  'Esta clase de $scheduleType ($scheduleTime) ya está marcada como no asistida',
               'action': 'already_no_show',
               'classTime': scheduleTime,
               'classType': scheduleType,
@@ -880,7 +976,8 @@ class BookingService {
           if (currentStatus == BookingStatus.attended.name) {
             return {
               'success': true,
-              'message': 'Tu asistencia a $scheduleType de las $scheduleTime ya estaba registrada',
+              'message':
+                  'Tu asistencia a $scheduleType de las $scheduleTime ya estaba registrada',
               'action': 'already_attended',
               'classTime': scheduleTime,
               'classType': scheduleType,
@@ -889,7 +986,8 @@ class BookingService {
           if (currentStatus == BookingStatus.pendingApproval.name) {
             return {
               'success': true,
-              'message': 'Tu confirmación de $scheduleType ($scheduleTime) está esperando la aprobación del administrador',
+              'message':
+                  'Tu confirmación de $scheduleType ($scheduleTime) está esperando la aprobación del administrador',
               'action': 'pending_approval',
               'classTime': scheduleTime,
               'classType': scheduleType,
@@ -904,7 +1002,8 @@ class BookingService {
 
           return {
             'success': true,
-            'message': 'La clase de $scheduleType ($scheduleTime) ha sido marcada como no asistida',
+            'message':
+                'La clase de $scheduleType ($scheduleTime) ha sido marcada como no asistida',
             'action': 'marked_no_show',
             'classTime': scheduleTime,
             'classType': scheduleType,
@@ -916,7 +1015,8 @@ class BookingService {
 
           return {
             'success': false,
-            'message': 'La clase de $scheduleType ($scheduleTime) ya comenzó '
+            'message':
+                'La clase de $scheduleType ($scheduleTime) ya comenzó '
                 'hace más de 20 minutos y no tenías reserva para ella. '
                 'Agenda tu próxima clase desde la app.',
             'action': 'no_active_class',
@@ -928,9 +1028,8 @@ class BookingService {
 
       // CASO 3: No hay clases hoy
       throw Exception(
-        'No hay clases programadas para hoy o aún no ha comenzado ninguna clase'
+        'No hay clases programadas para hoy o aún no ha comenzado ninguna clase',
       );
-
     } catch (e) {
       debugPrint('❌ Error en QR check-in: $e');
       return {
@@ -966,8 +1065,14 @@ class BookingService {
           .collection('bookings')
           .where('userId', isEqualTo: userId)
           .where('status', isEqualTo: BookingStatus.attended.name)
-          .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-          .where('classDate', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
+          .where(
+            'classDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
+          )
+          .where(
+            'classDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth),
+          )
           .get();
 
       return snapshot.docs.length;

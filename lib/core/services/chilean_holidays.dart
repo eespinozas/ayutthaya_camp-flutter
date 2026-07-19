@@ -26,9 +26,21 @@ class ChileanHolidays {
   /// Día de los Pueblos Indígenas: fecha del solsticio de invierno en Chile.
   /// Fuente: fechas oficiales publicadas; fallback 21 de junio.
   static const Map<int, int> _diaPueblosIndigenas = {
-    2021: 21, 2022: 21, 2023: 21, 2024: 20, 2025: 20,
-    2026: 21, 2027: 21, 2028: 20, 2029: 20, 2030: 21,
-    2031: 21, 2032: 20, 2033: 20, 2034: 21, 2035: 21,
+    2021: 21,
+    2022: 21,
+    2023: 21,
+    2024: 20,
+    2025: 20,
+    2026: 21,
+    2027: 21,
+    2028: 20,
+    2029: 20,
+    2030: 21,
+    2031: 21,
+    2032: 20,
+    2033: 20,
+    2034: 21,
+    2035: 21,
   };
 
   static int _key(int month, int day) => month * 100 + day;

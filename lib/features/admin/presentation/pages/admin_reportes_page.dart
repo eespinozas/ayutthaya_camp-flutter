@@ -47,9 +47,7 @@ class _AdminReportesPageState extends State<AdminReportesPage>
       return Scaffold(
         backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF6A00),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
         ),
       );
     }
@@ -77,12 +75,19 @@ class _AdminReportesPageState extends State<AdminReportesPage>
                     ),
                   ],
                 ),
-                child: const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.bar_chart_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               const Text(
                 'Reportes y Analytics',
-                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
@@ -139,10 +144,14 @@ class _DailyReportTabState extends State<_DailyReportTab> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<AdminReportesViewModel>(context, listen: false);
+    final viewModel = Provider.of<AdminReportesViewModel>(
+      context,
+      listen: false,
+    );
     final dayName = DateFormat('EEEE', 'es_ES').format(_selectedDate);
     final dateStr = DateFormat('dd MMM yyyy', 'es_ES').format(_selectedDate);
-    final isToday = _selectedDate.year == DateTime.now().year &&
+    final isToday =
+        _selectedDate.year == DateTime.now().year &&
         _selectedDate.month == DateTime.now().month &&
         _selectedDate.day == DateTime.now().day;
 
@@ -168,287 +177,307 @@ class _DailyReportTabState extends State<_DailyReportTab> {
           );
         }
 
-        final data = snapshot.data ?? {
-          'totalAsistencias': 0,
-          'clasesCompletadas': 0,
-          'clasesTotales': 0,
-          'alumnosNuevos': 0,
-          'pagosRecibidos': 0,
-          'tasaAsistencia': 0,
-          'clases': [],
-        };
+        final data =
+            snapshot.data ??
+            {
+              'totalAsistencias': 0,
+              'clasesCompletadas': 0,
+              'clasesTotales': 0,
+              'alumnosNuevos': 0,
+              'pagosRecibidos': 0,
+              'tasaAsistencia': 0,
+              'clases': [],
+            };
 
         return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Date selector
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2A2A2A),
-              border: Border(
-                bottom: BorderSide(
-                  color: Color(0xFF3A3A3A),
-                  width: 1,
+          child: Column(
+            children: [
+              // Date selector
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2A2A2A),
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFF3A3A3A), width: 1),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => _changeDate(-1),
+                          icon: const Icon(
+                            Icons.chevron_left,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Text(
+                                dayName[0].toUpperCase() + dayName.substring(1),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                dateStr,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _changeDate(1),
+                          icon: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (!isToday) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _goToToday,
+                        icon: const Icon(Icons.today, size: 18),
+                        label: const Text('Ir a Hoy'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFFF6A00),
+                          side: const BorderSide(color: Color(0xFFFF6A00)),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            ),
-            child: Column(
-              children: [
-                Row(
+
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconButton(
-                      onPressed: () => _changeDate(-1),
-                      icon: const Icon(Icons.chevron_left, color: Colors.white),
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            dayName[0].toUpperCase() + dayName.substring(1),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            dateStr,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                    // KPIs principales
+                    const Text(
+                      'Resumen del Día',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => _changeDate(1),
-                      icon: const Icon(Icons.chevron_right, color: Colors.white),
+                    const SizedBox(height: 12),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.5,
+                      children: [
+                        _buildKPICard(
+                          label: 'Total Asistencias',
+                          value: '${data['totalAsistencias']}',
+                          icon: Icons.people,
+                          color: Colors.blue,
+                          subtitle: '${data['tasaAsistencia']}% ocupación',
+                        ),
+                        _buildKPICard(
+                          label: 'Clases',
+                          value:
+                              '${data['clasesCompletadas']}/${data['clasesTotales']}',
+                          icon: Icons.fitness_center,
+                          color: Colors.green,
+                          subtitle: 'Completadas',
+                        ),
+                        _buildKPICard(
+                          label: 'Nuevos Alumnos',
+                          value: '${data['alumnosNuevos']}',
+                          icon: Icons.person_add,
+                          color: Colors.purple,
+                          subtitle: 'Registros',
+                        ),
+                        _buildKPICard(
+                          label: 'Ingresos',
+                          value:
+                              '\$${(data['pagosRecibidos'] / 1000).toInt()}K',
+                          icon: Icons.attach_money,
+                          color: Colors.orange,
+                          subtitle: 'CLP',
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                if (!isToday) ...[
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _goToToday,
-                    icon: const Icon(Icons.today, size: 18),
-                    label: const Text('Ir a Hoy'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFFF6A00),
-                      side: const BorderSide(color: Color(0xFFFF6A00)),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
 
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // KPIs principales
-                const Text(
-                  'Resumen del Día',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.5,
-                  children: [
-                    _buildKPICard(
-                      label: 'Total Asistencias',
-                      value: '${data['totalAsistencias']}',
-                      icon: Icons.people,
-                      color: Colors.blue,
-                      subtitle: '${data['tasaAsistencia']}% ocupación',
-                    ),
-                    _buildKPICard(
-                      label: 'Clases',
-                      value: '${data['clasesCompletadas']}/${data['clasesTotales']}',
-                      icon: Icons.fitness_center,
-                      color: Colors.green,
-                      subtitle: 'Completadas',
-                    ),
-                    _buildKPICard(
-                      label: 'Nuevos Alumnos',
-                      value: '${data['alumnosNuevos']}',
-                      icon: Icons.person_add,
-                      color: Colors.purple,
-                      subtitle: 'Registros',
-                    ),
-                    _buildKPICard(
-                      label: 'Ingresos',
-                      value: '\$${(data['pagosRecibidos'] / 1000).toInt()}K',
-                      icon: Icons.attach_money,
-                      color: Colors.orange,
-                      subtitle: 'CLP',
-                    ),
-                  ],
-                ),
+                    const SizedBox(height: 24),
 
-                const SizedBox(height: 24),
+                    // Asistencia por clase
+                    const Text(
+                      'Asistencia por Clase',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
-                // Asistencia por clase
-                const Text(
-                  'Asistencia por Clase',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: (data['clases'] as List).map((clase) {
+                          final inscritos = clase['inscritos'] as int;
+                          final asistieron = clase['asistieron'] as int;
+                          final faltas = (clase['faltas'] as int?) ?? 0;
+                          final porAprobar = (clase['porAprobar'] as int?) ?? 0;
+                          final finalizada =
+                              (clase['finalizada'] as bool?) ?? true;
+                          final capacidad = clase['capacidad'] as int;
+                          // Métrica principal: cupos tomados sobre capacidad
+                          // de la clase (los inscritos cuentan aunque no vayan).
+                          final percentage = capacidad > 0
+                              ? inscritos / capacidad
+                              : 0.0;
 
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: (data['clases'] as List).map((clase) {
-                      final inscritos = clase['inscritos'] as int;
-                      final asistieron = clase['asistieron'] as int;
-                      final faltas = (clase['faltas'] as int?) ?? 0;
-                      final porAprobar = (clase['porAprobar'] as int?) ?? 0;
-                      final finalizada = (clase['finalizada'] as bool?) ?? true;
-                      final capacidad = clase['capacidad'] as int;
-                      // Métrica principal: cupos tomados sobre capacidad
-                      // de la clase (los inscritos cuentan aunque no vayan).
-                      final percentage =
-                          capacidad > 0 ? inscritos / capacidad : 0.0;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Column(
-                          children: [
-                            Row(
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Column(
                               children: [
-                                Container(
-                                  width: 60,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    clase['hora'],
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Color(0xFFFF6A00),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 60,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFFFF6A00,
+                                        ).withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        clase['hora'],
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Color(0xFFFF6A00),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            '$inscritos/$capacidad inscritos',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
                                           Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
-                                              if (asistieron > 0) ...[
-                                                Text(
-                                                  '$asistieron asistieron',
-                                                  style: const TextStyle(
-                                                    color: Colors.green,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
+                                              Text(
+                                                '$inscritos/$capacidad inscritos',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
                                                 ),
-                                                const SizedBox(width: 8),
-                                              ],
-                                              if (porAprobar > 0) ...[
-                                                Text(
-                                                  '$porAprobar por aprobar',
-                                                  style: const TextStyle(
-                                                    color: Colors.amber,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                              ],
-                                              if (finalizada && faltas > 0)
-                                                Text(
-                                                  '$faltas falta${faltas > 1 ? 's' : ''}',
-                                                  style: const TextStyle(
-                                                    color: Colors.red,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                              if (!finalizada)
-                                                const Text(
-                                                  'Por realizarse',
-                                                  style: TextStyle(
-                                                    color: Colors.white54,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  if (asistieron > 0) ...[
+                                                    Text(
+                                                      '$asistieron asistieron',
+                                                      style: const TextStyle(
+                                                        color: Colors.green,
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                  ],
+                                                  if (porAprobar > 0) ...[
+                                                    Text(
+                                                      '$porAprobar por aprobar',
+                                                      style: const TextStyle(
+                                                        color: Colors.amber,
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                  ],
+                                                  if (finalizada && faltas > 0)
+                                                    Text(
+                                                      '$faltas falta${faltas > 1 ? 's' : ''}',
+                                                      style: const TextStyle(
+                                                        color: Colors.red,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  if (!finalizada)
+                                                    const Text(
+                                                      'Por realizarse',
+                                                      style: TextStyle(
+                                                        color: Colors.white54,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
                                             ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                            child: LinearProgressIndicator(
+                                              value: percentage,
+                                              minHeight: 6,
+                                              backgroundColor: Colors.white12,
+                                              // Ocupación: llena = verde; el resto
+                                              // en el naranjo de la marca.
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    percentage >= 1.0
+                                                        ? Colors.green
+                                                        : const Color(
+                                                            0xFFFF6A00,
+                                                          ),
+                                                  ),
+                                            ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 6),
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(4),
-                                        child: LinearProgressIndicator(
-                                          value: percentage,
-                                          minHeight: 6,
-                                          backgroundColor: Colors.white12,
-                                          // Ocupación: llena = verde; el resto
-                                          // en el naranjo de la marca.
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            percentage >= 1.0
-                                                ? Colors.green
-                                                : const Color(0xFFFF6A00),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
       },
     );
   }
@@ -464,10 +493,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.8),
-            color.withValues(alpha: 0.6),
-          ],
+          colors: [color.withValues(alpha: 0.8), color.withValues(alpha: 0.6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -484,11 +510,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
+          Icon(icon, color: Colors.white, size: 24),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -503,10 +525,7 @@ class _DailyReportTabState extends State<_DailyReportTab> {
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 11),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
@@ -557,9 +576,13 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<AdminReportesViewModel>(context, listen: false);
+    final viewModel = Provider.of<AdminReportesViewModel>(
+      context,
+      listen: false,
+    );
     final monthName = DateFormat('MMMM yyyy', 'es_ES').format(_selectedMonth);
-    final isCurrentMonth = _selectedMonth.year == DateTime.now().year &&
+    final isCurrentMonth =
+        _selectedMonth.year == DateTime.now().year &&
         _selectedMonth.month == DateTime.now().month;
 
     return StreamBuilder<Map<String, dynamic>>(
@@ -584,367 +607,383 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
           );
         }
 
-        final data = snapshot.data ?? {
-          'totalAsistencias': 0,
-          'promedioAsistenciaDiaria': 0,
-          'alumnosActivos': 0,
-          'alumnosNuevos': 0,
-          'alumnosInactivos': 0,
-          'ingresosMensualidad': 0,
-          'ingresosMatricula': 0,
-          'ingresosTotal': 0,
-          'tasaRetencion': 0,
-          'clasesOcupacionPromedio': [],
-          'diasConMasAsistencia': [],
-        };
+        final data =
+            snapshot.data ??
+            {
+              'totalAsistencias': 0,
+              'promedioAsistenciaDiaria': 0,
+              'alumnosActivos': 0,
+              'alumnosNuevos': 0,
+              'alumnosInactivos': 0,
+              'ingresosMensualidad': 0,
+              'ingresosMatricula': 0,
+              'ingresosTotal': 0,
+              'tasaRetencion': 0,
+              'clasesOcupacionPromedio': [],
+              'diasConMasAsistencia': [],
+            };
 
         return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Month selector
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2A2A2A),
-              border: Border(
-                bottom: BorderSide(
-                  color: Color(0xFF3A3A3A),
-                  width: 1,
+          child: Column(
+            children: [
+              // Month selector
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2A2A2A),
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFF3A3A3A), width: 1),
+                  ),
                 ),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
+                child: Column(
                   children: [
-                    IconButton(
-                      onPressed: () => _changeMonth(-1),
-                      icon: const Icon(Icons.chevron_left, color: Colors.white),
-                    ),
-                    Expanded(
-                      child: Text(
-                        monthName[0].toUpperCase() + monthName.substring(1),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => _changeMonth(-1),
+                          icon: const Icon(
+                            Icons.chevron_left,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => _changeMonth(1),
-                      icon: const Icon(Icons.chevron_right, color: Colors.white),
-                    ),
-                  ],
-                ),
-                if (!isCurrentMonth) ...[
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _goToCurrentMonth,
-                    icon: const Icon(Icons.today, size: 18),
-                    label: const Text('Mes Actual'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFFF6A00),
-                      side: const BorderSide(color: Color(0xFFFF6A00)),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // KPIs principales
-                const Text(
-                  'Resumen del Mes',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.4,
-                  children: [
-                    _buildKPICard(
-                      label: 'Asistencias Total',
-                      value: '${data['totalAsistencias']}',
-                      icon: Icons.people,
-                      color: Colors.blue,
-                      subtitle: '~${data['promedioAsistenciaDiaria']}/día',
-                    ),
-                    _buildKPICard(
-                      label: 'Alumnos Activos',
-                      value: '${data['alumnosActivos']}',
-                      icon: Icons.fitness_center,
-                      color: Colors.green,
-                      subtitle: '+${data['alumnosNuevos']} nuevos',
-                    ),
-                    _buildKPICard(
-                      label: 'Ingresos Totales',
-                      value: '\$${(data['ingresosTotal'] / 1000000).toStringAsFixed(1)}M',
-                      icon: Icons.attach_money,
-                      color: Colors.orange,
-                      subtitle: 'CLP',
-                    ),
-                    _buildKPICard(
-                      label: 'Tasa Retención',
-                      value: '${data['tasaRetencion']}%',
-                      icon: Icons.trending_up,
-                      color: Colors.purple,
-                      subtitle: '${data['alumnosInactivos']} bajas',
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Desglose de ingresos
-                const Text(
-                  'Desglose de Ingresos',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildIncomeRow(
-                        'Mensualidades',
-                        data['ingresosMensualidad'],
-                        Colors.blue,
-                        data['ingresosTotal'],
-                      ),
-                      const Divider(color: Color(0xFF3A3A3A)),
-                      _buildIncomeRow(
-                        'Matrículas',
-                        data['ingresosMatricula'],
-                        Colors.green,
-                        data['ingresosTotal'],
-                      ),
-                      const Divider(color: Color(0xFF3A3A3A)),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'TOTAL',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                        Expanded(
+                          child: Text(
+                            monthName[0].toUpperCase() + monthName.substring(1),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
-                            Text(
-                              '\$${NumberFormat('#,###', 'es_ES').format(data['ingresosTotal'])}',
-                              style: const TextStyle(
-                                color: Color(0xFFFF6A00),
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _changeMonth(1),
+                          icon: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (!isCurrentMonth) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _goToCurrentMonth,
+                        icon: const Icon(Icons.today, size: 18),
+                        label: const Text('Mes Actual'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFFF6A00),
+                          side: const BorderSide(color: Color(0xFFFF6A00)),
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
+              ),
 
-                const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // KPIs principales
+                    const Text(
+                      'Resumen del Mes',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
-                // Ocupación promedio por clase
-                const Text(
-                  'Ocupación Promedio por Horario',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.4,
+                      children: [
+                        _buildKPICard(
+                          label: 'Asistencias Total',
+                          value: '${data['totalAsistencias']}',
+                          icon: Icons.people,
+                          color: Colors.blue,
+                          subtitle: '~${data['promedioAsistenciaDiaria']}/día',
+                        ),
+                        _buildKPICard(
+                          label: 'Alumnos Activos',
+                          value: '${data['alumnosActivos']}',
+                          icon: Icons.fitness_center,
+                          color: Colors.green,
+                          subtitle: '+${data['alumnosNuevos']} nuevos',
+                        ),
+                        _buildKPICard(
+                          label: 'Ingresos Totales',
+                          value:
+                              '\$${(data['ingresosTotal'] / 1000000).toStringAsFixed(1)}M',
+                          icon: Icons.attach_money,
+                          color: Colors.orange,
+                          subtitle: 'CLP',
+                        ),
+                        _buildKPICard(
+                          label: 'Tasa Retención',
+                          value: '${data['tasaRetencion']}%',
+                          icon: Icons.trending_up,
+                          color: Colors.purple,
+                          subtitle: '${data['alumnosInactivos']} bajas',
+                        ),
+                      ],
+                    ),
 
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: (data['clasesOcupacionPromedio'] as List).map((clase) {
-                      final ocupacion = clase['ocupacion'] as int;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 60,
-                              child: Text(
-                                clase['hora'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                    const SizedBox(height: 24),
+
+                    // Desglose de ingresos
+                    const Text(
+                      'Desglose de Ingresos',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildIncomeRow(
+                            'Mensualidades',
+                            data['ingresosMensualidad'],
+                            Colors.blue,
+                            data['ingresosTotal'],
+                          ),
+                          const Divider(color: Color(0xFF3A3A3A)),
+                          _buildIncomeRow(
+                            'Matrículas',
+                            data['ingresosMatricula'],
+                            Colors.green,
+                            data['ingresosTotal'],
+                          ),
+                          const Divider(color: Color(0xFF3A3A3A)),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'TOTAL',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
+                                Text(
+                                  '\$${NumberFormat('#,###', 'es_ES').format(data['ingresosTotal'])}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFFF6A00),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Stack(
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Ocupación promedio por clase
+                    const Text(
+                      'Ocupación Promedio por Horario',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: (data['clasesOcupacionPromedio'] as List).map(
+                          (clase) {
+                            final ocupacion = clase['ocupacion'] as int;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
                                 children: [
-                                  Container(
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white12,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                  FractionallySizedBox(
-                                    widthFactor: ocupacion / 100,
-                                    child: Container(
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            ocupacion >= 90
-                                                ? Colors.green
-                                                : ocupacion >= 70
-                                                    ? Colors.orange
-                                                    : Colors.blue,
-                                            ocupacion >= 90
-                                                ? Colors.green.shade700
-                                                : ocupacion >= 70
-                                                    ? Colors.orange.shade700
-                                                    : Colors.blue.shade700,
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    height: 24,
-                                    alignment: Alignment.centerRight,
-                                    padding: const EdgeInsets.only(right: 8),
+                                  SizedBox(
+                                    width: 60,
                                     child: Text(
-                                      '$ocupacion%',
-                                      style: TextStyle(
-                                        color: ocupacion > 50
-                                            ? Colors.white
-                                            : Colors.white70,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                      clase['hora'],
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
                                       ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Stack(
+                                      children: [
+                                        Container(
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white12,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                        ),
+                                        FractionallySizedBox(
+                                          widthFactor: ocupacion / 100,
+                                          child: Container(
+                                            height: 24,
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  ocupacion >= 90
+                                                      ? Colors.green
+                                                      : ocupacion >= 70
+                                                      ? Colors.orange
+                                                      : Colors.blue,
+                                                  ocupacion >= 90
+                                                      ? Colors.green.shade700
+                                                      : ocupacion >= 70
+                                                      ? Colors.orange.shade700
+                                                      : Colors.blue.shade700,
+                                                ],
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          height: 24,
+                                          alignment: Alignment.centerRight,
+                                          padding: const EdgeInsets.only(
+                                            right: 8,
+                                          ),
+                                          child: Text(
+                                            '$ocupacion%',
+                                            style: TextStyle(
+                                              color: ocupacion > 50
+                                                  ? Colors.white
+                                                  : Colors.white70,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
+                            );
+                          },
+                        ).toList(),
+                      ),
+                    ),
 
-                const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                // Días con más asistencia
-                const Text(
-                  'Días con Mayor Asistencia',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
+                    // Días con más asistencia
+                    const Text(
+                      'Días con Mayor Asistencia',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: (data['diasConMasAsistencia'] as List)
-                        .asMap()
-                        .entries
-                        .map((entry) {
-                      final index = entry.key;
-                      final dia = entry.value;
-                      final medals = ['🥇', '🥈', '🥉'];
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: (data['diasConMasAsistencia'] as List)
+                            .asMap()
+                            .entries
+                            .map((entry) {
+                              final index = entry.key;
+                              final dia = entry.value;
+                              final medals = ['🥇', '🥈', '🥉'];
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          children: [
-                            Text(
-                              medals[index],
-                              style: const TextStyle(fontSize: 24),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                dia['dia'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      medals[index],
+                                      style: const TextStyle(fontSize: 24),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        dia['dia'],
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFFFF6A00,
+                                        ).withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '${dia['asistencias']} asistencias',
+                                        style: const TextStyle(
+                                          color: Color(0xFFFF6A00),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${dia['asistencias']} asistencias',
-                                style: const TextStyle(
-                                  color: Color(0xFFFF6A00),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                              );
+                            })
+                            .toList(),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
       },
     );
   }
@@ -960,10 +999,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.8),
-            color.withValues(alpha: 0.6),
-          ],
+          colors: [color.withValues(alpha: 0.8), color.withValues(alpha: 0.6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -980,11 +1016,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
+          Icon(icon, color: Colors.white, size: 24),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -999,10 +1031,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 11),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
@@ -1030,10 +1059,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
           Container(
             width: 12,
             height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1042,10 +1068,7 @@ class _MonthlyReportTabState extends State<_MonthlyReportTab> {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 const SizedBox(height: 4),
                 ClipRRect(
@@ -1121,13 +1144,17 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<AdminReportesViewModel>(context, listen: false);
+    final viewModel = Provider.of<AdminReportesViewModel>(
+      context,
+      listen: false,
+    );
     final weekEnd = _selectedWeekStart.add(const Duration(days: 6));
     final startStr = DateFormat('dd MMM', 'es_ES').format(_selectedWeekStart);
     final endStr = DateFormat('dd MMM yyyy', 'es_ES').format(weekEnd);
 
     final currentWeekStart = _getWeekStart(DateTime.now());
-    final isCurrentWeek = _selectedWeekStart.year == currentWeekStart.year &&
+    final isCurrentWeek =
+        _selectedWeekStart.year == currentWeekStart.year &&
         _selectedWeekStart.month == currentWeekStart.month &&
         _selectedWeekStart.day == currentWeekStart.day;
 
@@ -1153,479 +1180,504 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
           );
         }
 
-        final data = snapshot.data ?? {
-          'totalAsistencias': 0,
-          'promedioAsistenciaDiaria': 0,
-          'alumnosActivos': 0,
-          'alumnosNuevos': 0,
-          'ingresosSemana': 0,
-          'comparacionSemanaAnterior': 0,
-          'asistenciaPorDia': [],
-          'claseMasPopular': {'hora': 'N/A', 'asistenciaPromedio': 0.0, 'capacidad': 15},
-          'claseMenosPopular': {'hora': 'N/A', 'asistenciaPromedio': 0.0, 'capacidad': 15},
-          'tendencia': 'stable',
-        };
+        final data =
+            snapshot.data ??
+            {
+              'totalAsistencias': 0,
+              'promedioAsistenciaDiaria': 0,
+              'alumnosActivos': 0,
+              'alumnosNuevos': 0,
+              'ingresosSemana': 0,
+              'comparacionSemanaAnterior': 0,
+              'asistenciaPorDia': [],
+              'claseMasPopular': {
+                'hora': 'N/A',
+                'asistenciaPromedio': 0.0,
+                'capacidad': 15,
+              },
+              'claseMenosPopular': {
+                'hora': 'N/A',
+                'asistenciaPromedio': 0.0,
+                'capacidad': 15,
+              },
+              'tendencia': 'stable',
+            };
 
         return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Week selector
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2A2A2A),
-              border: Border(
-                bottom: BorderSide(
-                  color: Color(0xFF3A3A3A),
-                  width: 1,
+          child: Column(
+            children: [
+              // Week selector
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF2A2A2A),
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFF3A3A3A), width: 1),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => _changeWeek(-1),
+                          icon: const Icon(
+                            Icons.chevron_left,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              const Text(
+                                'Semana',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                '$startStr - $endStr',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _changeWeek(1),
+                          icon: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (!isCurrentWeek) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _goToCurrentWeek,
+                        icon: const Icon(Icons.today, size: 18),
+                        label: const Text('Semana Actual'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFFF6A00),
+                          side: const BorderSide(color: Color(0xFFFF6A00)),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            ),
-            child: Column(
-              children: [
-                Row(
+
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconButton(
-                      onPressed: () => _changeWeek(-1),
-                      icon: const Icon(Icons.chevron_left, color: Colors.white),
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Semana',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            '$startStr - $endStr',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                    // KPIs principales
+                    const Text(
+                      'Resumen de la Semana',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => _changeWeek(1),
-                      icon: const Icon(Icons.chevron_right, color: Colors.white),
-                    ),
-                  ],
-                ),
-                if (!isCurrentWeek) ...[
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _goToCurrentWeek,
-                    icon: const Icon(Icons.today, size: 18),
-                    label: const Text('Semana Actual'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFFF6A00),
-                      side: const BorderSide(color: Color(0xFFFF6A00)),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+                    const SizedBox(height: 12),
 
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // KPIs principales
-                const Text(
-                  'Resumen de la Semana',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.4,
-                  children: [
-                    _buildKPICard(
-                      label: 'Asistencias Total',
-                      value: '${data['totalAsistencias']}',
-                      icon: Icons.people,
-                      color: Colors.blue,
-                      subtitle: '~${data['promedioAsistenciaDiaria']}/día',
-                    ),
-                    _buildKPICard(
-                      label: 'Alumnos Activos',
-                      value: '${data['alumnosActivos']}',
-                      icon: Icons.fitness_center,
-                      color: Colors.green,
-                      subtitle: '+${data['alumnosNuevos']} esta semana',
-                    ),
-                    _buildKPICard(
-                      label: 'Ingresos',
-                      value: '\$${(data['ingresosSemana'] / 1000).toInt()}K',
-                      icon: Icons.attach_money,
-                      color: Colors.orange,
-                      subtitle: 'CLP',
-                    ),
-                    _buildKPICard(
-                      label: 'Tendencia',
-                      value: data['comparacionSemanaAnterior'] > 0
-                          ? '+${data['comparacionSemanaAnterior']}%'
-                          : '${data['comparacionSemanaAnterior']}%',
-                      icon: data['tendencia'] == 'up'
-                          ? Icons.trending_up
-                          : data['tendencia'] == 'down'
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.4,
+                      children: [
+                        _buildKPICard(
+                          label: 'Asistencias Total',
+                          value: '${data['totalAsistencias']}',
+                          icon: Icons.people,
+                          color: Colors.blue,
+                          subtitle: '~${data['promedioAsistenciaDiaria']}/día',
+                        ),
+                        _buildKPICard(
+                          label: 'Alumnos Activos',
+                          value: '${data['alumnosActivos']}',
+                          icon: Icons.fitness_center,
+                          color: Colors.green,
+                          subtitle: '+${data['alumnosNuevos']} esta semana',
+                        ),
+                        _buildKPICard(
+                          label: 'Ingresos',
+                          value:
+                              '\$${(data['ingresosSemana'] / 1000).toInt()}K',
+                          icon: Icons.attach_money,
+                          color: Colors.orange,
+                          subtitle: 'CLP',
+                        ),
+                        _buildKPICard(
+                          label: 'Tendencia',
+                          value: data['comparacionSemanaAnterior'] > 0
+                              ? '+${data['comparacionSemanaAnterior']}%'
+                              : '${data['comparacionSemanaAnterior']}%',
+                          icon: data['tendencia'] == 'up'
+                              ? Icons.trending_up
+                              : data['tendencia'] == 'down'
                               ? Icons.trending_down
                               : Icons.trending_flat,
-                      color: data['tendencia'] == 'up'
-                          ? Colors.green
-                          : data['tendencia'] == 'down'
+                          color: data['tendencia'] == 'up'
+                              ? Colors.green
+                              : data['tendencia'] == 'down'
                               ? Colors.red
                               : Colors.grey,
-                      subtitle: 'vs semana anterior',
+                          subtitle: 'vs semana anterior',
+                        ),
+                      ],
                     ),
-                  ],
-                ),
 
-                const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                // Asistencia diaria
-                const Text(
-                  'Asistencia Diaria',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
+                    // Asistencia diaria
+                    const Text(
+                      'Asistencia Diaria',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      // Bar chart
-                      SizedBox(
-                        height: 200,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: (data['asistenciaPorDia'] as List).map((dia) {
-                            final asistencias = dia['asistencias'] as int;
-                            final capacidad = dia['capacidad'] as int;
-                            // Días sin horarios (ej: domingo) tienen capacidad 0
-                            final percentage =
-                                capacidad > 0 ? asistencias / capacidad : 0.0;
-                            final today = DateTime.now();
-                            final diaFecha = int.parse(dia['fecha']);
-                            final isToday = today.day == diaFecha;
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          // Bar chart
+                          SizedBox(
+                            height: 200,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: (data['asistenciaPorDia'] as List).map((
+                                dia,
+                              ) {
+                                final asistencias = dia['asistencias'] as int;
+                                final capacidad = dia['capacidad'] as int;
+                                // Días sin horarios (ej: domingo) tienen capacidad 0
+                                final percentage = capacidad > 0
+                                    ? asistencias / capacidad
+                                    : 0.0;
+                                final today = DateTime.now();
+                                final diaFecha = int.parse(dia['fecha']);
+                                final isToday = today.day == diaFecha;
 
-                            return Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 2),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      '$asistencias',
-                                      style: TextStyle(
-                                        color: isToday
-                                            ? const Color(0xFFFF6A00)
-                                            : Colors.white70,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                return Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 2,
                                     ),
-                                    const SizedBox(height: 4),
-                                    Expanded(
-                                      child: FractionallySizedBox(
-                                        heightFactor: percentage,
-                                        alignment: Alignment.bottomCenter,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              begin: Alignment.bottomCenter,
-                                              end: Alignment.topCenter,
-                                              colors: isToday
-                                                  ? [
-                                                      const Color(0xFFFF6A00),
-                                                      const Color(0xFFCC5500),
-                                                    ]
-                                                  : [
-                                                      Colors.blue,
-                                                      Colors.blue.shade700,
-                                                    ],
-                                            ),
-                                            borderRadius: const BorderRadius.vertical(
-                                              top: Radius.circular(4),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          '$asistencias',
+                                          style: TextStyle(
+                                            color: isToday
+                                                ? const Color(0xFFFF6A00)
+                                                : Colors.white70,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Expanded(
+                                          child: FractionallySizedBox(
+                                            heightFactor: percentage,
+                                            alignment: Alignment.bottomCenter,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.bottomCenter,
+                                                  end: Alignment.topCenter,
+                                                  colors: isToday
+                                                      ? [
+                                                          const Color(
+                                                            0xFFFF6A00,
+                                                          ),
+                                                          const Color(
+                                                            0xFFCC5500,
+                                                          ),
+                                                        ]
+                                                      : [
+                                                          Colors.blue,
+                                                          Colors.blue.shade700,
+                                                        ],
+                                                ),
+                                                borderRadius:
+                                                    const BorderRadius.vertical(
+                                                      top: Radius.circular(4),
+                                                    ),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          dia['dia'],
+                                          style: TextStyle(
+                                            color: isToday
+                                                ? const Color(0xFFFF6A00)
+                                                : Colors.white60,
+                                            fontSize: 12,
+                                            fontWeight: isToday
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                        ),
+                                        Text(
+                                          dia['fecha'],
+                                          style: TextStyle(
+                                            color: isToday
+                                                ? const Color(0xFFFF6A00)
+                                                : Colors.white38,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      dia['dia'],
-                                      style: TextStyle(
-                                        color: isToday
-                                            ? const Color(0xFFFF6A00)
-                                            : Colors.white60,
-                                        fontSize: 12,
-                                        fontWeight:
-                                            isToday ? FontWeight.bold : FontWeight.normal,
-                                      ),
-                                    ),
-                                    Text(
-                                      dia['fecha'],
-                                      style: TextStyle(
-                                        color: isToday
-                                            ? const Color(0xFFFF6A00)
-                                            : Colors.white38,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Divider(color: Color(0xFF3A3A3A)),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: const BoxDecoration(
-                              color: Colors.blue,
-                              shape: BoxShape.circle,
+                                  ),
+                                );
+                              }).toList(),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'Asistencias',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
+                          const SizedBox(height: 16),
+                          const Divider(color: Color(0xFF3A3A3A)),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: const BoxDecoration(
+                                  color: Colors.blue,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Asistencias',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFF6A00),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Hoy',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Análisis de horarios
+                    const Text(
+                      'Análisis de Horarios',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Clase más popular
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.green.withValues(alpha: 0.3),
+                            Colors.green.withValues(alpha: 0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.green.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.trending_up,
+                              color: Colors.white,
+                              size: 24,
                             ),
                           ),
                           const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Clase Más Popular',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  data['claseMasPopular']['hora'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${data['claseMasPopular']['asistencias']}',
+                                style: const TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Text(
+                                'asistencias esta semana',
+                                style: TextStyle(
+                                  color: Colors.white60,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Clase menos popular
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.orange.withValues(alpha: 0.3),
+                            Colors.orange.withValues(alpha: 0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.orange.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
                           Container(
-                            width: 12,
-                            height: 12,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFFF6A00),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'Hoy',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Análisis de horarios
-                const Text(
-                  'Análisis de Horarios',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Clase más popular
-                Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.green.withValues(alpha: 0.3),
-                        Colors.green.withValues(alpha: 0.1),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.green.withValues(alpha: 0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.trending_up,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Clase Más Popular',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              data['claseMasPopular']['hora'],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${data['claseMasPopular']['asistencias']}',
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Text(
-                            'asistencias esta semana',
-                            style: TextStyle(
-                              color: Colors.white60,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Clase menos popular
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.orange.withValues(alpha: 0.3),
-                        Colors.orange.withValues(alpha: 0.1),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.orange.withValues(alpha: 0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.trending_down,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Oportunidad de Mejora',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              data['claseMenosPopular']['hora'],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${data['claseMenosPopular']['asistencias']}',
-                            style: const TextStyle(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
                               color: Colors.orange,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.trending_down,
+                              color: Colors.white,
+                              size: 24,
                             ),
                           ),
-                          const Text(
-                            'asistencias esta semana',
-                            style: TextStyle(
-                              color: Colors.white60,
-                              fontSize: 11,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Oportunidad de Mejora',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  data['claseMenosPopular']['hora'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${data['claseMenosPopular']['asistencias']}',
+                                style: const TextStyle(
+                                  color: Colors.orange,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Text(
+                                'asistencias esta semana',
+                                style: TextStyle(
+                                  color: Colors.white60,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
       },
     );
   }
@@ -1641,10 +1693,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.8),
-            color.withValues(alpha: 0.6),
-          ],
+          colors: [color.withValues(alpha: 0.8), color.withValues(alpha: 0.6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1661,11 +1710,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
+          Icon(icon, color: Colors.white, size: 24),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1680,10 +1725,7 @@ class _WeeklyReportTabState extends State<_WeeklyReportTab> {
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 11),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 2),

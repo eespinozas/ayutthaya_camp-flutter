@@ -35,10 +35,7 @@ class AppCard extends StatelessWidget {
           borderRadius ?? AppDesignTokens.radiusCard,
         ),
         border: showBorder
-            ? Border.all(
-                color: AppColors.border,
-                width: 1,
-              )
+            ? Border.all(color: AppColors.border, width: 1)
             : null,
         boxShadow: shadows ?? AppDesignTokens.shadowSm,
       ),
@@ -47,7 +44,8 @@ class AppCard extends StatelessWidget {
 
     if (onTap != null) {
       return Padding(
-        padding: margin ??
+        padding:
+            margin ??
             const EdgeInsets.symmetric(
               horizontal: AppDesignTokens.spaceMd,
               vertical: AppDesignTokens.spaceSm,
@@ -66,7 +64,8 @@ class AppCard extends StatelessWidget {
     }
 
     return Padding(
-      padding: margin ??
+      padding:
+          margin ??
           const EdgeInsets.symmetric(
             horizontal: AppDesignTokens.spaceMd,
             vertical: AppDesignTokens.spaceSm,
@@ -125,10 +124,7 @@ class AppAccentCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBlack,
         borderRadius: BorderRadius.circular(AppDesignTokens.radiusCard),
-        border: Border.all(
-          color: AppColors.tigerOrange,
-          width: 2,
-        ),
+        border: Border.all(color: AppColors.tigerOrange, width: 2),
         boxShadow: AppDesignTokens.shadowTigerGlow,
       ),
       child: child,
@@ -136,7 +132,8 @@ class AppAccentCard extends StatelessWidget {
 
     if (onTap != null) {
       return Padding(
-        padding: margin ??
+        padding:
+            margin ??
             const EdgeInsets.symmetric(
               horizontal: AppDesignTokens.spaceMd,
               vertical: AppDesignTokens.spaceSm,
@@ -153,7 +150,8 @@ class AppAccentCard extends StatelessWidget {
     }
 
     return Padding(
-      padding: margin ??
+      padding:
+          margin ??
           const EdgeInsets.symmetric(
             horizontal: AppDesignTokens.spaceMd,
             vertical: AppDesignTokens.spaceSm,
@@ -192,7 +190,8 @@ class AppGradientCard extends StatelessWidget {
 
     if (onTap != null) {
       return Padding(
-        padding: margin ??
+        padding:
+            margin ??
             const EdgeInsets.symmetric(
               horizontal: AppDesignTokens.spaceMd,
               vertical: AppDesignTokens.spaceSm,
@@ -209,7 +208,8 @@ class AppGradientCard extends StatelessWidget {
     }
 
     return Padding(
-      padding: margin ??
+      padding:
+          margin ??
           const EdgeInsets.symmetric(
             horizontal: AppDesignTokens.spaceMd,
             vertical: AppDesignTokens.spaceSm,

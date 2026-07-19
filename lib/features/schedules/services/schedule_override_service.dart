@@ -18,24 +18,30 @@ class ScheduleOverrideService {
         .where('dateKey', isEqualTo: dateKey)
         .where('disabled', isEqualTo: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => doc.data()['scheduleId'] as String? ?? '')
-            .where((id) => id.isNotEmpty)
-            .toSet());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => doc.data()['scheduleId'] as String? ?? '')
+              .where((id) => id.isNotEmpty)
+              .toSet(),
+        );
   }
 
   /// ¿Está deshabilitado este horario en esta fecha? (lookup directo)
   Future<bool> isDisabled(String scheduleId, DateTime date) async {
-    final doc =
-        await _collection.doc(ScheduleOverride.docIdFor(scheduleId, date)).get();
+    final doc = await _collection
+        .doc(ScheduleOverride.docIdFor(scheduleId, date))
+        .get();
     return doc.exists && (doc.data()?['disabled'] ?? false) == true;
   }
 
   /// Override vigente (o null) para un horario + fecha.
   Future<ScheduleOverride?> getOverride(
-      String scheduleId, DateTime date) async {
-    final doc =
-        await _collection.doc(ScheduleOverride.docIdFor(scheduleId, date)).get();
+    String scheduleId,
+    DateTime date,
+  ) async {
+    final doc = await _collection
+        .doc(ScheduleOverride.docIdFor(scheduleId, date))
+        .get();
     if (!doc.exists) return null;
     return ScheduleOverride.fromFirestore(doc);
   }
@@ -66,6 +72,7 @@ class ScheduleOverrideService {
   Future<void> enableSchedule(String scheduleId, DateTime date) async {
     await _collection.doc(ScheduleOverride.docIdFor(scheduleId, date)).delete();
     debugPrint(
-        '✅ Horario $scheduleId rehabilitado para ${ScheduleOverride.dateKeyFor(date)}');
+      '✅ Horario $scheduleId rehabilitado para ${ScheduleOverride.dateKeyFor(date)}',
+    );
   }
 }

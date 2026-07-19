@@ -37,9 +37,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       return Scaffold(
         backgroundColor: const Color(0xFF0F0F0F),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF6A00),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
         ),
       );
     }
@@ -95,14 +93,17 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           }).toList();
 
           // Ordenar por hora
-          clasesToday.sort((a, b) => (a['time'] as String).compareTo(b['time'] as String));
+          clasesToday.sort(
+            (a, b) => (a['time'] as String).compareTo(b['time'] as String),
+          );
 
           // Preparar alertas
           final alertas = <Map<String, dynamic>>[];
           if (viewModel.pendingPayments > 0) {
             alertas.add({
               'icon': Icons.payments,
-              'text': '${viewModel.pendingPayments} pagos pendientes de aprobación',
+              'text':
+                  '${viewModel.pendingPayments} pagos pendientes de aprobación',
               'count': viewModel.pendingPayments,
             });
           }
@@ -116,7 +117,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           if (viewModel.expiringMemberships > 0) {
             alertas.add({
               'icon': Icons.warning_amber,
-              'text': '${viewModel.expiringMemberships} membresías vencen en 3 días',
+              'text':
+                  '${viewModel.expiringMemberships} membresías vencen en 3 días',
               'count': viewModel.expiringMemberships,
             });
           }
@@ -127,308 +129,347 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               onRefresh: viewModel.reload,
               color: const Color(0xFFFF6A00),
               child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Enhanced Header with Welcome Banner
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.dashboard_outlined,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Dashboard Admin',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Enhanced Header with Welcome Banner
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '$dayName, $dateStr',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFFF6A00,
+                            ).withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      _buildHeaderIconButton(
-                        icon: Icons.qr_code_2,
-                        tooltip: 'Códigos QR',
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const AdminQRCodesPage(),
-                            ),
-                          );
-                        },
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      _buildHeaderIconButton(
-                        icon: Icons.notifications_outlined,
-                        tooltip: 'Notificaciones',
-                        badge: alertas.isNotEmpty ? '${alertas.length}' : null,
-                        onPressed: () {
-                          // TODO: Implementar notificaciones
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Resumen del día - KPIs
-            const Text(
-              'Resumen del Día',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            GridView(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              // Altura fija por card: garantiza que todo el contenido
-              // (ícono, valor, subtítulo, barra y título) quepa en
-              // cualquier ancho de pantalla.
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                mainAxisExtent: 164,
-              ),
-              children: [
-                _buildEnhancedKPICard(
-                  label: 'Asistencias Hoy',
-                  value: '${todayStats['totalAsistencias']}',
-                  subtitle: '/${todayStats['capacidadTotalHoy']} capacidad',
-                  icon: Icons.people_rounded,
-                  gradientColors: const [Color(0xFF4F46E5), Color(0xFF6366F1)],
-                  percentage: todayStats['capacidadTotalHoy'] != null && (todayStats['capacidadTotalHoy'] as int) > 0
-                    ? (todayStats['totalAsistencias'] as int) / (todayStats['capacidadTotalHoy'] as int)
-                    : 0.0,
-                ),
-                _buildEnhancedKPICard(
-                  label: 'Clases Hoy',
-                  value: '${todayStats['clasesCompletadas']}',
-                  subtitle: '/${todayStats['clasesTotales']} total',
-                  icon: Icons.fitness_center,
-                  gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
-                  percentage: todayStats['clasesTotales'] != null && (todayStats['clasesTotales'] as int) > 0
-                    ? (todayStats['clasesCompletadas'] as int) / (todayStats['clasesTotales'] as int)
-                    : 0.0,
-                ),
-                _buildEnhancedKPICard(
-                  label: 'Nuevos Alumnos',
-                  value: '${todayStats['alumnosNuevos']}',
-                  subtitle: 'hoy',
-                  icon: Icons.person_add_rounded,
-                  gradientColors: const [Color(0xFFF59E0B), Color(0xFFEF4444)],
-                  showTrend: true,
-                  trendUp: todayStats['alumnosNuevos'] != null && (todayStats['alumnosNuevos'] as int) > 0,
-                ),
-                _buildEnhancedKPICard(
-                  label: 'Ingresos Hoy',
-                  value: formatCLP(todayStats['pagosRecibidos'] ?? 0),
-                  subtitle: 'total recibido',
-                  icon: Icons.payments_rounded,
-                  gradientColors: const [Color(0xFFFF6A00), Color(0xFFFF8534)],
-                  showTrend: true,
-                  trendUp: todayStats['pagosRecibidos'] != null && (todayStats['pagosRecibidos'] as int) > 0,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // Asistencia por Clase
-            const Text(
-              'Asistencia por Clase (Hoy)',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            Builder(
-              builder: (context) {
-                // Calcular totales agregados
-                final totalCapacity = todayStats['capacidadTotalHoy'] as int;
-                final totalAttended = todayStats['totalAsistencias'] as int;
-
-                final percentage = totalCapacity > 0 ? totalAttended / totalCapacity : 0.0;
-                final isFull = totalAttended >= totalCapacity;
-
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Total del Día',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.dashboard_outlined,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Dashboard Admin',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '$dayName, $dateStr',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           Row(
                             children: [
-                              Text(
-                                '$totalAttended/$totalCapacity',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              _buildHeaderIconButton(
+                                icon: Icons.qr_code_2,
+                                tooltip: 'Códigos QR',
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AdminQRCodesPage(),
+                                    ),
+                                  );
+                                },
                               ),
-                              if (isFull) ...[
-                                const SizedBox(width: 8),
-                                const Icon(
-                                  Icons.warning,
-                                  color: Colors.red,
-                                  size: 20,
-                                ),
-                              ],
+                              const SizedBox(width: 8),
+                              _buildHeaderIconButton(
+                                icon: Icons.notifications_outlined,
+                                tooltip: 'Notificaciones',
+                                badge: alertas.isNotEmpty
+                                    ? '${alertas.length}'
+                                    : null,
+                                onPressed: () {
+                                  // TODO: Implementar notificaciones
+                                },
+                              ),
                             ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: percentage,
-                          minHeight: 12,
-                          backgroundColor: Colors.white12,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            isFull
-                                ? Colors.red
-                                : percentage > 0.7
-                                    ? Colors.orange
-                                    : Colors.green,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Resumen del día - KPIs
+                    const Text(
+                      'Resumen del Día',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    GridView(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      // Altura fija por card: garantiza que todo el contenido
+                      // (ícono, valor, subtítulo, barra y título) quepa en
+                      // cualquier ancho de pantalla.
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            mainAxisExtent: 164,
+                          ),
+                      children: [
+                        _buildEnhancedKPICard(
+                          label: 'Asistencias Hoy',
+                          value: '${todayStats['totalAsistencias']}',
+                          subtitle:
+                              '/${todayStats['capacidadTotalHoy']} capacidad',
+                          icon: Icons.people_rounded,
+                          gradientColors: const [
+                            Color(0xFF4F46E5),
+                            Color(0xFF6366F1),
+                          ],
+                          percentage:
+                              todayStats['capacidadTotalHoy'] != null &&
+                                  (todayStats['capacidadTotalHoy'] as int) > 0
+                              ? (todayStats['totalAsistencias'] as int) /
+                                    (todayStats['capacidadTotalHoy'] as int)
+                              : 0.0,
+                        ),
+                        _buildEnhancedKPICard(
+                          label: 'Clases Hoy',
+                          value: '${todayStats['clasesCompletadas']}',
+                          subtitle: '/${todayStats['clasesTotales']} total',
+                          icon: Icons.fitness_center,
+                          gradientColors: const [
+                            Color(0xFF10B981),
+                            Color(0xFF059669),
+                          ],
+                          percentage:
+                              todayStats['clasesTotales'] != null &&
+                                  (todayStats['clasesTotales'] as int) > 0
+                              ? (todayStats['clasesCompletadas'] as int) /
+                                    (todayStats['clasesTotales'] as int)
+                              : 0.0,
+                        ),
+                        _buildEnhancedKPICard(
+                          label: 'Nuevos Alumnos',
+                          value: '${todayStats['alumnosNuevos']}',
+                          subtitle: 'hoy',
+                          icon: Icons.person_add_rounded,
+                          gradientColors: const [
+                            Color(0xFFF59E0B),
+                            Color(0xFFEF4444),
+                          ],
+                          showTrend: true,
+                          trendUp:
+                              todayStats['alumnosNuevos'] != null &&
+                              (todayStats['alumnosNuevos'] as int) > 0,
+                        ),
+                        _buildEnhancedKPICard(
+                          label: 'Ingresos Hoy',
+                          value: formatCLP(todayStats['pagosRecibidos'] ?? 0),
+                          subtitle: 'total recibido',
+                          icon: Icons.payments_rounded,
+                          gradientColors: const [
+                            Color(0xFFFF6A00),
+                            Color(0xFFFF8534),
+                          ],
+                          showTrend: true,
+                          trendUp:
+                              todayStats['pagosRecibidos'] != null &&
+                              (todayStats['pagosRecibidos'] as int) > 0,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Asistencia por Clase
+                    const Text(
+                      'Asistencia por Clase (Hoy)',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Builder(
+                      builder: (context) {
+                        // Calcular totales agregados
+                        final totalCapacity =
+                            todayStats['capacidadTotalHoy'] as int;
+                        final totalAttended =
+                            todayStats['totalAsistencias'] as int;
+
+                        final percentage = totalCapacity > 0
+                            ? totalAttended / totalCapacity
+                            : 0.0;
+                        final isFull = totalAttended >= totalCapacity;
+
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1A1A),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Total del Día',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '$totalAttended/$totalCapacity',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      if (isFull) ...[
+                                        const SizedBox(width: 8),
+                                        const Icon(
+                                          Icons.warning,
+                                          color: Colors.red,
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: percentage,
+                                  minHeight: 12,
+                                  backgroundColor: Colors.white12,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    isFull
+                                        ? Colors.red
+                                        : percentage > 0.7
+                                        ? Colors.orange
+                                        : Colors.green,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${(percentage * 100).toInt()}% de ocupación',
+                                style: const TextStyle(
+                                  color: Colors.white60,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Alertas Importantes
+                    Row(
+                      children: [
+                        const Text(
+                          'Alertas Importantes',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${(percentage * 100).toInt()}% de ocupación',
-                        style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 13,
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${alertas.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            // Alertas Importantes
-            Row(
-              children: [
-                const Text(
-                  'Alertas Importantes',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${alertas.length}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 12),
+
+                    ...alertas.map((alerta) {
+                      return _buildInteractiveAlert(
+                        icon: alerta['icon'] as IconData,
+                        text: alerta['text'] as String,
+                        count: alerta['count'] as int,
+                        onTap: () {
+                          // TODO: Navegar a la sección correspondiente
+                        },
+                      );
+                    }),
+
+                    const SizedBox(height: 24),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            ...alertas.map((alerta) {
-              return _buildInteractiveAlert(
-                icon: alerta['icon'] as IconData,
-                text: alerta['text'] as String,
-                count: alerta['count'] as int,
-                onTap: () {
-                  // TODO: Navegar a la sección correspondiente
-                },
-              );
-            }),
-
-            const SizedBox(height: 24),
-          ],
-        ),
               ),
             ),
           );
@@ -526,7 +567,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               ),
               if (showTrend)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(8),

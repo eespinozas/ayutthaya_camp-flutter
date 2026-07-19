@@ -10,7 +10,8 @@ class ForgotPasswordPage extends StatefulWidget {
   State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTickerProviderStateMixin {
+class _ForgotPasswordPageState extends State<ForgotPasswordPage>
+    with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final _emailService = AuthEmailService();
@@ -96,11 +97,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0F0F0F),
-              Color(0xFF1A1A1A),
-              Color(0xFF0F0F0F),
-            ],
+            colors: [Color(0xFF0F0F0F), Color(0xFF1A1A1A), Color(0xFF0F0F0F)],
             stops: [0.0, 0.5, 1.0],
           ),
         ),
@@ -120,7 +117,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
                       constraints: BoxConstraints(
                         maxWidth: isSmallScreen ? double.infinity : 450,
                       ),
-                      child: _emailSent ? _buildSuccessView() : _buildFormView(isSmallScreen),
+                      child: _emailSent
+                          ? _buildSuccessView()
+                          : _buildFormView(isSmallScreen),
                     ),
                   ),
                 ),
@@ -153,12 +152,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
               fontWeight: FontWeight.w900,
               letterSpacing: 1.5,
               color: Color(0xFFFF6A00),
-              shadows: [
-                Shadow(
-                  color: Color(0xFFFF6A00),
-                  blurRadius: 20,
-                ),
-              ],
+              shadows: [Shadow(color: Color(0xFFFF6A00), blurRadius: 20)],
             ),
           ),
           const SizedBox(height: 12),
@@ -274,8 +268,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
                     if (value == null || value.isEmpty) {
                       return 'Por favor ingresa tu email';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return 'Email inválido';
                     }
                     return null;
@@ -292,7 +287,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6A00),
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(0xFFFF6A00).withValues(alpha: 0.5),
+                      disabledBackgroundColor: const Color(
+                        0xFFFF6A00,
+                      ).withValues(alpha: 0.5),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -360,10 +357,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
               onPressed: _isSendingEmail ? null : () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFFF6A00),
-                side: const BorderSide(
-                  color: Color(0xFFFF6A00),
-                  width: 2,
-                ),
+                side: const BorderSide(color: Color(0xFFFF6A00), width: 2),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -390,10 +384,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
         height: isSmallScreen ? 100 : 120,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(
-            color: const Color(0xFFFF6A00),
-            width: 3,
-          ),
+          border: Border.all(color: const Color(0xFFFF6A00), width: 3),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFFFF6A00).withValues(alpha: 0.5),
@@ -467,10 +458,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFF10B981),
-                width: 3,
-              ),
+              border: Border.all(color: const Color(0xFF10B981), width: 3),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF10B981).withValues(alpha: 0.5),
@@ -513,12 +501,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
             color: Color(0xFF10B981),
-            shadows: [
-              Shadow(
-                color: Color(0xFF10B981),
-                blurRadius: 20,
-              ),
-            ],
+            shadows: [Shadow(color: Color(0xFF10B981), blurRadius: 20)],
           ),
         ),
         const SizedBox(height: 12),
@@ -656,10 +639,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFFF6A00),
-              side: const BorderSide(
-                color: Color(0xFFFF6A00),
-                width: 2,
-              ),
+              side: const BorderSide(color: Color(0xFFFF6A00), width: 2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),

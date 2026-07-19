@@ -107,15 +107,19 @@ class _ForcePasswordChangePageState extends State<ForcePasswordChangePage> {
             'Mínimo ${Validators.passwordMinLength} caracteres',
             Validators.passwordHasMinLength(value.text),
           ),
-          ('Al menos una mayúscula', Validators.passwordHasUppercase(value.text)),
+          (
+            'Al menos una mayúscula',
+            Validators.passwordHasUppercase(value.text),
+          ),
           ('Letras y números', Validators.passwordIsAlphanumeric(value.text)),
         ];
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: rules.map((rule) {
             final (label, ok) = rule;
-            final color =
-                ok ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.4);
+            final color = ok
+                ? const Color(0xFF10B981)
+                : Colors.white.withValues(alpha: 0.4);
             return Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Row(
@@ -140,7 +144,11 @@ class _ForcePasswordChangePageState extends State<ForcePasswordChangePage> {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
-      prefixIcon: const Icon(Icons.lock_outlined, color: Color(0xFFFF6A00), size: 20),
+      prefixIcon: const Icon(
+        Icons.lock_outlined,
+        color: Color(0xFFFF6A00),
+        size: 20,
+      ),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: const Color(0xFF0F0F0F),
@@ -173,7 +181,8 @@ class _ForcePasswordChangePageState extends State<ForcePasswordChangePage> {
     final email = FirebaseAuth.instance.currentUser?.email ?? '';
 
     return PopScope(
-      canPop: false, // No hay vuelta atrás: la contraseña temporal debe cambiarse
+      canPop:
+          false, // No hay vuelta atrás: la contraseña temporal debe cambiarse
       child: Scaffold(
         backgroundColor: const Color(0xFF0F0F0F),
         body: SafeArea(
@@ -257,7 +266,8 @@ class _ForcePasswordChangePageState extends State<ForcePasswordChangePage> {
                               size: 20,
                             ),
                             onPressed: () => setState(
-                                () => _obscureRepeat = !_obscureRepeat),
+                              () => _obscureRepeat = !_obscureRepeat,
+                            ),
                           ),
                         ),
                         validator: (v) =>
@@ -272,8 +282,9 @@ class _ForcePasswordChangePageState extends State<ForcePasswordChangePage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF6A00),
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor:
-                                const Color(0xFFFF6A00).withValues(alpha: 0.5),
+                            disabledBackgroundColor: const Color(
+                              0xFFFF6A00,
+                            ).withValues(alpha: 0.5),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),

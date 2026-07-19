@@ -36,7 +36,8 @@ class AuthViewModel extends ChangeNotifier {
   bool get hasActiveMembership => _membershipStatus == 'active';
 
   /// Verificar si el usuario necesita pagar matrícula
-  bool get needsEnrollment => _membershipStatus == 'none' || _membershipStatus == 'pending';
+  bool get needsEnrollment =>
+      _membershipStatus == 'none' || _membershipStatus == 'pending';
 
   /// Verificar si la membresía expiró
   bool get isMembershipExpired => _membershipStatus == 'expired';
@@ -87,17 +88,21 @@ class AuthViewModel extends ChangeNotifier {
         // Fase de acceso libre: los alumnos también nacen activos.
         final isAdmin = userEmail.startsWith('admin');
         final role = isAdmin ? 'admin' : 'student';
-        final membershipStatus =
-            (isAdmin || AppFlags.freeAccessPhase) ? 'active' : 'none';
+        final membershipStatus = (isAdmin || AppFlags.freeAccessPhase)
+            ? 'active'
+            : 'none';
 
-        debugPrint('⚠️ Usuario no encontrado en Firestore, creando documento...');
+        debugPrint(
+          '⚠️ Usuario no encontrado en Firestore, creando documento...',
+        );
         debugPrint('   UID: $userId');
         debugPrint('   Email: $userEmail');
         debugPrint('   Rol: $role');
 
         await _firestore.collection('users').doc(userId).set({
           'email': userEmail,
-          'searchKey': userEmail.toLowerCase(), // Para búsquedas fáciles en Firebase Console
+          'searchKey': userEmail
+              .toLowerCase(), // Para búsquedas fáciles en Firebase Console
           'name': userName,
           'role': role,
           'membershipStatus': membershipStatus,
@@ -204,7 +209,8 @@ class AuthViewModel extends ChangeNotifier {
       // 4. Crear documento del usuario en Firestore
       await _firestore.collection('users').doc(cred.user!.uid).set({
         'email': email,
-        'searchKey': email.toLowerCase(), // Para búsquedas fáciles en Firebase Console
+        'searchKey': email
+            .toLowerCase(), // Para búsquedas fáciles en Firebase Console
         'name': displayName ?? '',
         'role': 'student',
         // none, pending, active, expired, frozen.
@@ -261,10 +267,7 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   /// Login con Firebase Auth (detecta rol automáticamente)
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     try {
       _loading = true;
       _error = null;

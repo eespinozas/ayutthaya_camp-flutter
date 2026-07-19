@@ -12,7 +12,8 @@ class ServerException implements Exception {
   const ServerException(this.message, {this.code});
 
   @override
-  String toString() => 'ServerException: $message${code != null ? ' (code: $code)' : ''}';
+  String toString() =>
+      'ServerException: $message${code != null ? ' (code: $code)' : ''}';
 }
 
 /// Excepción de red

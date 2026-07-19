@@ -91,7 +91,11 @@ class PaymentViewModel extends ChangeNotifier {
   }
 
   /// Rechazar pago (admin)
-  Future<bool> rejectPayment(String paymentId, String adminId, String reason) async {
+  Future<bool> rejectPayment(
+    String paymentId,
+    String adminId,
+    String reason,
+  ) async {
     _loading = true;
     _error = null;
     notifyListeners();

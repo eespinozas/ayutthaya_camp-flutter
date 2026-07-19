@@ -53,9 +53,7 @@ class App extends StatelessWidget {
         ),
 
         // Plan ViewModel (Firebase directo)
-        ChangeNotifierProvider<PlanViewModel>(
-          create: (_) => PlanViewModel(),
-        ),
+        ChangeNotifierProvider<PlanViewModel>(create: (_) => PlanViewModel()),
 
         // ClassSchedule ViewModel (Firebase directo)
         ChangeNotifierProvider<ClassScheduleViewModel>(
@@ -92,7 +90,8 @@ class App extends StatelessWidget {
           Routes.dashboard: (_) => const DashboardPage(),
           // Routes.shell: (_) => const ShellPage(), // ya no lo usamos como pantalla inicial
           Routes.mainNav: (_) => const MainNavBar(), // 👈 ruta a la navbar
-          Routes.avatarTest: (_) => const AvatarTestScreen(), // Avatar animation test screen
+          Routes.avatarTest: (_) =>
+              const AvatarTestScreen(), // Avatar animation test screen
         },
 
         // Pantalla inicial que decide a dónde ir

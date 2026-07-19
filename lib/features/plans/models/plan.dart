@@ -6,7 +6,8 @@ class Plan {
   final double price; // Precio en CLP
   final int durationDays; // Duración en días (30, 90, 180, 365)
   final String description;
-  final int? classesPerMonth; // Número de clases permitidas por mes (null = ilimitado)
+  final int?
+  classesPerMonth; // Número de clases permitidas por mes (null = ilimitado)
   final bool active; // Si el plan está activo o no
   final int displayOrder; // Orden de visualización
   final DateTime createdAt;

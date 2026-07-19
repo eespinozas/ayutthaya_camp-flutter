@@ -274,10 +274,7 @@ class _PerfilPageState extends State<PerfilPage> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: accent, width: 1.5),
         boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.35),
-            blurRadius: 12,
-          ),
+          BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 12),
         ],
       ),
       child: Row(
@@ -303,8 +300,9 @@ class _PerfilPageState extends State<PerfilPage> {
     const umbral = RankingService.clasesPorDivision;
     final progreso = RankingService.progresoEnDivision(_totalAttendedClasses);
     final siguiente = RankingService.siguienteRango(_totalAttendedClasses);
-    final faltan =
-        RankingService.clasesParaSiguienteRango(_totalAttendedClasses);
+    final faltan = RankingService.clasesParaSiguienteRango(
+      _totalAttendedClasses,
+    );
     final actual = RankingService.rangoDesdeClases(_totalAttendedClasses);
     final color = _tierColor((siguiente ?? actual).tier);
 
@@ -366,8 +364,8 @@ class _PerfilPageState extends State<PerfilPage> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: ventana.map((rango) {
         final achieved = rango.index <= actual.index;
-        final faltan = RankingService.clasesParaRango(rango.index) -
-            _totalAttendedClasses;
+        final faltan =
+            RankingService.clasesParaRango(rango.index) - _totalAttendedClasses;
         final color = achieved ? _tierColor(rango.tier) : Colors.grey.shade700;
 
         return Expanded(
@@ -511,9 +509,7 @@ class _PerfilPageState extends State<PerfilPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              e.toString().replaceFirst('Exception: ', ''),
-            ),
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
             backgroundColor: Colors.red,
           ),
         );
@@ -563,7 +559,10 @@ class _PerfilPageState extends State<PerfilPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.camera_alt, color: Color(0xFFFF6A00)),
+                  leading: const Icon(
+                    Icons.camera_alt,
+                    color: Color(0xFFFF6A00),
+                  ),
                   title: const Text(
                     'Cámara',
                     style: TextStyle(color: Colors.white),
@@ -571,7 +570,10 @@ class _PerfilPageState extends State<PerfilPage> {
                   onTap: () => Navigator.pop(context, ImageSource.camera),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library, color: Color(0xFFFF6A00)),
+                  leading: const Icon(
+                    Icons.photo_library,
+                    color: Color(0xFFFF6A00),
+                  ),
                   title: const Text(
                     'Galería',
                     style: TextStyle(color: Colors.white),
@@ -624,10 +626,7 @@ class _PerfilPageState extends State<PerfilPage> {
       final downloadUrl = await storageRef.getDownloadURL();
 
       // Actualizar Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .update({
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
         'photoUrl': downloadUrl,
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -663,10 +662,7 @@ class _PerfilPageState extends State<PerfilPage> {
           _ => 'No se pudo subir la foto, inténtalo de nuevo.',
         };
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -701,10 +697,7 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
         title: const Text(
           'Mi Perfil',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         actions: [
           if (_isRefreshing)
@@ -723,9 +716,7 @@ class _PerfilPageState extends State<PerfilPage> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFFF6A00),
-              ),
+              child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
             )
           : RefreshIndicator(
               onRefresh: _refreshData,
@@ -735,99 +726,114 @@ class _PerfilPageState extends State<PerfilPage> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Avatar con foto de perfil
-                    Center(
-                      child: Stack(
-                        children: [
-                          ClipOval(
-                            child: Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                gradient: _photoUrl == null
-                                    ? const LinearGradient(
-                                        colors: [Color(0xFFFF6A00), Color(0xFFFF8C42)],
-                                      )
-                                    : null,
-                                color: _photoUrl != null ? Colors.grey.shade300 : null,
-                              ),
-                              child: _photoUrl != null
-                                  ? Image.network(
-                                      _photoUrl!,
-                                      fit: BoxFit.cover,
-                                      width: 100,
-                                      height: 100,
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded /
-                                                    loadingProgress.expectedTotalBytes!
-                                                : null,
-                                            color: const Color(0xFFFF6A00),
-                                          ),
-                                        );
-                                      },
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return const Icon(
-                                          Icons.person,
-                                          size: 50,
-                                          color: Colors.white,
-                                        );
-                                      },
-                                    )
-                                  : const Icon(
-                                      Icons.person,
-                                      size: 50,
-                                      color: Colors.white,
-                                    ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: _isUploadingPhoto ? null : _uploadProfilePhoto,
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Avatar con foto de perfil
+                      Center(
+                        child: Stack(
+                          children: [
+                            ClipOval(
                               child: Container(
-                                width: 32,
-                                height: 32,
+                                width: 100,
+                                height: 100,
                                 decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: const Color(0xFFFF6A00),
-                                  border: Border.all(
-                                    color: const Color(0xFF0F0F0F),
-                                    width: 2,
-                                  ),
+                                  gradient: _photoUrl == null
+                                      ? const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFF6A00),
+                                            Color(0xFFFF8C42),
+                                          ],
+                                        )
+                                      : null,
+                                  color: _photoUrl != null
+                                      ? Colors.grey.shade300
+                                      : null,
                                 ),
-                                child: _isUploadingPhoto
-                                    ? const Padding(
-                                        padding: EdgeInsets.all(6.0),
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
+                                child: _photoUrl != null
+                                    ? Image.network(
+                                        _photoUrl!,
+                                        fit: BoxFit.cover,
+                                        width: 100,
+                                        height: 100,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) {
+                                            return child;
+                                          }
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value:
+                                                  loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
+                                                  : null,
+                                              color: const Color(0xFFFF6A00),
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return const Icon(
+                                                Icons.person,
+                                                size: 50,
+                                                color: Colors.white,
+                                              );
+                                            },
                                       )
                                     : const Icon(
-                                        Icons.camera_alt,
-                                        size: 16,
+                                        Icons.person,
+                                        size: 50,
                                         color: Colors.white,
                                       ),
                               ),
                             ),
-                          ),
-                        ],
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: _isUploadingPhoto
+                                    ? null
+                                    : _uploadProfilePhoto,
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: const Color(0xFFFF6A00),
+                                    border: Border.all(
+                                      color: const Color(0xFF0F0F0F),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: _isUploadingPhoto
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(6.0),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.camera_alt,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    // COMMENTED OUT: Rive Avatar de progreso
-                    /*
+                      // COMMENTED OUT: Rive Avatar de progreso
+                      /*
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -923,408 +929,415 @@ class _PerfilPageState extends State<PerfilPage> {
                     ),
                     */
 
-                    // NEW: Pixel Art Fighter Avatar
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          // Título de la sección
-                          const Text(
-                            'Tu Luchador',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                      // NEW: Pixel Art Fighter Avatar
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1A1A),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(
+                              0xFFFF6A00,
+                            ).withValues(alpha: 0.2),
+                            width: 1,
                           ),
-                          const SizedBox(height: 16),
-
-                          // Badge del rango actual (tier + división)
-                          _buildRankBadge(),
-
-                          const SizedBox(height: 16),
-
-                          // Progreso hacia la siguiente división
-                          _buildRankProgress(),
-
-                          const SizedBox(height: 20),
-
-                          // Contador de clases
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F0F0F),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _getProgressColor().withValues(alpha: 0.3),
-                                width: 1,
+                        ),
+                        child: Column(
+                          children: [
+                            // Título de la sección
+                            const Text(
+                              'Tu Luchador',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  '$_totalAttendedClasses',
-                                  style: TextStyle(
-                                    color: _getProgressColor(),
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    height: 1.0,
+                            const SizedBox(height: 16),
+
+                            // Badge del rango actual (tier + división)
+                            _buildRankBadge(),
+
+                            const SizedBox(height: 16),
+
+                            // Progreso hacia la siguiente división
+                            _buildRankProgress(),
+
+                            const SizedBox(height: 20),
+
+                            // Contador de clases
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F0F0F),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _getProgressColor().withValues(
+                                    alpha: 0.3,
                                   ),
+                                  width: 1,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _totalAttendedClasses == 1
-                                      ? 'Clase Completada'
-                                      : 'Clases Completadas',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 13,
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '$_totalAttendedClasses',
+                                    style: TextStyle(
+                                      color: _getProgressColor(),
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.0,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _getProgressMessage(),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: _getProgressColor(),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _totalAttendedClasses == 1
+                                        ? 'Clase Completada'
+                                        : 'Clases Completadas',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _getProgressMessage(),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: _getProgressColor(),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
 
-                          const SizedBox(height: 12),
+                            const SizedBox(height: 12),
 
-                          // Próximos rangos a alcanzar
-                          _buildRankMilestones(),
-                        ],
+                            // Próximos rangos a alcanzar
+                            _buildRankMilestones(),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
-                    // Nombre (solo lectura)
-                    _buildTextField(
-                      controller: _nameController,
-                      label: 'Nombre',
-                      icon: Icons.person,
-                      enabled: false,
-                    ),
+                      // Nombre (solo lectura)
+                      _buildTextField(
+                        controller: _nameController,
+                        label: 'Nombre',
+                        icon: Icons.person,
+                        enabled: false,
+                      ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Email (solo lectura)
-                    _buildTextField(
-                      controller: _emailController,
-                      label: 'Correo Electrónico',
-                      icon: Icons.email,
-                      enabled: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El correo es requerido';
-                        }
-                        return null;
-                      },
-                    ),
+                      // Email (solo lectura)
+                      _buildTextField(
+                        controller: _emailController,
+                        label: 'Correo Electrónico',
+                        icon: Icons.email,
+                        enabled: false,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'El correo es requerido';
+                          }
+                          return null;
+                        },
+                      ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Fecha de Nacimiento
-                    InkWell(
-                      onTap: _selectBirthDate,
-                      child: Container(
+                      // Fecha de Nacimiento
+                      InkWell(
+                        onTap: _selectBirthDate,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1A1A),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white12, width: 1),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.cake,
+                                color: Colors.white70,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _birthDate == null
+                                      ? 'Seleccionar fecha de nacimiento'
+                                      : DateFormat(
+                                          'dd/MM/yyyy',
+                                        ).format(_birthDate!),
+                                  style: TextStyle(
+                                    color: _birthDate == null
+                                        ? Colors.white38
+                                        : Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.calendar_today,
+                                color: Colors.white38,
+                                size: 18,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Dirección
+                      _buildTextField(
+                        controller: _addressController,
+                        label: 'Dirección',
+                        icon: Icons.home,
+                        maxLines: 2,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Sección de cambio de contraseña
+                      const Text(
+                        'Cambiar Contraseña',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Deja en blanco si no deseas cambiar tu contraseña',
+                        style: TextStyle(color: Colors.white38, fontSize: 12),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Nueva Contraseña
+                      _buildTextField(
+                        controller: _passwordController,
+                        label: 'Nueva Contraseña',
+                        icon: Icons.lock,
+                        obscureText: _obscurePassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Colors.white38,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                        validator: (value) {
+                          if (value != null &&
+                              value.isNotEmpty &&
+                              value.length < 6) {
+                            return 'La contraseña debe tener al menos 6 caracteres';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Confirmar Contraseña
+                      _buildTextField(
+                        controller: _confirmPasswordController,
+                        label: 'Confirmar Nueva Contraseña',
+                        icon: Icons.lock_outline,
+                        obscureText: _obscureConfirmPassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Colors.white38,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirmPassword =
+                                  !_obscureConfirmPassword;
+                            });
+                          },
+                        ),
+                        validator: (value) {
+                          if (_passwordController.text.isNotEmpty &&
+                              value != _passwordController.text) {
+                            return 'Las contraseñas no coinciden';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Botón Guardar Cambios
+                      ElevatedButton(
+                        onPressed: _isSaving ? null : _saveChanges,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF6A00),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          disabledBackgroundColor: Colors.grey.shade700,
+                        ),
+                        child: _isSaving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'GUARDAR CAMBIOS',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Botón Cerrar Sesión
+                      OutlinedButton.icon(
+                        onPressed: auth.loading
+                            ? null
+                            : () async {
+                                await context.read<AuthViewModel>().logout();
+
+                                if (context.mounted) {
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                      builder: (_) => const LoginPage(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                }
+                              },
+                        icon: auth.loading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.red,
+                                ),
+                              )
+                            : const Icon(Icons.logout),
+                        label: Text(
+                          auth.loading ? 'Cerrando sesión...' : 'Cerrar Sesión',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: const BorderSide(color: Colors.redAccent),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Zona de peligro: eliminación de cuenta
+                      Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: const Color(0xFF1A1A1A),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white12,
-                            width: 1,
+                            color: Colors.red.withValues(alpha: 0.25),
                           ),
                         ),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.cake,
-                              color: Colors.white70,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _birthDate == null
-                                    ? 'Seleccionar fecha de nacimiento'
-                                    : DateFormat('dd/MM/yyyy').format(_birthDate!),
-                                style: TextStyle(
-                                  color: _birthDate == null
-                                      ? Colors.white38
-                                      : Colors.white70,
-                                  fontSize: 16,
-                                ),
+                            const Text(
+                              'Eliminar cuenta',
+                              style: TextStyle(
+                                color: Colors.redAccent,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const Icon(
-                              Icons.calendar_today,
-                              color: Colors.white38,
-                              size: 18,
+                            const SizedBox(height: 6),
+                            Text(
+                              'Se eliminarán permanentemente tu perfil, tus clases '
+                              'agendadas y tu progreso. Te enviaremos un correo '
+                              'para confirmar antes de borrar nada.',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.55),
+                                fontSize: 12.5,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: _isRequestingDeletion
+                                    ? null
+                                    : _requestAccountDeletion,
+                                icon: _isRequestingDeletion
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.red,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.delete_forever,
+                                        size: 18,
+                                      ),
+                                label: Text(
+                                  _isRequestingDeletion
+                                      ? 'Enviando correo...'
+                                      : 'Eliminar mi cuenta',
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red.shade400,
+                                  side: BorderSide(color: Colors.red.shade400),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
-
-                    // Dirección
-                    _buildTextField(
-                      controller: _addressController,
-                      label: 'Dirección',
-                      icon: Icons.home,
-                      maxLines: 2,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Sección de cambio de contraseña
-                    const Text(
-                      'Cambiar Contraseña',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Deja en blanco si no deseas cambiar tu contraseña',
-                      style: TextStyle(
-                        color: Colors.white38,
-                        fontSize: 12,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Nueva Contraseña
-                    _buildTextField(
-                      controller: _passwordController,
-                      label: 'Nueva Contraseña',
-                      icon: Icons.lock,
-                      obscureText: _obscurePassword,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Colors.white38,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                      validator: (value) {
-                        if (value != null && value.isNotEmpty && value.length < 6) {
-                          return 'La contraseña debe tener al menos 6 caracteres';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Confirmar Contraseña
-                    _buildTextField(
-                      controller: _confirmPasswordController,
-                      label: 'Confirmar Nueva Contraseña',
-                      icon: Icons.lock_outline,
-                      obscureText: _obscureConfirmPassword,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Colors.white38,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureConfirmPassword = !_obscureConfirmPassword;
-                          });
-                        },
-                      ),
-                      validator: (value) {
-                        if (_passwordController.text.isNotEmpty &&
-                            value != _passwordController.text) {
-                          return 'Las contraseñas no coinciden';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Botón Guardar Cambios
-                    ElevatedButton(
-                      onPressed: _isSaving ? null : _saveChanges,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6A00),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        disabledBackgroundColor: Colors.grey.shade700,
-                      ),
-                      child: _isSaving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'GUARDAR CAMBIOS',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Botón Cerrar Sesión
-                    OutlinedButton.icon(
-                      onPressed: auth.loading
-                          ? null
-                          : () async {
-                              await context.read<AuthViewModel>().logout();
-
-                              if (context.mounted) {
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                    builder: (_) => const LoginPage(),
-                                  ),
-                                  (route) => false,
-                                );
-                              }
-                            },
-                      icon: auth.loading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.red,
-                              ),
-                            )
-                          : const Icon(Icons.logout),
-                      label: Text(
-                        auth.loading ? 'Cerrando sesión...' : 'Cerrar Sesión',
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.redAccent,
-                        side: const BorderSide(color: Colors.redAccent),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Zona de peligro: eliminación de cuenta
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A1A),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.25),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Eliminar cuenta',
-                            style: TextStyle(
-                              color: Colors.redAccent,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Se eliminarán permanentemente tu perfil, tus clases '
-                            'agendadas y tu progreso. Te enviaremos un correo '
-                            'para confirmar antes de borrar nada.',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.55),
-                              fontSize: 12.5,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: _isRequestingDeletion
-                                  ? null
-                                  : _requestAccountDeletion,
-                              icon: _isRequestingDeletion
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.red,
-                                      ),
-                                    )
-                                  : const Icon(Icons.delete_forever, size: 18),
-                              label: Text(
-                                _isRequestingDeletion
-                                    ? 'Enviando correo...'
-                                    : 'Eliminar mi cuenta',
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red.shade400,
-                                side: BorderSide(color: Colors.red.shade400),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-                  ],
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
     );
   }
 

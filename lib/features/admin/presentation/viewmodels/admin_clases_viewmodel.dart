@@ -45,7 +45,16 @@ class AdminClasesViewModel extends ChangeNotifier {
     // weekday: 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves, 5=Viernes, 6=Sábado, 7=Domingo
     // Feriados de lunes a viernes usan el horario del sábado
     final weekday = ChileanHolidays.effectiveDayOfWeek(_selectedDate);
-    final dayNames = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    final dayNames = [
+      '',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo',
+    ];
     final dayName = dayNames[weekday];
 
     debugPrint('📡 Obteniendo schedules...');
@@ -58,69 +67,73 @@ class AdminClasesViewModel extends ChangeNotifier {
         .orderBy('time', descending: false)
         .snapshots()
         .handleError((error) {
-      debugPrint('❌ ERROR obteniendo schedules: $error');
+          debugPrint('❌ ERROR obteniendo schedules: $error');
 
-      // Si hay error de índice, intentar sin filtro por día
-      if (error.toString().contains('index')) {
-        debugPrint('');
-        debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
-        debugPrint('   Colección: class_schedules');
-        debugPrint('   Campos: daysOfWeek (array-contains) + time (ASC)');
-        debugPrint('');
-        debugPrint('⚠️ FALLBACK: Obteniendo TODOS los schedules y filtrando en cliente...');
+          // Si hay error de índice, intentar sin filtro por día
+          if (error.toString().contains('index')) {
+            debugPrint('');
+            debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
+            debugPrint('   Colección: class_schedules');
+            debugPrint('   Campos: daysOfWeek (array-contains) + time (ASC)');
+            debugPrint('');
+            debugPrint(
+              '⚠️ FALLBACK: Obteniendo TODOS los schedules y filtrando en cliente...',
+            );
 
-        // Como alternativa, retornar todos los schedules sin filtro
-        return _firestore
-            .collection('class_schedules')
-            .orderBy('time', descending: false)
-            .snapshots();
-      }
+            // Como alternativa, retornar todos los schedules sin filtro
+            return _firestore
+                .collection('class_schedules')
+                .orderBy('time', descending: false)
+                .snapshots();
+          }
 
-      errorMsg = 'Error cargando horarios: $error';
-      notifyListeners();
-    })
+          errorMsg = 'Error cargando horarios: $error';
+          notifyListeners();
+        })
         .map((snapshot) {
-      debugPrint('');
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('📊 SCHEDULES RECIBIDOS DE FIRESTORE');
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('Total de documentos: ${snapshot.docs.length}');
-      debugPrint('Filtrando por día: $dayName (posición: $weekday)');
-      debugPrint('');
-
-      final schedules = <ClassSchedule>[];
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final daysOfWeek = data['daysOfWeek'] as List<dynamic>?;
-
-        debugPrint('Schedule ID: ${doc.id}');
-        debugPrint('  - time: ${data['time']}');
-        debugPrint('  - daysOfWeek: $daysOfWeek');
-        debugPrint('  - capacity: ${data['capacity']}');
-        debugPrint('  - instructor: ${data['instructor']}');
-        debugPrint('');
-
-        // Filtrar por día en cliente si el query no lo hizo
-        if (daysOfWeek != null && !daysOfWeek.contains(weekday)) {
-          debugPrint('  ⚠️ SKIP: Schedule no incluye el día $weekday ($dayName)');
           debugPrint('');
-          continue;
-        }
+          debugPrint('═══════════════════════════════════════════════════════');
+          debugPrint('📊 SCHEDULES RECIBIDOS DE FIRESTORE');
+          debugPrint('═══════════════════════════════════════════════════════');
+          debugPrint('Total de documentos: ${snapshot.docs.length}');
+          debugPrint('Filtrando por día: $dayName (posición: $weekday)');
+          debugPrint('');
 
-        try {
-          final schedule = ClassSchedule.fromFirestore(doc);
-          schedules.add(schedule);
-        } catch (e) {
-          debugPrint('❌ Error parseando schedule ${doc.id}: $e');
-        }
-      }
+          final schedules = <ClassSchedule>[];
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            final daysOfWeek = data['daysOfWeek'] as List<dynamic>?;
 
-      debugPrint('Schedules parseados exitosamente: ${schedules.length}');
-      debugPrint('═══════════════════════════════════════════════════════');
-      debugPrint('');
+            debugPrint('Schedule ID: ${doc.id}');
+            debugPrint('  - time: ${data['time']}');
+            debugPrint('  - daysOfWeek: $daysOfWeek');
+            debugPrint('  - capacity: ${data['capacity']}');
+            debugPrint('  - instructor: ${data['instructor']}');
+            debugPrint('');
 
-      return schedules;
-    });
+            // Filtrar por día en cliente si el query no lo hizo
+            if (daysOfWeek != null && !daysOfWeek.contains(weekday)) {
+              debugPrint(
+                '  ⚠️ SKIP: Schedule no incluye el día $weekday ($dayName)',
+              );
+              debugPrint('');
+              continue;
+            }
+
+            try {
+              final schedule = ClassSchedule.fromFirestore(doc);
+              schedules.add(schedule);
+            } catch (e) {
+              debugPrint('❌ Error parseando schedule ${doc.id}: $e');
+            }
+          }
+
+          debugPrint('Schedules parseados exitosamente: ${schedules.length}');
+          debugPrint('═══════════════════════════════════════════════════════');
+          debugPrint('');
+
+          return schedules;
+        });
   }
 
   // ---------------------------------------------------------------------------
@@ -149,32 +162,43 @@ class AdminClasesViewModel extends ChangeNotifier {
     return _firestore
         .collection('bookings')
         .where('scheduleId', isEqualTo: scheduleId)
-        .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where(
+          'classDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
         .where('classDate', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
         .orderBy('classDate', descending: false)
         .orderBy('userName', descending: false)
         .snapshots()
         .handleError((error) {
-      debugPrint('❌ ERROR obteniendo bookings para schedule $scheduleId: $error');
-      if (error.toString().contains('index')) {
-        debugPrint('');
-        debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
-        debugPrint('   Colección: bookings');
-        debugPrint('   Campos: scheduleId (==) + classDate (>=, <=) + userName (ASC)');
-        debugPrint('');
-      }
-    })
+          debugPrint(
+            '❌ ERROR obteniendo bookings para schedule $scheduleId: $error',
+          );
+          if (error.toString().contains('index')) {
+            debugPrint('');
+            debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
+            debugPrint('   Colección: bookings');
+            debugPrint(
+              '   Campos: scheduleId (==) + classDate (>=, <=) + userName (ASC)',
+            );
+            debugPrint('');
+          }
+        })
         .map((snapshot) {
-      debugPrint('✅ Bookings para schedule $scheduleId: ${snapshot.docs.length}');
-      if (snapshot.docs.isNotEmpty) {
-        debugPrint('   Alumnos:');
-        for (var doc in snapshot.docs) {
-          final data = doc.data();
-          debugPrint('   - ${data['userName']} (${data['status']})');
-        }
-      }
-      return snapshot.docs.map((doc) => Booking.fromFirestore(doc)).toList();
-    });
+          debugPrint(
+            '✅ Bookings para schedule $scheduleId: ${snapshot.docs.length}',
+          );
+          if (snapshot.docs.isNotEmpty) {
+            debugPrint('   Alumnos:');
+            for (var doc in snapshot.docs) {
+              final data = doc.data();
+              debugPrint('   - ${data['userName']} (${data['status']})');
+            }
+          }
+          return snapshot.docs
+              .map((doc) => Booking.fromFirestore(doc))
+              .toList();
+        });
   }
 
   // ---------------------------------------------------------------------------
@@ -323,7 +347,9 @@ class AdminClasesViewModel extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   Future<void> markAllAttended(List<Booking> bookings) async {
     try {
-      debugPrint('🔄 Marcando todos como asistidos: ${bookings.length} bookings');
+      debugPrint(
+        '🔄 Marcando todos como asistidos: ${bookings.length} bookings',
+      );
 
       final adminId = _auth.currentUser?.uid ?? 'unknown';
       final batch = _firestore.batch();

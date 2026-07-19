@@ -3,12 +3,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_design_tokens.dart';
 
 /// Avatar sizes
-enum AppAvatarSize {
-  small,
-  medium,
-  large,
-  extraLarge,
-}
+enum AppAvatarSize { small, medium, large, extraLarge }
 
 /// User avatar component
 class AppAvatar extends StatelessWidget {
@@ -32,10 +27,7 @@ class AppAvatar extends StatelessWidget {
       backgroundColor: AppColors.tigerOrange,
       backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
       child: imageUrl == null
-          ? Text(
-              _getInitials(),
-              style: _getTextStyle(),
-            )
+          ? Text(_getInitials(), style: _getTextStyle())
           : null,
     );
 
@@ -121,12 +113,7 @@ class AppAvatarWithStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        AppAvatar(
-          imageUrl: imageUrl,
-          name: name,
-          size: size,
-          onTap: onTap,
-        ),
+        AppAvatar(imageUrl: imageUrl, name: name, size: size, onTap: onTap),
         Positioned(
           right: 0,
           bottom: 0,
@@ -136,10 +123,7 @@ class AppAvatarWithStatus extends StatelessWidget {
             decoration: BoxDecoration(
               color: isOnline ? AppColors.success : AppColors.textTertiary,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primaryBlack,
-                width: 2,
-              ),
+              border: Border.all(color: AppColors.primaryBlack, width: 2),
             ),
           ),
         ),
@@ -178,7 +162,9 @@ class AppAvatarGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayCount = imageUrls.length > maxDisplay ? maxDisplay : imageUrls.length;
+    final displayCount = imageUrls.length > maxDisplay
+        ? maxDisplay
+        : imageUrls.length;
     final remaining = imageUrls.length - displayCount;
 
     return Row(
@@ -186,9 +172,7 @@ class AppAvatarGroup extends StatelessWidget {
       children: [
         ...List.generate(displayCount, (index) {
           return Padding(
-            padding: EdgeInsets.only(
-              right: index < displayCount - 1 ? 4 : 0,
-            ),
+            padding: EdgeInsets.only(right: index < displayCount - 1 ? 4 : 0),
             child: AppAvatar(
               imageUrl: imageUrls[index],
               name: names.length > index ? names[index] : null,
@@ -202,10 +186,7 @@ class AppAvatarGroup extends StatelessWidget {
             child: CircleAvatar(
               radius: _getRadius(),
               backgroundColor: AppColors.surfaceBlack,
-              child: Text(
-                '+$remaining',
-                style: _getTextStyle(),
-              ),
+              child: Text('+$remaining', style: _getTextStyle()),
             ),
           ),
       ],

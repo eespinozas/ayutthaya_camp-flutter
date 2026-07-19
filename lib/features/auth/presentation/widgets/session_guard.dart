@@ -48,21 +48,21 @@ class _SessionGuardState extends State<SessionGuard>
           .doc(uid)
           .snapshots()
           .listen(
-        (snap) {
-          // Solo confirmaciones del servidor: un miss de cache no es señal
-          // de cuenta eliminada.
-          if (!snap.exists && !snap.metadata.isFromCache) {
-            _forceLogout();
-          }
-        },
-        onError: (Object e) {
-          // Cuando el token expira tras el borrado, el listener recibe
-          // permission-denied: también implica que la cuenta ya no existe.
-          if (e is FirebaseException && e.code == 'permission-denied') {
-            _forceLogout();
-          }
-        },
-      );
+            (snap) {
+              // Solo confirmaciones del servidor: un miss de cache no es señal
+              // de cuenta eliminada.
+              if (!snap.exists && !snap.metadata.isFromCache) {
+                _forceLogout();
+              }
+            },
+            onError: (Object e) {
+              // Cuando el token expira tras el borrado, el listener recibe
+              // permission-denied: también implica que la cuenta ya no existe.
+              if (e is FirebaseException && e.code == 'permission-denied') {
+                _forceLogout();
+              }
+            },
+          );
     }
   }
 

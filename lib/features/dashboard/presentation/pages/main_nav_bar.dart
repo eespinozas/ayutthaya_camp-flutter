@@ -41,9 +41,8 @@ class _MainNavBarState extends State<MainNavBar> {
           id: 'inicio',
           icon: Icons.home_rounded,
           label: 'Inicio',
-          pageBuilder: (_) => DashboardPage(
-            onNavigateToPagos: () => _selectTabById('pagos'),
-          ),
+          pageBuilder: (_) =>
+              DashboardPage(onNavigateToPagos: () => _selectTabById('pagos')),
         ),
       if (FeatureFlags.showAgendarTab)
         _NavTab(
@@ -84,9 +83,7 @@ class _MainNavBarState extends State<MainNavBar> {
     // snackbar, sin registrar nada).
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const QRCheckInPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const QRCheckInPage()),
     );
   }
 
@@ -109,44 +106,44 @@ class _MainNavBarState extends State<MainNavBar> {
       floatingActionButton: !FeatureFlags.enableQrCheckIn
           ? null
           : Container(
-        width: 70,
-        height: 70,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFF6A00).withValues(alpha: 0.6),
-              blurRadius: 20,
-              spreadRadius: 2,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
-              blurRadius: 40,
-              spreadRadius: 5,
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _onQRPressed,
-            borderRadius: BorderRadius.circular(35),
-            child: const Center(
-              child: Icon(
-                Icons.qr_code_scanner,
-                size: 36,
-                color: Colors.white,
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.6),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                    blurRadius: 40,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _onQRPressed,
+                  borderRadius: BorderRadius.circular(35),
+                  child: const Center(
+                    child: Icon(
+                      Icons.qr_code_scanner,
+                      size: 36,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         color: const Color(0xFF1A1A1A),
@@ -202,7 +199,9 @@ class _MainNavBarState extends State<MainNavBar> {
     required int selectedIndex,
   }) {
     final isSelected = selectedIndex == index;
-    final itemColor = isSelected ? const Color(0xFFFF6A00) : Colors.white.withValues(alpha: 0.6);
+    final itemColor = isSelected
+        ? const Color(0xFFFF6A00)
+        : Colors.white.withValues(alpha: 0.6);
 
     return InkWell(
       onTap: () {
@@ -217,11 +216,7 @@ class _MainNavBarState extends State<MainNavBar> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              tab.icon,
-              color: itemColor,
-              size: isSelected ? 26 : 24,
-            ),
+            Icon(tab.icon, color: itemColor, size: isSelected ? 26 : 24),
             const SizedBox(height: 2),
             Text(
               tab.label,

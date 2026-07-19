@@ -84,11 +84,11 @@ class AppTextStyles {
 
   /// Caption - Texto pequeño (timestamps, badges)
   static TextStyle get caption => TextStyle(
-        color: AppColors.textMuted,
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        height: 1.4,
-      );
+    color: AppColors.textMuted,
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+  );
 
   /// Label - Labels de formularios, botones
   static const TextStyle label = TextStyle(

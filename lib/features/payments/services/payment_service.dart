@@ -17,7 +17,10 @@ class PaymentService {
   /// Verificar si existe un pago duplicado según el tipo:
   /// - Matrícula: 1 vez al AÑO
   /// - Mensualidad: 1 vez al MES
-  Future<Map<String, dynamic>> _checkDuplicatePayment(String userId, PaymentType type) async {
+  Future<Map<String, dynamic>> _checkDuplicatePayment(
+    String userId,
+    PaymentType type,
+  ) async {
     try {
       final now = DateTime.now();
 
@@ -35,7 +38,8 @@ class PaymentService {
           if (membershipStatus == 'active') {
             return {
               'allowed': false,
-              'message': 'Ya tienes una membresía activa.\n\n'
+              'message':
+                  'Ya tienes una membresía activa.\n\n'
                   'Para extender tu plan, realiza un pago de mensualidad en lugar de matrícula.',
             };
           }
@@ -44,7 +48,8 @@ class PaymentService {
           if (membershipStatus == 'pending') {
             return {
               'allowed': false,
-              'message': 'Ya tienes un pago de matrícula pendiente de aprobación.\n\n'
+              'message':
+                  'Ya tienes un pago de matrícula pendiente de aprobación.\n\n'
                   'Por favor espera la revisión del administrador antes de enviar otro comprobante.',
             };
           }
@@ -58,11 +63,15 @@ class PaymentService {
             debugPrint('   Última matrícula: $lastEnrollment');
             debugPrint('   Días desde última matrícula: $daysSinceEnrollment');
 
-            if (daysSinceEnrollment < MembershipConstants.minDaysForRenewEnrollment) {
-              final daysRemaining = MembershipConstants.minDaysForRenewEnrollment - daysSinceEnrollment;
+            if (daysSinceEnrollment <
+                MembershipConstants.minDaysForRenewEnrollment) {
+              final daysRemaining =
+                  MembershipConstants.minDaysForRenewEnrollment -
+                  daysSinceEnrollment;
               return {
                 'allowed': false,
-                'message': 'Solo puedes renovar tu matrícula después de 1 año.\n\n'
+                'message':
+                    'Solo puedes renovar tu matrícula después de 1 año.\n\n'
                     'Tu última matrícula fue el ${lastEnrollment.day}/${lastEnrollment.month}/${lastEnrollment.year}.\n'
                     'Podrás renovar en $daysRemaining días.',
               };
@@ -86,7 +95,10 @@ class PaymentService {
           .collection('payments')
           .where('userId', isEqualTo: userId)
           .where('type', isEqualTo: type.name)
-          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where(
+            'createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+          )
           .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
           .get();
 
@@ -98,13 +110,15 @@ class PaymentService {
         if (existingPayment.status == PaymentStatus.pending) {
           return {
             'allowed': false,
-            'message': 'Ya tienes un pago de mensualidad pendiente de revisión este mes.\n\n'
+            'message':
+                'Ya tienes un pago de mensualidad pendiente de revisión este mes.\n\n'
                 'Por favor espera a que sea revisado antes de enviar otro.',
           };
         } else if (existingPayment.status == PaymentStatus.approved) {
           return {
             'allowed': false,
-            'message': 'Ya realizaste el pago de mensualidad este mes.\n\n'
+            'message':
+                'Ya realizaste el pago de mensualidad este mes.\n\n'
                 'Solo puedes pagar una vez por mes.',
           };
         } else if (existingPayment.status == PaymentStatus.rejected) {
@@ -125,7 +139,8 @@ class PaymentService {
       // En caso de error, ser conservadores y no permitir
       return {
         'allowed': false,
-        'message': 'Error al verificar pagos anteriores. Por favor intenta nuevamente.',
+        'message':
+            'Error al verificar pagos anteriores. Por favor intenta nuevamente.',
       };
     }
   }
@@ -189,12 +204,16 @@ class PaymentService {
         createdAt: DateTime.now(),
       );
 
-      final docRef = await _firestore.collection('payments').add(payment.toMap());
+      final docRef = await _firestore
+          .collection('payments')
+          .add(payment.toMap());
       debugPrint('✅ Pago creado exitosamente con ID: ${docRef.id}');
 
       // Si es pago de matrícula, actualizar estado del usuario a "pending"
       if (type == PaymentType.enrollment) {
-        debugPrint('📝 Actualizando usuario a estado "pending" (esperando aprobación de matrícula)');
+        debugPrint(
+          '📝 Actualizando usuario a estado "pending" (esperando aprobación de matrícula)',
+        );
         await _firestore.collection('users').doc(userId).update({
           'membershipStatus': 'pending',
           'updatedAt': FieldValue.serverTimestamp(),
@@ -204,7 +223,9 @@ class PaymentService {
 
       // Notificar a admins sobre nuevo pago pendiente
       try {
-        final paymentTypeText = type == PaymentType.enrollment ? 'Matrícula' : 'Mensualidad';
+        final paymentTypeText = type == PaymentType.enrollment
+            ? 'Matrícula'
+            : 'Mensualidad';
         await NotificationService().sendNotificationToAdmins(
           title: '💳 Nuevo Comprobante de Pago',
           body: '$userName subió comprobante de $paymentTypeText - Plan: $plan',
@@ -241,27 +262,32 @@ class PaymentService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      debugPrint('PaymentService - Snapshot recibido: ${snapshot.docs.length} documentos');
+          debugPrint(
+            'PaymentService - Snapshot recibido: ${snapshot.docs.length} documentos',
+          );
 
-      try {
-        final payments = snapshot.docs.map((doc) {
-          debugPrint('Procesando documento: ${doc.id}');
-          debugPrint('Data: ${doc.data()}');
-          return Payment.fromFirestore(doc);
-        }).toList();
+          try {
+            final payments = snapshot.docs.map((doc) {
+              debugPrint('Procesando documento: ${doc.id}');
+              debugPrint('Data: ${doc.data()}');
+              return Payment.fromFirestore(doc);
+            }).toList();
 
-        debugPrint('PaymentService - Total pagos procesados: ${payments.length}');
-        return payments;
-      } catch (e, stackTrace) {
-        debugPrint('ERROR en getUserPayments: $e');
-        debugPrint('STACK TRACE: $stackTrace');
-        rethrow;
-      }
-    }).handleError((error, stackTrace) {
-      debugPrint('ERROR en Stream getUserPayments: $error');
-      debugPrint('STACK TRACE: $stackTrace');
-      throw error;
-    });
+            debugPrint(
+              'PaymentService - Total pagos procesados: ${payments.length}',
+            );
+            return payments;
+          } catch (e, stackTrace) {
+            debugPrint('ERROR en getUserPayments: $e');
+            debugPrint('STACK TRACE: $stackTrace');
+            rethrow;
+          }
+        })
+        .handleError((error, stackTrace) {
+          debugPrint('ERROR en Stream getUserPayments: $error');
+          debugPrint('STACK TRACE: $stackTrace');
+          throw error;
+        });
   }
 
   /// Obtener todos los pagos (admin)
@@ -271,8 +297,10 @@ class PaymentService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Payment.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => Payment.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Obtener pagos por estado (admin)
@@ -283,8 +311,10 @@ class PaymentService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Payment.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => Payment.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Aprobar pago (admin)
@@ -294,7 +324,10 @@ class PaymentService {
       debugPrint('paymentId: $paymentId');
       debugPrint('adminId: $adminId');
 
-      final paymentDoc = await _firestore.collection('payments').doc(paymentId).get();
+      final paymentDoc = await _firestore
+          .collection('payments')
+          .doc(paymentId)
+          .get();
 
       if (!paymentDoc.exists) {
         debugPrint('❌ ERROR: Pago no encontrado');
@@ -318,7 +351,10 @@ class PaymentService {
       // Actualizar usuario según tipo de pago
       if (payment.type == PaymentType.enrollment) {
         debugPrint('Procesando matrícula...');
-        await _updateUserAfterEnrollment(payment.userId, payment.enrollmentPlan);
+        await _updateUserAfterEnrollment(
+          payment.userId,
+          payment.enrollmentPlan,
+        );
       } else {
         debugPrint('Procesando pago mensual...');
         await _updateUserAfterMonthlyPayment(payment.userId, payment.plan);
@@ -328,7 +364,8 @@ class PaymentService {
       try {
         await NotificationService().sendNotificationToAdmins(
           title: 'Nuevo Pago Aprobado',
-          body: 'Se ha aprobado el pago de ${payment.userName} - Plan: ${payment.plan}',
+          body:
+              'Se ha aprobado el pago de ${payment.userName} - Plan: ${payment.plan}',
           data: {
             'type': 'payment_approved',
             'paymentId': paymentId,
@@ -350,10 +387,17 @@ class PaymentService {
   }
 
   /// Rechazar pago (admin)
-  Future<void> rejectPayment(String paymentId, String adminId, String reason) async {
+  Future<void> rejectPayment(
+    String paymentId,
+    String adminId,
+    String reason,
+  ) async {
     try {
       // Obtener datos del pago antes de actualizar
-      final paymentDoc = await _firestore.collection('payments').doc(paymentId).get();
+      final paymentDoc = await _firestore
+          .collection('payments')
+          .doc(paymentId)
+          .get();
       final paymentData = paymentDoc.data();
 
       if (paymentData == null) {
@@ -372,12 +416,15 @@ class PaymentService {
       if (MembershipConstants.notifyUserOnPaymentRejection) {
         final userId = paymentData['userId'] as String;
         final paymentType = paymentData['type'] as String;
-        final paymentTypeText = paymentType == 'enrollment' ? 'matrícula' : 'mensualidad';
+        final paymentTypeText = paymentType == 'enrollment'
+            ? 'matrícula'
+            : 'mensualidad';
 
         await NotificationService().sendNotificationToUser(
           userId: userId,
           title: '❌ Pago Rechazado',
-          body: 'Tu comprobante de $paymentTypeText ha sido rechazado.\n\n'
+          body:
+              'Tu comprobante de $paymentTypeText ha sido rechazado.\n\n'
               'Motivo: $reason\n\n'
               'Por favor sube un nuevo comprobante válido.',
           data: {
@@ -445,31 +492,40 @@ class PaymentService {
           updateData['planId'] = planDoc.id;
           updateData['planName'] = enrollmentPlan;
           updateData['planDisplayName'] = enrollmentPlan;
-          updateData['expirationDate'] =
-              Timestamp.fromDate(now.add(Duration(days: durationDays)));
+          updateData['expirationDate'] = Timestamp.fromDate(
+            now.add(Duration(days: durationDays)),
+          );
           if (classesPerMonth != null) {
             updateData['classesPerMonth'] = classesPerMonth;
           } else {
             updateData['classesPerMonth'] = FieldValue.delete();
           }
-          debugPrint('✅ Plan asignado en matrícula: $enrollmentPlan '
-              '(classesPerMonth: ${classesPerMonth ?? "ilimitado"}, '
-              'durationDays: $durationDays)');
+          debugPrint(
+            '✅ Plan asignado en matrícula: $enrollmentPlan '
+            '(classesPerMonth: ${classesPerMonth ?? "ilimitado"}, '
+            'durationDays: $durationDays)',
+          );
         } else {
-          debugPrint('⚠️ Plan "$enrollmentPlan" no encontrado en plans/, '
-              'fallback a matrícula sin plan');
-          updateData['expirationDate'] =
-              Timestamp.fromDate(now.add(const Duration(days: 30)));
+          debugPrint(
+            '⚠️ Plan "$enrollmentPlan" no encontrado en plans/, '
+            'fallback a matrícula sin plan',
+          );
+          updateData['expirationDate'] = Timestamp.fromDate(
+            now.add(const Duration(days: 30)),
+          );
         }
       } else {
         // Matrícula sin plan: comportamiento legado (30 días, sin plan).
-        updateData['expirationDate'] =
-            Timestamp.fromDate(now.add(const Duration(days: 30)));
+        updateData['expirationDate'] = Timestamp.fromDate(
+          now.add(const Duration(days: 30)),
+        );
       }
 
       await _firestore.collection('users').doc(userId).update(updateData);
 
-      debugPrint('✅ Usuario actualizado exitosamente con membershipStatus: active');
+      debugPrint(
+        '✅ Usuario actualizado exitosamente con membershipStatus: active',
+      );
     } catch (e) {
       debugPrint('❌ ERROR al actualizar usuario: $e');
       throw Exception('Error al actualizar usuario: $e');
@@ -477,7 +533,10 @@ class PaymentService {
   }
 
   /// Actualizar usuario después de pago mensual
-  Future<void> _updateUserAfterMonthlyPayment(String userId, String planName) async {
+  Future<void> _updateUserAfterMonthlyPayment(
+    String userId,
+    String planName,
+  ) async {
     try {
       debugPrint('=== Actualizando usuario después de pago mensual ===');
       debugPrint('userId: $userId');
@@ -492,7 +551,9 @@ class PaymentService {
           .get();
 
       if (plansQuery.docs.isEmpty) {
-        debugPrint('⚠️ Plan no encontrado en Firestore, usando configuración por defecto');
+        debugPrint(
+          '⚠️ Plan no encontrado en Firestore, usando configuración por defecto',
+        );
         // Fallback a configuración anterior
         await _updateUserWithDefaultPlan(userId, planName);
         return;
@@ -546,7 +607,10 @@ class PaymentService {
   }
 
   /// Actualizar usuario con configuración por defecto (fallback)
-  Future<void> _updateUserWithDefaultPlan(String userId, String planName) async {
+  Future<void> _updateUserWithDefaultPlan(
+    String userId,
+    String planName,
+  ) async {
     final now = DateTime.now();
     int daysToAdd = 30;
 
@@ -627,7 +691,10 @@ class PaymentService {
   String _getValidatedFileExtension(File file) {
     // Obtener extensión del archivo
     final filePath = file.path;
-    final extension = path.extension(filePath).toLowerCase().replaceAll('.', '');
+    final extension = path
+        .extension(filePath)
+        .toLowerCase()
+        .replaceAll('.', '');
 
     debugPrint('Validando archivo: $filePath');
     debugPrint('Extensión detectada: $extension');
@@ -660,7 +727,10 @@ class PaymentService {
         fileName = path.basename(receiptFile.path);
       } else if (receiptBytes != null && receiptFileName != null) {
         // Plataforma web - usar bytes
-        extension = path.extension(receiptFileName).toLowerCase().replaceAll('.', '');
+        extension = path
+            .extension(receiptFileName)
+            .toLowerCase()
+            .replaceAll('.', '');
 
         // Validar extensión
         if (!allowedExtensions.contains(extension)) {

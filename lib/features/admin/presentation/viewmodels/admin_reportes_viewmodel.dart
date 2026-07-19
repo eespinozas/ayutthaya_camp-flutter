@@ -36,8 +36,14 @@ class AdminReportesViewModel extends ChangeNotifier {
         // Get all bookings for the day
         final bookingsSnapshot = await _firestore
             .collection('bookings')
-            .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-            .where('classDate', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
+            .where(
+              'classDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+            )
+            .where(
+              'classDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfDay),
+            )
             .get();
 
         final bookings = bookingsSnapshot.docs
@@ -47,8 +53,14 @@ class AdminReportesViewModel extends ChangeNotifier {
         // Get payments for the day
         final paymentsSnapshot = await _firestore
             .collection('payments')
-            .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-            .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+            )
+            .where(
+              'createdAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfDay),
+            )
             .where('status', isEqualTo: 'approved')
             .get();
 
@@ -59,8 +71,14 @@ class AdminReportesViewModel extends ChangeNotifier {
         // Get new users registered on the day
         final newUsersSnapshot = await _firestore
             .collection('users')
-            .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-            .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+            )
+            .where(
+              'createdAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfDay),
+            )
             .get();
 
         // Calculate metrics
@@ -74,7 +92,9 @@ class AdminReportesViewModel extends ChangeNotifier {
             .where((b) => b.status == BookingStatus.attended)
             .length;
         final newUsers = newUsersSnapshot.docs.length;
-        final totalIncome = payments.fold<double>(0, (total, payment) => total + payment.amount).toInt();
+        final totalIncome = payments
+            .fold<double>(0, (total, payment) => total + payment.amount)
+            .toInt();
 
         // Get schedules for the day to calculate capacity
         // Feriados de lunes a viernes usan el horario del sábado
@@ -168,7 +188,9 @@ class AdminReportesViewModel extends ChangeNotifier {
 
         // Sort classes by time
         final classesList = classesBySchedule.values.toList();
-        classesList.sort((a, b) => (a['hora'] as String).compareTo(b['hora'] as String));
+        classesList.sort(
+          (a, b) => (a['hora'] as String).compareTo(b['hora'] as String),
+        );
 
         debugPrint('   ✅ Valid Bookings: ${validBookings.length}');
         debugPrint('   ✅ Attended: $attendedBookings');
@@ -204,7 +226,9 @@ class AdminReportesViewModel extends ChangeNotifier {
   // WEEKLY REPORT DATA
   // ---------------------------------------------------------------------------
   Stream<Map<String, dynamic>> getWeeklyReport(DateTime weekStart) {
-    final weekEnd = weekStart.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+    final weekEnd = weekStart.add(
+      const Duration(days: 6, hours: 23, minutes: 59, seconds: 59),
+    );
 
     debugPrint('');
     debugPrint('📊 WEEKLY REPORT');
@@ -215,8 +239,14 @@ class AdminReportesViewModel extends ChangeNotifier {
         // Get all bookings for the week
         final bookingsSnapshot = await _firestore
             .collection('bookings')
-            .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(weekStart))
-            .where('classDate', isLessThanOrEqualTo: Timestamp.fromDate(weekEnd))
+            .where(
+              'classDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(weekStart),
+            )
+            .where(
+              'classDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(weekEnd),
+            )
             .get();
 
         final bookings = bookingsSnapshot.docs
@@ -226,8 +256,14 @@ class AdminReportesViewModel extends ChangeNotifier {
         // Get payments for the week
         final paymentsSnapshot = await _firestore
             .collection('payments')
-            .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(weekStart))
-            .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(weekEnd))
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(weekStart),
+            )
+            .where(
+              'createdAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(weekEnd),
+            )
             .where('status', isEqualTo: 'approved')
             .get();
 
@@ -238,8 +274,14 @@ class AdminReportesViewModel extends ChangeNotifier {
         // Get new users for the week
         final newUsersSnapshot = await _firestore
             .collection('users')
-            .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(weekStart))
-            .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(weekEnd))
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(weekStart),
+            )
+            .where(
+              'createdAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(weekEnd),
+            )
             .get();
 
         // Get active users (those with active membership)
@@ -257,17 +299,25 @@ class AdminReportesViewModel extends ChangeNotifier {
         int capacityForDay(DateTime day) {
           final weekday = ChileanHolidays.effectiveDayOfWeek(day);
           return schedulesSnapshot.docs
-              .where((doc) => List<int>.from(doc.data()['daysOfWeek'] ?? [])
-                  .contains(weekday))
+              .where(
+                (doc) => List<int>.from(
+                  doc.data()['daysOfWeek'] ?? [],
+                ).contains(weekday),
+              )
               .fold<int>(
                 0,
-                (total, doc) => total + ((doc.data()['capacity'] as int?) ?? 30),
+                (total, doc) =>
+                    total + ((doc.data()['capacity'] as int?) ?? 30),
               );
         }
 
         // Calculate metrics
-        final attendedBookings = bookings.where((b) => b.status == BookingStatus.attended).length;
-        final totalIncome = payments.fold<double>(0, (total, payment) => total + payment.amount).toInt();
+        final attendedBookings = bookings
+            .where((b) => b.status == BookingStatus.attended)
+            .length;
+        final totalIncome = payments
+            .fold<double>(0, (total, payment) => total + payment.amount)
+            .toInt();
         final newUsers = newUsersSnapshot.docs.length;
         final activeUsers = activeUsersSnapshot.docs.length;
 
@@ -277,7 +327,8 @@ class AdminReportesViewModel extends ChangeNotifier {
 
         for (int i = 0; i < 7; i++) {
           final currentDay = weekStart.add(Duration(days: i));
-          final dayKey = '${currentDay.year}-${currentDay.month}-${currentDay.day}';
+          final dayKey =
+              '${currentDay.year}-${currentDay.month}-${currentDay.day}';
 
           dailyAttendance[dayKey] = {
             'dia': dayNames[i],
@@ -291,7 +342,8 @@ class AdminReportesViewModel extends ChangeNotifier {
         for (var booking in bookings) {
           if (booking.status == BookingStatus.attended) {
             final bookingDate = booking.classDate;
-            final dayKey = '${bookingDate.year}-${bookingDate.month}-${bookingDate.day}';
+            final dayKey =
+                '${bookingDate.year}-${bookingDate.month}-${bookingDate.day}';
 
             if (dailyAttendance.containsKey(dayKey)) {
               dailyAttendance[dayKey]!['asistencias'] =
@@ -302,7 +354,9 @@ class AdminReportesViewModel extends ChangeNotifier {
 
         // Find most and least popular classes by schedule
         final attendanceBySchedule = <String, Map<String, dynamic>>{};
-        for (var booking in bookings.where((b) => b.status == BookingStatus.attended)) {
+        for (var booking in bookings.where(
+          (b) => b.status == BookingStatus.attended,
+        )) {
           final scheduleId = booking.scheduleId;
 
           if (!attendanceBySchedule.containsKey(scheduleId)) {
@@ -318,7 +372,10 @@ class AdminReportesViewModel extends ChangeNotifier {
 
         // Sort by attendance
         final sortedSchedules = attendanceBySchedule.entries.toList()
-          ..sort((a, b) => (b.value['count'] as int).compareTo(a.value['count'] as int));
+          ..sort(
+            (a, b) =>
+                (b.value['count'] as int).compareTo(a.value['count'] as int),
+          );
 
         // Total de asistencias de la semana en el horario más/menos popular
         // (antes se dividía por 7, un "promedio" sin sentido para clases
@@ -328,20 +385,14 @@ class AdminReportesViewModel extends ChangeNotifier {
                 'hora': sortedSchedules.first.value['time'],
                 'asistencias': sortedSchedules.first.value['count'] as int,
               }
-            : {
-                'hora': 'N/A',
-                'asistencias': 0,
-              };
+            : {'hora': 'N/A', 'asistencias': 0};
 
         final leastPopular = sortedSchedules.length > 1
             ? {
                 'hora': sortedSchedules.last.value['time'],
                 'asistencias': sortedSchedules.last.value['count'] as int,
               }
-            : {
-                'hora': 'N/A',
-                'asistencias': 0,
-              };
+            : {'hora': 'N/A', 'asistencias': 0};
 
         // Promedio diario sobre los días ya transcurridos de la semana
         // (una semana en curso no debe diluirse entre 7 días).
@@ -353,12 +404,20 @@ class AdminReportesViewModel extends ChangeNotifier {
 
         // Get previous week data for comparison
         final prevWeekStart = weekStart.subtract(const Duration(days: 7));
-        final prevWeekEnd = prevWeekStart.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+        final prevWeekEnd = prevWeekStart.add(
+          const Duration(days: 6, hours: 23, minutes: 59, seconds: 59),
+        );
 
         final prevBookingsSnapshot = await _firestore
             .collection('bookings')
-            .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(prevWeekStart))
-            .where('classDate', isLessThanOrEqualTo: Timestamp.fromDate(prevWeekEnd))
+            .where(
+              'classDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(prevWeekStart),
+            )
+            .where(
+              'classDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(prevWeekEnd),
+            )
             .get();
 
         final prevAttended = prevBookingsSnapshot.docs
@@ -369,7 +428,11 @@ class AdminReportesViewModel extends ChangeNotifier {
             ? ((attendedBookings - prevAttended) / prevAttended * 100).toInt()
             : 0;
 
-        final trend = comparison > 0 ? 'up' : comparison < 0 ? 'down' : 'stable';
+        final trend = comparison > 0
+            ? 'up'
+            : comparison < 0
+            ? 'down'
+            : 'stable';
 
         debugPrint('   ✅ Total Attended: $attendedBookings');
         debugPrint('   ✅ Avg Daily: ${avgDailyAttendance.toInt()}');
@@ -432,8 +495,14 @@ class AdminReportesViewModel extends ChangeNotifier {
         // Get all bookings for the month
         final bookingsSnapshot = await _firestore
             .collection('bookings')
-            .where('classDate', isGreaterThanOrEqualTo: Timestamp.fromDate(monthStart))
-            .where('classDate', isLessThanOrEqualTo: Timestamp.fromDate(monthEnd))
+            .where(
+              'classDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(monthStart),
+            )
+            .where(
+              'classDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(monthEnd),
+            )
             .get();
 
         final bookings = bookingsSnapshot.docs
@@ -443,8 +512,14 @@ class AdminReportesViewModel extends ChangeNotifier {
         // Get payments for the month
         final paymentsSnapshot = await _firestore
             .collection('payments')
-            .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(monthStart))
-            .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(monthEnd))
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(monthStart),
+            )
+            .where(
+              'createdAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(monthEnd),
+            )
             .where('status', isEqualTo: 'approved')
             .get();
 
@@ -461,8 +536,14 @@ class AdminReportesViewModel extends ChangeNotifier {
         // Get new users for the month
         final newUsersSnapshot = await _firestore
             .collection('users')
-            .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(monthStart))
-            .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(monthEnd))
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(monthStart),
+            )
+            .where(
+              'createdAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(monthEnd),
+            )
             .get();
 
         // Get inactive users (cancelled or expired in this month)
@@ -472,7 +553,9 @@ class AdminReportesViewModel extends ChangeNotifier {
             .get();
 
         // Calculate metrics
-        final attendedBookings = bookings.where((b) => b.status == BookingStatus.attended).length;
+        final attendedBookings = bookings
+            .where((b) => b.status == BookingStatus.attended)
+            .length;
         final activeUsers = activeUsersSnapshot.docs.length;
         final newUsers = newUsersSnapshot.docs.length;
         final inactiveUsers = inactiveUsersSnapshot.docs.length;
@@ -484,11 +567,19 @@ class AdminReportesViewModel extends ChangeNotifier {
             : 100;
 
         // Calculate income breakdown
-        final monthlyPayments = payments.where((p) => p.type == PaymentType.monthly).toList();
-        final enrollmentPayments = payments.where((p) => p.type == PaymentType.enrollment).toList();
+        final monthlyPayments = payments
+            .where((p) => p.type == PaymentType.monthly)
+            .toList();
+        final enrollmentPayments = payments
+            .where((p) => p.type == PaymentType.enrollment)
+            .toList();
 
-        final monthlyIncome = monthlyPayments.fold<double>(0, (total, p) => total + p.amount).toInt();
-        final enrollmentIncome = enrollmentPayments.fold<double>(0, (total, p) => total + p.amount).toInt();
+        final monthlyIncome = monthlyPayments
+            .fold<double>(0, (total, p) => total + p.amount)
+            .toInt();
+        final enrollmentIncome = enrollmentPayments
+            .fold<double>(0, (total, p) => total + p.amount)
+            .toInt();
         final totalIncome = monthlyIncome + enrollmentIncome;
 
         // Días a considerar: el mes completo si ya pasó, o solo los
@@ -512,8 +603,9 @@ class AdminReportesViewModel extends ChangeNotifier {
             .get();
 
         final lastDayToCount = isCurrentMonth ? now.day : daysInMonth;
-        final validMonthBookings =
-            bookings.where((b) => b.status != BookingStatus.cancelled);
+        final validMonthBookings = bookings.where(
+          (b) => b.status != BookingStatus.cancelled,
+        );
 
         final bookingsByScheduleId = <String, int>{};
         for (var booking in validMonthBookings) {
@@ -540,13 +632,16 @@ class AdminReportesViewModel extends ChangeNotifier {
           final reserved = bookingsByScheduleId[doc.id] ?? 0;
           scheduleOccupancy.add({
             'hora': data['time'] ?? 'N/A',
-            'ocupacion':
-                (reserved / (occurrences * capacity) * 100).round().clamp(0, 100),
+            'ocupacion': (reserved / (occurrences * capacity) * 100)
+                .round()
+                .clamp(0, 100),
           });
         }
 
         // Sort by time
-        scheduleOccupancy.sort((a, b) => (a['hora'] as String).compareTo(b['hora'] as String));
+        scheduleOccupancy.sort(
+          (a, b) => (a['hora'] as String).compareTo(b['hora'] as String),
+        );
 
         // Calculate attendance by day of week
         final attendanceByWeekday = <int, int>{};
@@ -554,21 +649,30 @@ class AdminReportesViewModel extends ChangeNotifier {
           attendanceByWeekday[i] = 0;
         }
 
-        for (var booking in bookings.where((b) => b.status == BookingStatus.attended)) {
+        for (var booking in bookings.where(
+          (b) => b.status == BookingStatus.attended,
+        )) {
           final weekday = booking.classDate.weekday;
-          attendanceByWeekday[weekday] = (attendanceByWeekday[weekday] ?? 0) + 1;
+          attendanceByWeekday[weekday] =
+              (attendanceByWeekday[weekday] ?? 0) + 1;
         }
 
         // Get top 3 days
-        final dayNames = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        final dayNames = [
+          '',
+          'Lunes',
+          'Martes',
+          'Miércoles',
+          'Jueves',
+          'Viernes',
+          'Sábado',
+          'Domingo',
+        ];
         final sortedDays = attendanceByWeekday.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
 
         final topDays = sortedDays.take(3).map((entry) {
-          return {
-            'dia': dayNames[entry.key],
-            'asistencias': entry.value,
-          };
+          return {'dia': dayNames[entry.key], 'asistencias': entry.value};
         }).toList();
 
         debugPrint('   ✅ Total Attended: $attendedBookings');

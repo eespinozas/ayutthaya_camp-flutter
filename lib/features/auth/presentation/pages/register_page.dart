@@ -16,10 +16,7 @@ class School {
 
   factory School.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    return School(
-      id: doc.id,
-      name: data['name'] ?? data['nombre'] ?? '',
-    );
+    return School(id: doc.id, name: data['name'] ?? data['nombre'] ?? '');
   }
 }
 
@@ -30,7 +27,8 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderStateMixin {
+class _RegisterPageState extends State<RegisterPage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
   final _nombreCtrl = TextEditingController();
@@ -115,7 +113,9 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     });
     try {
       debugPrint('📚 Cargando escuelas desde Firestore...');
-      final snapshot = await FirebaseFirestore.instance.collection('schools').get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('schools')
+          .get();
       debugPrint('✅ Snapshot recibido: ${snapshot.docs.length} documentos');
 
       final items = snapshot.docs.map((doc) {
@@ -264,15 +264,21 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
             .get();
 
         if (!verifyDoc.exists) {
-          throw Exception('El documento del usuario no se pudo crear en Firestore');
+          throw Exception(
+            'El documento del usuario no se pudo crear en Firestore',
+          );
         }
 
         debugPrint('✅ Documento verificado en Firestore');
       } catch (firestoreError) {
-        debugPrint('❌ Error crítico al crear documento en Firestore: $firestoreError');
+        debugPrint(
+          '❌ Error crítico al crear documento en Firestore: $firestoreError',
+        );
         try {
           await user.delete();
-          debugPrint('🗑️ Usuario eliminado de Auth debido a error en Firestore');
+          debugPrint(
+            '🗑️ Usuario eliminado de Auth debido a error en Firestore',
+          );
         } catch (deleteError) {
           debugPrint('⚠️ No se pudo eliminar usuario de Auth: $deleteError');
         }
@@ -305,13 +311,17 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                 ? 'Te enviamos un correo de verificación. Valídalo y luego inicia sesión.'
                 : 'Cuenta creada. Te enviamos el correo de verificación a tu email.',
           ),
-          backgroundColor: emailSent ? const Color(0xFF10B981) : const Color(0xFFFF8534),
+          backgroundColor: emailSent
+              ? const Color(0xFF10B981)
+              : const Color(0xFFFF8534),
         ),
       );
 
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     } on FirebaseAuthException catch (e) {
-      debugPrint('❌ FirebaseAuthException en registro: ${e.code} - ${e.message}');
+      debugPrint(
+        '❌ FirebaseAuthException en registro: ${e.code} - ${e.message}',
+      );
       final msg = switch (e.code) {
         'email-already-in-use' =>
           'Ese correo ya está registrado. Intenta iniciar sesión.',
@@ -361,10 +371,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
             'Al menos una mayúscula',
             Validators.passwordHasUppercase(value.text),
           ),
-          (
-            'Letras y números',
-            Validators.passwordIsAlphanumeric(value.text),
-          ),
+          ('Letras y números', Validators.passwordIsAlphanumeric(value.text)),
         ];
 
         return Column(
@@ -384,10 +391,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                     color: color,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    label,
-                    style: TextStyle(fontSize: 12, color: color),
-                  ),
+                  Text(label, style: TextStyle(fontSize: 12, color: color)),
                 ],
               ),
             );
@@ -411,11 +415,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0F0F0F),
-              Color(0xFF1A1A1A),
-              Color(0xFF0F0F0F),
-            ],
+            colors: [Color(0xFF0F0F0F), Color(0xFF1A1A1A), Color(0xFF0F0F0F)],
             stops: [0.0, 0.5, 1.0],
           ),
         ),
@@ -444,7 +444,11 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                           children: [
                             _buildHeader(context, isSmallScreen),
                             SizedBox(height: isSmallScreen ? 32 : 40),
-                            _buildRegisterCard(context, isSmallScreen, isFormBusy),
+                            _buildRegisterCard(
+                              context,
+                              isSmallScreen,
+                              isFormBusy,
+                            ),
                             SizedBox(height: isSmallScreen ? 24 : 32),
                             _buildFooter(context, isFormBusy),
                           ],
@@ -469,10 +473,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           height: isSmallScreen ? 100 : 120,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFFFF6A00),
-              width: 3,
-            ),
+            border: Border.all(color: const Color(0xFFFF6A00), width: 3),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFFFF6A00).withValues(alpha: 0.5),
@@ -534,12 +535,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
             color: const Color(0xFFFF6A00),
-            shadows: const [
-              Shadow(
-                color: Color(0xFFFF6A00),
-                blurRadius: 20,
-              ),
-            ],
+            shadows: const [Shadow(color: Color(0xFFFF6A00), blurRadius: 20)],
           ),
         ),
         const SizedBox(height: 8),
@@ -557,7 +553,11 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildRegisterCard(BuildContext context, bool isSmallScreen, bool isFormBusy) {
+  Widget _buildRegisterCard(
+    BuildContext context,
+    bool isSmallScreen,
+    bool isFormBusy,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A).withValues(alpha: 0.8),
@@ -681,11 +681,14 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
             obscureText: _obscurePassword,
             suffixIcon: IconButton(
               icon: Icon(
-                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                _obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 color: Colors.white.withValues(alpha: 0.5),
                 size: 20,
               ),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
             ),
             validator: Validators.validatePassword,
             onChanged: (_) {
@@ -713,11 +716,15 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
             obscureText: _obscureRepeatPassword,
             suffixIcon: IconButton(
               icon: Icon(
-                _obscureRepeatPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                _obscureRepeatPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 color: Colors.white.withValues(alpha: 0.5),
                 size: 20,
               ),
-              onPressed: () => setState(() => _obscureRepeatPassword = !_obscureRepeatPassword),
+              onPressed: () => setState(
+                () => _obscureRepeatPassword = !_obscureRepeatPassword,
+              ),
             ),
             validator: (v) =>
                 Validators.validatePasswordMatch(v, _passCtrl.text),
@@ -737,7 +744,9 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF6A00),
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFFFF6A00).withValues(alpha: 0.5),
+                disabledBackgroundColor: const Color(
+                  0xFFFF6A00,
+                ).withValues(alpha: 0.5),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -810,11 +819,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           fontWeight: FontWeight.w400,
           fontSize: 15,
         ),
-        prefixIcon: Icon(
-          icon,
-          color: const Color(0xFFFF6A00),
-          size: 20,
-        ),
+        prefixIcon: Icon(icon, color: const Color(0xFFFF6A00), size: 20),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: const Color(0xFF0F0F0F),
@@ -834,24 +839,15 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFFF6A00),
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 1,
-          ),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
@@ -875,9 +871,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
             decoration: BoxDecoration(
               color: const Color(0xFF0F0F0F),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -911,12 +905,19 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 20),
+                    const Icon(
+                      Icons.error_outline,
+                      color: Color(0xFFEF4444),
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _errorSchools!,
-                        style: const TextStyle(color: Color(0xFFEF4444), fontSize: 13),
+                        style: const TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
@@ -953,7 +954,11 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Color(0xFFFF8534), size: 20),
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Color(0xFFFF8534),
+                      size: 20,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'No hay escuelas disponibles',
@@ -1007,7 +1012,9 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                   ),
                 )
                 .toList(),
-            onChanged: isFormBusy ? null : (v) => setState(() => _selectedSchool = v),
+            onChanged: isFormBusy
+                ? null
+                : (v) => setState(() => _selectedSchool = v),
             decoration: InputDecoration(
               hintText: 'Selecciona tu escuela',
               hintStyle: TextStyle(
@@ -1104,13 +1111,12 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           child: OutlinedButton(
             onPressed: isFormBusy
                 ? null
-                : () => Navigator.of(context).pushNamedAndRemoveUntil('/login', (r) => false),
+                : () => Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (r) => false),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFFF6A00),
-              side: const BorderSide(
-                color: Color(0xFFFF6A00),
-                width: 2,
-              ),
+              side: const BorderSide(color: Color(0xFFFF6A00), width: 2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),

@@ -9,7 +9,8 @@ class QRScannerPage extends StatefulWidget {
   State<QRScannerPage> createState() => _QRScannerPageState();
 }
 
-class _QRScannerPageState extends State<QRScannerPage> with SingleTickerProviderStateMixin {
+class _QRScannerPageState extends State<QRScannerPage>
+    with SingleTickerProviderStateMixin {
   MobileScannerController cameraController = MobileScannerController();
   bool _isProcessing = false;
   bool _torchEnabled = false;
@@ -107,12 +108,19 @@ class _QRScannerPageState extends State<QRScannerPage> with SingleTickerProvider
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.error_outline, color: Colors.white, size: 28),
+              child: const Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 12),
             const Text(
               'QR Inválido',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -171,10 +179,18 @@ class _QRScannerPageState extends State<QRScannerPage> with SingleTickerProvider
             colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
           ),
           borderRadius: BorderRadius.only(
-            topLeft: alignment == Alignment.topLeft ? const Radius.circular(12) : Radius.zero,
-            topRight: alignment == Alignment.topRight ? const Radius.circular(12) : Radius.zero,
-            bottomLeft: alignment == Alignment.bottomLeft ? const Radius.circular(12) : Radius.zero,
-            bottomRight: alignment == Alignment.bottomRight ? const Radius.circular(12) : Radius.zero,
+            topLeft: alignment == Alignment.topLeft
+                ? const Radius.circular(12)
+                : Radius.zero,
+            topRight: alignment == Alignment.topRight
+                ? const Radius.circular(12)
+                : Radius.zero,
+            bottomLeft: alignment == Alignment.bottomLeft
+                ? const Radius.circular(12)
+                : Radius.zero,
+            bottomRight: alignment == Alignment.bottomRight
+                ? const Radius.circular(12)
+                : Radius.zero,
           ),
         ),
       ),
@@ -206,12 +222,19 @@ class _QRScannerPageState extends State<QRScannerPage> with SingleTickerProvider
                   ),
                 ],
               ),
-              child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.qr_code_scanner,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             const Text(
               'Escanear QR',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -220,8 +243,8 @@ class _QRScannerPageState extends State<QRScannerPage> with SingleTickerProvider
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
               color: _torchEnabled
-                ? const Color(0xFFFF6A00).withValues(alpha: 0.2)
-                : Colors.white.withValues(alpha: 0.1),
+                  ? const Color(0xFFFF6A00).withValues(alpha: 0.2)
+                  : Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: IconButton(
@@ -250,10 +273,7 @@ class _QRScannerPageState extends State<QRScannerPage> with SingleTickerProvider
       body: Stack(
         children: [
           // Escáner de QR
-          MobileScanner(
-            controller: cameraController,
-            onDetect: _handleBarcode,
-          ),
+          MobileScanner(controller: cameraController, onDetect: _handleBarcode),
 
           // Overlay con instrucciones
           Container(
@@ -333,7 +353,9 @@ class _QRScannerPageState extends State<QRScannerPage> with SingleTickerProvider
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFF6A00).withValues(alpha: 0.6),
+                                color: const Color(
+                                  0xFFFF6A00,
+                                ).withValues(alpha: 0.6),
                                 blurRadius: 10,
                               ),
                             ],
@@ -354,7 +376,10 @@ class _QRScannerPageState extends State<QRScannerPage> with SingleTickerProvider
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
                   margin: const EdgeInsets.symmetric(horizontal: 40),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(

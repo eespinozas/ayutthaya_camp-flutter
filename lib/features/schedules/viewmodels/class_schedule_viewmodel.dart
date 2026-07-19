@@ -69,7 +69,10 @@ class ClassScheduleViewModel extends ChangeNotifier {
   }
 
   /// Actualizar un horario (admin)
-  Future<bool> updateSchedule(String scheduleId, Map<String, dynamic> data) async {
+  Future<bool> updateSchedule(
+    String scheduleId,
+    Map<String, dynamic> data,
+  ) async {
     try {
       _setLoading(true);
       await _scheduleService.updateSchedule(scheduleId, data);

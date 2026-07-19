@@ -52,16 +52,16 @@ class AdminPerfilPage extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 user?.email ?? '',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 16, color: Colors.white70),
               ),
               const SizedBox(height: 8),
 
               // Badge de Admin
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -111,7 +111,9 @@ class AdminPerfilPage extends StatelessWidget {
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text('Cerrar sesión'),
-                        content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+                        content: const Text(
+                          '¿Estás seguro de que deseas cerrar sesión?',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
@@ -128,10 +130,9 @@ class AdminPerfilPage extends StatelessWidget {
                     if (confirm == true && context.mounted) {
                       await authVM.logout();
                       if (context.mounted) {
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/login',
-                          (route) => false,
-                        );
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil('/login', (route) => false);
                       }
                     }
                   },

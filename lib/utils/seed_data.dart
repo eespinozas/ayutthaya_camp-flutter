@@ -223,9 +223,13 @@ class SeedData {
     int count = 0;
     for (var schedule in schedules) {
       try {
-        final docRef = await _firestore.collection('class_schedules').add(schedule);
+        final docRef = await _firestore
+            .collection('class_schedules')
+            .add(schedule);
         count++;
-        debugPrint('✅ Horario agregado: "${schedule['type']}" a las ${schedule['time']} con ID: ${docRef.id}');
+        debugPrint(
+          '✅ Horario agregado: "${schedule['type']}" a las ${schedule['time']} con ID: ${docRef.id}',
+        );
       } catch (e) {
         debugPrint('❌ Error al agregar horario "${schedule['type']}": $e');
       }

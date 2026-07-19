@@ -49,10 +49,22 @@ void main() {
           RankingService.rangoDesdeClases(i * 12).nombre,
       ];
       expect(nombres, [
-        'Nak Rian IV', 'Nak Rian III', 'Nak Rian II', 'Nak Rian I',
-        'Nak Muay IV', 'Nak Muay III', 'Nak Muay II', 'Nak Muay I',
-        'Nak Su IV', 'Nak Su III', 'Nak Su II', 'Nak Su I',
-        'Yod Muay IV', 'Yod Muay III', 'Yod Muay II', 'Yod Muay I',
+        'Nak Rian IV',
+        'Nak Rian III',
+        'Nak Rian II',
+        'Nak Rian I',
+        'Nak Muay IV',
+        'Nak Muay III',
+        'Nak Muay II',
+        'Nak Muay I',
+        'Nak Su IV',
+        'Nak Su III',
+        'Nak Su II',
+        'Nak Su I',
+        'Yod Muay IV',
+        'Yod Muay III',
+        'Yod Muay II',
+        'Yod Muay I',
       ]);
     });
   });

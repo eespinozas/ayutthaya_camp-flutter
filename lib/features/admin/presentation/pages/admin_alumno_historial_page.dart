@@ -31,15 +31,16 @@ class AdminAlumnoHistorialPage extends StatelessWidget {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      final bookings =
-          snapshot.docs.map((doc) => Booking.fromFirestore(doc)).toList();
-      bookings.sort((a, b) {
-        final byDate = b.classDate.compareTo(a.classDate);
-        if (byDate != 0) return byDate;
-        return b.scheduleTime.compareTo(a.scheduleTime);
-      });
-      return bookings;
-    });
+          final bookings = snapshot.docs
+              .map((doc) => Booking.fromFirestore(doc))
+              .toList();
+          bookings.sort((a, b) {
+            final byDate = b.classDate.compareTo(a.classDate);
+            if (byDate != 0) return byDate;
+            return b.scheduleTime.compareTo(a.scheduleTime);
+          });
+          return bookings;
+        });
   }
 
   @override
@@ -87,123 +88,130 @@ class AdminAlumnoHistorialPage extends StatelessWidget {
 
   Widget _buildBody() {
     return StreamBuilder<List<Booking>>(
-        stream: _bookingsStream(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
-            );
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Error al cargar historial: ${snapshot.error}',
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-
-          final bookings = snapshot.data ?? [];
-
-          final asistidas = bookings
-              .where((b) => b.status == BookingStatus.attended)
-              .length;
-          final noAsistidas = bookings
-              .where((b) =>
-                  b.status == BookingStatus.noShow ||
-                  b.status == BookingStatus.rejected)
-              .length;
-          final pendientes = bookings
-              .where((b) => b.status == BookingStatus.pendingApproval)
-              .length;
-          final rango = RankingService.rangoDesdeClases(asistidas);
-
-          return Column(
-            children: [
-              // Resumen
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFFFF6A00).withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.military_tech,
-                            color: Color(0xFFFF6A00), size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          rango.nombre,
-                          style: const TextStyle(
-                            color: Color(0xFFFF6A00),
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '$asistidas clases válidas',
-                          style: const TextStyle(
-                              color: Colors.white60, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _buildStat('Total', '${bookings.length}', Colors.white),
-                        _buildStat('Asistidas', '$asistidas', Colors.green),
-                        _buildStat('No asistió', '$noAsistidas', Colors.red),
-                        if (pendientes > 0)
-                          _buildStat(
-                              'Pendientes', '$pendientes', Colors.amber),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Historial
-              Expanded(
-                child: bookings.isEmpty
-                    ? const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.history,
-                                size: 64, color: Colors.white24),
-                            SizedBox(height: 16),
-                            Text(
-                              'Este alumno aún no tiene\nreservas registradas',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.white38, fontSize: 15),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        itemCount: bookings.length,
-                        itemBuilder: (context, index) =>
-                            _buildBookingTile(bookings[index]),
-                      ),
-              ),
-            ],
+      stream: _bookingsStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
           );
-        },
-      );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Error al cargar historial: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        final bookings = snapshot.data ?? [];
+
+        final asistidas = bookings
+            .where((b) => b.status == BookingStatus.attended)
+            .length;
+        final noAsistidas = bookings
+            .where(
+              (b) =>
+                  b.status == BookingStatus.noShow ||
+                  b.status == BookingStatus.rejected,
+            )
+            .length;
+        final pendientes = bookings
+            .where((b) => b.status == BookingStatus.pendingApproval)
+            .length;
+        final rango = RankingService.rangoDesdeClases(asistidas);
+
+        return Column(
+          children: [
+            // Resumen
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.25),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.military_tech,
+                        color: Color(0xFFFF6A00),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        rango.nombre,
+                        style: const TextStyle(
+                          color: Color(0xFFFF6A00),
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '$asistidas clases válidas',
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _buildStat('Total', '${bookings.length}', Colors.white),
+                      _buildStat('Asistidas', '$asistidas', Colors.green),
+                      _buildStat('No asistió', '$noAsistidas', Colors.red),
+                      if (pendientes > 0)
+                        _buildStat('Pendientes', '$pendientes', Colors.amber),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Historial
+            Expanded(
+              child: bookings.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.history, size: 64, color: Colors.white24),
+                          SizedBox(height: 16),
+                          Text(
+                            'Este alumno aún no tiene\nreservas registradas',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      itemCount: bookings.length,
+                      itemBuilder: (context, index) =>
+                          _buildBookingTile(bookings[index]),
+                    ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildStat(String label, String value, Color color) {
@@ -240,29 +248,35 @@ class AdminAlumnoHistorialPage extends StatelessWidget {
         return (
           color: Colors.amber,
           text: 'Esperando aprobación',
-          icon: Icons.hourglass_top
+          icon: Icons.hourglass_top,
         );
       case BookingStatus.cancelled:
         return (
           color: Colors.orange,
           text: 'Cancelada',
-          icon: Icons.event_busy
+          icon: Icons.event_busy,
         );
       case BookingStatus.confirmed:
         return booking.isPast()
-            ? (color: Colors.grey, text: 'Sin resolver', icon: Icons.help_outline)
+            ? (
+                color: Colors.grey,
+                text: 'Sin resolver',
+                icon: Icons.help_outline,
+              )
             : (
                 color: const Color(0xFFFF6A00),
                 text: 'Agendada',
-                icon: Icons.event_available
+                icon: Icons.event_available,
               );
     }
   }
 
   Widget _buildBookingTile(Booking booking) {
     final status = _statusInfo(booking);
-    final fecha =
-        DateFormat('EEE dd MMM yyyy', 'es_ES').format(booking.classDate);
+    final fecha = DateFormat(
+      'EEE dd MMM yyyy',
+      'es_ES',
+    ).format(booking.classDate);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),

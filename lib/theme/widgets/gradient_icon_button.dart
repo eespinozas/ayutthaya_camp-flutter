@@ -40,11 +40,7 @@ class GradientIconButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppSpacing.radiusIcon),
             boxShadow: AppColors.primaryGlow,
           ),
-          child: Icon(
-            icon,
-            color: AppColors.textPrimary,
-            size: iconSize,
-          ),
+          child: Icon(icon, color: AppColors.textPrimary, size: iconSize),
         ),
       ),
     );

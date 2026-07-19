@@ -69,10 +69,7 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
             const Text(
               'Escanea el código QR en el gimnasio para registrar tu asistencia a la clase',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.white70, fontSize: 16),
             ),
             const SizedBox(height: 32),
 
@@ -162,7 +159,11 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
     );
   }
 
-  Widget _buildInstructionItem(String number, String title, String description) {
+  Widget _buildInstructionItem(
+    String number,
+    String title,
+    String description,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -200,10 +201,7 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
               const SizedBox(height: 4),
               Text(
                 description,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
           ),
@@ -215,17 +213,18 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
   Future<void> _scanQR() async {
     // Navegar a la página del escáner
     final result = await Navigator.of(context).push<Map<String, dynamic>>(
-      MaterialPageRoute(
-        builder: (context) => const QRScannerPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const QRScannerPage()),
     );
 
     // Si no hay resultado, el usuario canceló
     if (result == null) return;
 
     // Verificar que sea del tipo correcto (acepta tanto el nuevo como el antiguo)
-    if (result['type'] != 'gym_checkin' && result['type'] != 'attendance_checkin') {
-      _showErrorDialog('Este código QR no es válido para check-in de asistencia');
+    if (result['type'] != 'gym_checkin' &&
+        result['type'] != 'attendance_checkin') {
+      _showErrorDialog(
+        'Este código QR no es válido para check-in de asistencia',
+      );
       return;
     }
 
@@ -334,17 +333,11 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2A2A2A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 80,
-              color: iconColor,
-            ),
+            Icon(icon, size: 80, color: iconColor),
             const SizedBox(height: 16),
             Text(
               title,
@@ -359,10 +352,7 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 16),
             ),
             if (classType != null && classTime != null) ...[
               const SizedBox(height: 8),
@@ -372,11 +362,17 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: action == 'marked_no_show' || action == 'created_no_show' || action == 'already_no_show'
+                  color:
+                      action == 'marked_no_show' ||
+                          action == 'created_no_show' ||
+                          action == 'already_no_show'
                       ? Colors.red.withValues(alpha: 0.2)
                       : Colors.orangeAccent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
-                  border: action == 'marked_no_show' || action == 'created_no_show' || action == 'already_no_show'
+                  border:
+                      action == 'marked_no_show' ||
+                          action == 'created_no_show' ||
+                          action == 'already_no_show'
                       ? Border.all(color: Colors.red.withValues(alpha: 0.3))
                       : null,
                 ),
@@ -385,7 +381,10 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
                     Text(
                       classType,
                       style: TextStyle(
-                        color: action == 'marked_no_show' || action == 'created_no_show' || action == 'already_no_show'
+                        color:
+                            action == 'marked_no_show' ||
+                                action == 'created_no_show' ||
+                                action == 'already_no_show'
                             ? Colors.red
                             : Colors.orangeAccent,
                         fontSize: 18,
@@ -394,10 +393,7 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
                     ),
                     Text(
                       classTime,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ],
                 ),
@@ -430,17 +426,11 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2A2A2A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 80,
-              color: Colors.red,
-            ),
+            const Icon(Icons.error_outline, size: 80, color: Colors.red),
             const SizedBox(height: 16),
             const Text(
               'Error',
@@ -454,10 +444,7 @@ class _QRCheckInPageState extends State<QRCheckInPage> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 16),
             ),
           ],
         ),

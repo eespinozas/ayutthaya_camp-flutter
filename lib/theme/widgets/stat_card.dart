@@ -61,7 +61,11 @@ class StatCard extends StatelessWidget {
                   color: AppColors.glassmorphismStrong,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                 ),
-                child: Icon(icon, color: AppColors.textPrimary, size: AppSpacing.iconMd),
+                child: Icon(
+                  icon,
+                  color: AppColors.textPrimary,
+                  size: AppSpacing.iconMd,
+                ),
               ),
               if (showTrend)
                 Container(

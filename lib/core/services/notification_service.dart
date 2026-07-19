@@ -29,7 +29,9 @@ class NotificationService {
         provisional: false,
       );
 
-      debugPrint('📱 Permisos de notificación: ${settings.authorizationStatus}');
+      debugPrint(
+        '📱 Permisos de notificación: ${settings.authorizationStatus}',
+      );
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         debugPrint('✅ Notificaciones autorizadas');
@@ -41,13 +43,15 @@ class NotificationService {
         try {
           String? token = await _messaging.getToken(
             vapidKey: kIsWeb
-              ? dotenv.env['VAPID_KEY'] // ✅ Desde .env (más seguro)
-              : null,
+                ? dotenv.env['VAPID_KEY'] // ✅ Desde .env (más seguro)
+                : null,
           );
           debugPrint('🔑 FCM Token: $token');
         } catch (e) {
           if (e.toString().contains('failed-service-worker-registration')) {
-            debugPrint('⚠️ Service Worker no registrado (normal en desarrollo local sin HTTPS)');
+            debugPrint(
+              '⚠️ Service Worker no registrado (normal en desarrollo local sin HTTPS)',
+            );
           } else {
             debugPrint('⚠️ No se pudo obtener FCM token: $e');
           }
@@ -128,8 +132,8 @@ class NotificationService {
 
       String? token = await _messaging.getToken(
         vapidKey: kIsWeb
-          ? dotenv.env['VAPID_KEY'] // ✅ Desde .env (más seguro)
-          : null,
+            ? dotenv.env['VAPID_KEY'] // ✅ Desde .env (más seguro)
+            : null,
       );
 
       if (token != null) {
@@ -146,7 +150,9 @@ class NotificationService {
       // Manejar específicamente el error del service worker en web
       if (e.toString().contains('failed-service-worker-registration')) {
         debugPrint('⚠️ Service Worker no disponible en este entorno');
-        debugPrint('   Las notificaciones push solo funcionan en HTTPS o localhost');
+        debugPrint(
+          '   Las notificaciones push solo funcionan en HTTPS o localhost',
+        );
       } else {
         debugPrint('❌ Error guardando FCM token: $e');
       }
@@ -236,7 +242,9 @@ class NotificationService {
         }
       }
 
-      debugPrint('✅ Notificaciones creadas para ${adminsSnapshot.docs.length} admins');
+      debugPrint(
+        '✅ Notificaciones creadas para ${adminsSnapshot.docs.length} admins',
+      );
     } catch (e) {
       debugPrint('❌ Error enviando notificaciones a admins: $e');
     }
@@ -261,14 +269,17 @@ class NotificationService {
         int.parse(timeParts[1]),
       );
 
-      final reminderTime = classDateTime.subtract(Duration(minutes: minutesBefore));
+      final reminderTime = classDateTime.subtract(
+        Duration(minutes: minutesBefore),
+      );
 
       // Crear documento de recordatorio programado
       await _firestore.collection('scheduled_notifications').add({
         'bookingId': bookingId,
         'userId': userId,
         'title': 'Recordatorio de Clase',
-        'body': 'Tu clase de $className es en $minutesBefore minutos. No olvides confirmar tu asistencia.',
+        'body':
+            'Tu clase de $className es en $minutesBefore minutos. No olvides confirmar tu asistencia.',
         'data': {
           'type': 'class_reminder',
           'bookingId': bookingId,
@@ -279,7 +290,9 @@ class NotificationService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      debugPrint('⏰ Recordatorio programado para $minutesBefore min antes: $reminderTime');
+      debugPrint(
+        '⏰ Recordatorio programado para $minutesBefore min antes: $reminderTime',
+      );
     } catch (e) {
       debugPrint('❌ Error programando recordatorio: $e');
     }

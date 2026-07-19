@@ -19,28 +19,32 @@ class AdminPagosViewModel extends ChangeNotifier {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .handleError((error) {
-        debugPrint('❌ ERROR en getPendingPayments:');
-        debugPrint('   Tipo: ${error.runtimeType}');
-        debugPrint('   Mensaje: $error');
-        if (error.toString().contains('index')) {
-          debugPrint('');
-          debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
-          debugPrint('   Colección: payments');
-          debugPrint('   Campos: status (==) + createdAt (DESCENDING)');
-          debugPrint('');
-          debugPrint('   Para crear el índice:');
-          debugPrint('   1. Copia el enlace del error si aparece');
-          debugPrint('   2. O ejecuta: firebase firestore:indexes');
-          debugPrint('   3. O crea manualmente en Firebase Console:');
-          debugPrint('      - Collection: payments');
-          debugPrint('      - Fields: status (Ascending), createdAt (Descending)');
-          debugPrint('');
-        }
-      })
+            debugPrint('❌ ERROR en getPendingPayments:');
+            debugPrint('   Tipo: ${error.runtimeType}');
+            debugPrint('   Mensaje: $error');
+            if (error.toString().contains('index')) {
+              debugPrint('');
+              debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
+              debugPrint('   Colección: payments');
+              debugPrint('   Campos: status (==) + createdAt (DESCENDING)');
+              debugPrint('');
+              debugPrint('   Para crear el índice:');
+              debugPrint('   1. Copia el enlace del error si aparece');
+              debugPrint('   2. O ejecuta: firebase firestore:indexes');
+              debugPrint('   3. O crea manualmente en Firebase Console:');
+              debugPrint('      - Collection: payments');
+              debugPrint(
+                '      - Fields: status (Ascending), createdAt (Descending)',
+              );
+              debugPrint('');
+            }
+          })
           .map((snapshot) {
-        debugPrint('✅ Pagos pendientes recibidos: ${snapshot.docs.length}');
-        return snapshot.docs.map((doc) => Payment.fromFirestore(doc)).toList();
-      });
+            debugPrint('✅ Pagos pendientes recibidos: ${snapshot.docs.length}');
+            return snapshot.docs
+                .map((doc) => Payment.fromFirestore(doc))
+                .toList();
+          });
     } catch (e) {
       debugPrint('❌ Error crítico en getPendingPayments: $e');
       return Stream.value([]);
@@ -56,21 +60,23 @@ class AdminPagosViewModel extends ChangeNotifier {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .handleError((error) {
-        debugPrint('❌ ERROR en getApprovedPayments:');
-        debugPrint('   Tipo: ${error.runtimeType}');
-        debugPrint('   Mensaje: $error');
-        if (error.toString().contains('index')) {
-          debugPrint('');
-          debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
-          debugPrint('   Colección: payments');
-          debugPrint('   Campos: status (==) + createdAt (DESCENDING)');
-          debugPrint('');
-        }
-      })
+            debugPrint('❌ ERROR en getApprovedPayments:');
+            debugPrint('   Tipo: ${error.runtimeType}');
+            debugPrint('   Mensaje: $error');
+            if (error.toString().contains('index')) {
+              debugPrint('');
+              debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
+              debugPrint('   Colección: payments');
+              debugPrint('   Campos: status (==) + createdAt (DESCENDING)');
+              debugPrint('');
+            }
+          })
           .map((snapshot) {
-        debugPrint('✅ Pagos aprobados recibidos: ${snapshot.docs.length}');
-        return snapshot.docs.map((doc) => Payment.fromFirestore(doc)).toList();
-      });
+            debugPrint('✅ Pagos aprobados recibidos: ${snapshot.docs.length}');
+            return snapshot.docs
+                .map((doc) => Payment.fromFirestore(doc))
+                .toList();
+          });
     } catch (e) {
       debugPrint('❌ Error crítico en getApprovedPayments: $e');
       return Stream.value([]);
@@ -86,21 +92,23 @@ class AdminPagosViewModel extends ChangeNotifier {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .handleError((error) {
-        debugPrint('❌ ERROR en getRejectedPayments:');
-        debugPrint('   Tipo: ${error.runtimeType}');
-        debugPrint('   Mensaje: $error');
-        if (error.toString().contains('index')) {
-          debugPrint('');
-          debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
-          debugPrint('   Colección: payments');
-          debugPrint('   Campos: status (==) + createdAt (DESCENDING)');
-          debugPrint('');
-        }
-      })
+            debugPrint('❌ ERROR en getRejectedPayments:');
+            debugPrint('   Tipo: ${error.runtimeType}');
+            debugPrint('   Mensaje: $error');
+            if (error.toString().contains('index')) {
+              debugPrint('');
+              debugPrint('🔴 ¡FALTA ÍNDICE DE FIRESTORE!');
+              debugPrint('   Colección: payments');
+              debugPrint('   Campos: status (==) + createdAt (DESCENDING)');
+              debugPrint('');
+            }
+          })
           .map((snapshot) {
-        debugPrint('✅ Pagos rechazados recibidos: ${snapshot.docs.length}');
-        return snapshot.docs.map((doc) => Payment.fromFirestore(doc)).toList();
-      });
+            debugPrint('✅ Pagos rechazados recibidos: ${snapshot.docs.length}');
+            return snapshot.docs
+                .map((doc) => Payment.fromFirestore(doc))
+                .toList();
+          });
     } catch (e) {
       debugPrint('❌ Error crítico en getRejectedPayments: $e');
       return Stream.value([]);
@@ -144,7 +152,6 @@ class AdminPagosViewModel extends ChangeNotifier {
 
       // TODO: Enviar notificación al usuario informando el rechazo
       // con el motivo para que pueda corregir y enviar nuevamente
-
     } catch (e) {
       debugPrint('❌ Error rechazando pago: $e');
       rethrow;

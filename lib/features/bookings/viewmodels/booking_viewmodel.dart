@@ -46,7 +46,10 @@ class BookingViewModel extends ChangeNotifier {
   }
 
   /// Obtener reservas de una clase (admin)
-  Stream<List<Booking>> getClassBookings(String scheduleId, DateTime classDate) {
+  Stream<List<Booking>> getClassBookings(
+    String scheduleId,
+    DateTime classDate,
+  ) {
     return _bookingService.getClassBookings(scheduleId, classDate);
   }
 
@@ -121,9 +124,17 @@ class BookingViewModel extends ChangeNotifier {
   }
 
   /// Verificar si tiene reserva
-  Future<bool> hasBookingForClass(String userId, String scheduleId, DateTime classDate) async {
+  Future<bool> hasBookingForClass(
+    String userId,
+    String scheduleId,
+    DateTime classDate,
+  ) async {
     try {
-      return await _bookingService.hasBookingForClass(userId, scheduleId, classDate);
+      return await _bookingService.hasBookingForClass(
+        userId,
+        scheduleId,
+        classDate,
+      );
     } catch (e) {
       _setError(e.toString());
       return false;
@@ -131,7 +142,11 @@ class BookingViewModel extends ChangeNotifier {
   }
 
   /// Alias para hasBookingForClass (para compatibilidad)
-  Future<bool> hasUserBookedSchedule(String userId, String scheduleId, DateTime classDate) async {
+  Future<bool> hasUserBookedSchedule(
+    String userId,
+    String scheduleId,
+    DateTime classDate,
+  ) async {
     return hasBookingForClass(userId, scheduleId, classDate);
   }
 
@@ -150,9 +165,15 @@ class BookingViewModel extends ChangeNotifier {
   }
 
   /// Obtener número de clases agendadas por el usuario este mes
-  Future<int> getUserBookedClassesThisMonth(String userId, DateTime referenceDate) async {
+  Future<int> getUserBookedClassesThisMonth(
+    String userId,
+    DateTime referenceDate,
+  ) async {
     try {
-      return await _bookingService.getUserBookedClassesThisMonth(userId, referenceDate);
+      return await _bookingService.getUserBookedClassesThisMonth(
+        userId,
+        referenceDate,
+      );
     } catch (e) {
       _setError(e.toString());
       return 0;

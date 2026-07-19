@@ -31,12 +31,12 @@ void main() {
           .collection('capacity_tracking')
           .doc('2025-01-15')
           .set({
-        'currentBookings': 0,
-        'maxCapacity': 15,
-        'scheduleId': 'schedule_1',
-        'classDate': Timestamp.fromDate(DateTime(2025, 1, 15)),
-        'lastUpdated': FieldValue.serverTimestamp(),
-      });
+            'currentBookings': 0,
+            'maxCapacity': 15,
+            'scheduleId': 'schedule_1',
+            'classDate': Timestamp.fromDate(DateTime(2025, 1, 15)),
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
 
       // Seed: Create user
       await fakeFirestore.collection('users').doc('user_1').set({
@@ -51,39 +51,43 @@ void main() {
       bookingService = BookingService(firestore: fakeFirestore);
     });
 
-    test('should create booking and increment capacity counter atomically',
-        () async {
-      final booking = Booking(
-        userId: 'user_1',
-        userName: 'Test User',
-        userEmail: 'test@test.com',
-        scheduleId: 'schedule_1',
-        scheduleTime: '07:00',
-        scheduleType: 'Muay Thai',
-        instructor: 'Francisco Poveda',
-        classDate: DateTime(2025, 1, 15),
-        createdAt: DateTime.now(),
-      );
+    test(
+      'should create booking and increment capacity counter atomically',
+      () async {
+        final booking = Booking(
+          userId: 'user_1',
+          userName: 'Test User',
+          userEmail: 'test@test.com',
+          scheduleId: 'schedule_1',
+          scheduleTime: '07:00',
+          scheduleType: 'Muay Thai',
+          instructor: 'Francisco Poveda',
+          classDate: DateTime(2025, 1, 15),
+          createdAt: DateTime.now(),
+        );
 
-      // Act: Create booking
-      final bookingId = await bookingService.createBooking(booking);
+        // Act: Create booking
+        final bookingId = await bookingService.createBooking(booking);
 
-      // Assert: Booking created
-      expect(bookingId, isNotNull);
-      final bookingDoc =
-          await fakeFirestore.collection('bookings').doc(bookingId).get();
-      expect(bookingDoc.exists, true);
+        // Assert: Booking created
+        expect(bookingId, isNotNull);
+        final bookingDoc = await fakeFirestore
+            .collection('bookings')
+            .doc(bookingId)
+            .get();
+        expect(bookingDoc.exists, true);
 
-      // Assert: Capacity counter incremented
-      final capacityDoc = await fakeFirestore
-          .collection('class_schedules')
-          .doc('schedule_1')
-          .collection('capacity_tracking')
-          .doc('2025-01-15')
-          .get();
+        // Assert: Capacity counter incremented
+        final capacityDoc = await fakeFirestore
+            .collection('class_schedules')
+            .doc('schedule_1')
+            .collection('capacity_tracking')
+            .doc('2025-01-15')
+            .get();
 
-      expect(capacityDoc.data()?['currentBookings'], 1);
-    });
+        expect(capacityDoc.data()?['currentBookings'], 1);
+      },
+    );
 
     test('should prevent booking when class is full', () async {
       // Arrange: Set capacity to full
@@ -113,76 +117,86 @@ void main() {
       );
     });
 
-    test('should prevent duplicate bookings for same user, schedule, and date',
-        () async {
-      final booking = Booking(
-        userId: 'user_1',
-        userName: 'Test User',
-        userEmail: 'test@test.com',
-        scheduleId: 'schedule_1',
-        scheduleTime: '07:00',
-        scheduleType: 'Muay Thai',
-        instructor: 'Francisco Poveda',
-        classDate: DateTime(2025, 1, 15),
-        status: BookingStatus.confirmed,
-        createdAt: DateTime.now(),
-      );
+    test(
+      'should prevent duplicate bookings for same user, schedule, and date',
+      () async {
+        final booking = Booking(
+          userId: 'user_1',
+          userName: 'Test User',
+          userEmail: 'test@test.com',
+          scheduleId: 'schedule_1',
+          scheduleTime: '07:00',
+          scheduleType: 'Muay Thai',
+          instructor: 'Francisco Poveda',
+          classDate: DateTime(2025, 1, 15),
+          status: BookingStatus.confirmed,
+          createdAt: DateTime.now(),
+        );
 
-      // Create first booking
-      await bookingService.createBooking(booking);
+        // Create first booking
+        await bookingService.createBooking(booking);
 
-      // Try to create duplicate
-      expect(
-        () async => await bookingService.createBooking(booking),
-        throwsA(predicate((e) =>
-            e is Exception &&
-            e.toString().contains('Ya tienes una reserva'))),
-      );
-    });
+        // Try to create duplicate
+        expect(
+          () async => await bookingService.createBooking(booking),
+          throwsA(
+            predicate(
+              (e) =>
+                  e is Exception &&
+                  e.toString().contains('Ya tienes una reserva'),
+            ),
+          ),
+        );
+      },
+    );
 
-    test('should cancel booking and decrement capacity counter atomically',
-        () async {
-      // Arrange: Create a booking first
-      final booking = Booking(
-        userId: 'user_1',
-        userName: 'Test User',
-        userEmail: 'test@test.com',
-        scheduleId: 'schedule_1',
-        scheduleTime: '07:00',
-        scheduleType: 'Muay Thai',
-        instructor: 'Francisco Poveda',
-        classDate: DateTime(2025, 1, 15),
-        createdAt: DateTime.now(),
-      );
+    test(
+      'should cancel booking and decrement capacity counter atomically',
+      () async {
+        // Arrange: Create a booking first
+        final booking = Booking(
+          userId: 'user_1',
+          userName: 'Test User',
+          userEmail: 'test@test.com',
+          scheduleId: 'schedule_1',
+          scheduleTime: '07:00',
+          scheduleType: 'Muay Thai',
+          instructor: 'Francisco Poveda',
+          classDate: DateTime(2025, 1, 15),
+          createdAt: DateTime.now(),
+        );
 
-      final bookingId = await bookingService.createBooking(booking);
+        final bookingId = await bookingService.createBooking(booking);
 
-      // Verify counter is 1
-      var capacityDoc = await fakeFirestore
-          .collection('class_schedules')
-          .doc('schedule_1')
-          .collection('capacity_tracking')
-          .doc('2025-01-15')
-          .get();
-      expect(capacityDoc.data()?['currentBookings'], 1);
+        // Verify counter is 1
+        var capacityDoc = await fakeFirestore
+            .collection('class_schedules')
+            .doc('schedule_1')
+            .collection('capacity_tracking')
+            .doc('2025-01-15')
+            .get();
+        expect(capacityDoc.data()?['currentBookings'], 1);
 
-      // Act: Cancel booking
-      await bookingService.cancelBooking(bookingId, 'User cancelled');
+        // Act: Cancel booking
+        await bookingService.cancelBooking(bookingId, 'User cancelled');
 
-      // Assert: Booking status updated
-      final bookingDoc =
-          await fakeFirestore.collection('bookings').doc(bookingId).get();
-      expect(bookingDoc.data()?['status'], BookingStatus.cancelled.name);
+        // Assert: Booking status updated
+        final bookingDoc = await fakeFirestore
+            .collection('bookings')
+            .doc(bookingId)
+            .get();
+        expect(bookingDoc.data()?['status'], BookingStatus.cancelled.name);
 
-      // Assert: Counter decremented
-      capacityDoc = await fakeFirestore
-          .collection('class_schedules')
-          .doc('schedule_1')
-          .collection('capacity_tracking')
-          .doc('2025-01-15')
-          .get();
-      expect(capacityDoc.data()?['currentBookings'], 0);
-    });
+        // Assert: Counter decremented
+        capacityDoc = await fakeFirestore
+            .collection('class_schedules')
+            .doc('schedule_1')
+            .collection('capacity_tracking')
+            .doc('2025-01-15')
+            .get();
+        expect(capacityDoc.data()?['currentBookings'], 0);
+      },
+    );
 
     test('should not allow cancelling already cancelled booking', () async {
       // Arrange: Create and cancel a booking
@@ -205,31 +219,37 @@ void main() {
       expect(
         () async =>
             await bookingService.cancelBooking(bookingId, 'Second attempt'),
-        throwsA(predicate((e) =>
-            e is Exception &&
-            e.toString().contains('Solo se pueden cancelar'))),
+        throwsA(
+          predicate(
+            (e) =>
+                e is Exception &&
+                e.toString().contains('Solo se pueden cancelar'),
+          ),
+        ),
       );
     });
 
-    test('getBookedCount should return current bookings from counter',
-        () async {
-      // Arrange: Update counter manually
-      await fakeFirestore
-          .collection('class_schedules')
-          .doc('schedule_1')
-          .collection('capacity_tracking')
-          .doc('2025-01-15')
-          .update({'currentBookings': 8});
+    test(
+      'getBookedCount should return current bookings from counter',
+      () async {
+        // Arrange: Update counter manually
+        await fakeFirestore
+            .collection('class_schedules')
+            .doc('schedule_1')
+            .collection('capacity_tracking')
+            .doc('2025-01-15')
+            .update({'currentBookings': 8});
 
-      // Act
-      final count = await bookingService.getBookedCount(
-        'schedule_1',
-        DateTime(2025, 1, 15),
-      );
+        // Act
+        final count = await bookingService.getBookedCount(
+          'schedule_1',
+          DateTime(2025, 1, 15),
+        );
 
-      // Assert
-      expect(count, 8);
-    });
+        // Assert
+        expect(count, 8);
+      },
+    );
 
     test('getBookedCount should return 0 for date without counter', () async {
       // Act: Query date that has no capacity_tracking document
@@ -268,8 +288,11 @@ void main() {
       // Act & Assert
       expect(
         () async => await bookingService.createBooking(booking),
-        throwsA(predicate((e) =>
-            e is Exception && e.toString().contains('ya comenzó'))),
+        throwsA(
+          predicate(
+            (e) => e is Exception && e.toString().contains('ya comenzó'),
+          ),
+        ),
       );
     });
 
@@ -321,27 +344,31 @@ void main() {
       );
     });
 
-    test('getUserUpcomingBookings should only return future bookings',
-        () async {
-      // Arrange: Add a past booking
-      final past = DateTime.now().subtract(Duration(days: 5));
-      await fakeFirestore.collection('bookings').add({
-        'userId': 'user_1',
-        'classDate': Timestamp.fromDate(past),
-        'status': BookingStatus.confirmed.name,
-      });
+    test(
+      'getUserUpcomingBookings should only return future bookings',
+      () async {
+        // Arrange: Add a past booking
+        final past = DateTime.now().subtract(Duration(days: 5));
+        await fakeFirestore.collection('bookings').add({
+          'userId': 'user_1',
+          'classDate': Timestamp.fromDate(past),
+          'status': BookingStatus.confirmed.name,
+        });
 
-      // Act
-      final stream = bookingService.getUserUpcomingBookings('user_1');
+        // Act
+        final stream = bookingService.getUserUpcomingBookings('user_1');
 
-      // Assert: Should only get future booking
-      await expectLater(
-        stream,
-        emits(predicate<List<Booking>>((bookings) {
-          return bookings.every((b) => !b.isPast());
-        })),
-      );
-    });
+        // Assert: Should only get future booking
+        await expectLater(
+          stream,
+          emits(
+            predicate<List<Booking>>((bookings) {
+              return bookings.every((b) => !b.isPast());
+            }),
+          ),
+        );
+      },
+    );
   });
 
   group('BookingService - Schedule overrides (horarios suspendidos)', () {
@@ -376,16 +403,16 @@ void main() {
     });
 
     Booking buildBooking() => Booking(
-          userId: 'user_1',
-          userName: 'Test User',
-          userEmail: 'test@test.com',
-          scheduleId: 'schedule_1',
-          scheduleTime: '07:00',
-          scheduleType: 'Muay Thai',
-          instructor: 'Francisco Poveda',
-          classDate: normalizedDate,
-          createdAt: DateTime.now(),
-        );
+      userId: 'user_1',
+      userName: 'Test User',
+      userEmail: 'test@test.com',
+      scheduleId: 'schedule_1',
+      scheduleTime: '07:00',
+      scheduleType: 'Muay Thai',
+      instructor: 'Francisco Poveda',
+      classDate: normalizedDate,
+      createdAt: DateTime.now(),
+    );
 
     test('bloquea reservas nuevas cuando el horario está suspendido', () async {
       final dateKey =
@@ -394,13 +421,13 @@ void main() {
           .collection('schedule_overrides')
           .doc('schedule_1_$dateKey')
           .set({
-        'scheduleId': 'schedule_1',
-        'dateKey': dateKey,
-        'disabled': true,
-        'reason': 'Pelea',
-        'createdBy': 'admin_1',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+            'scheduleId': 'schedule_1',
+            'dateKey': dateKey,
+            'disabled': true,
+            'reason': 'Pelea',
+            'createdBy': 'admin_1',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
       expect(
         () => bookingService.createBooking(buildBooking()),
@@ -415,12 +442,12 @@ void main() {
           .collection('schedule_overrides')
           .doc('schedule_1_$dateKey')
           .set({
-        'scheduleId': 'schedule_1',
-        'dateKey': dateKey,
-        'disabled': false,
-        'createdBy': 'admin_1',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+            'scheduleId': 'schedule_1',
+            'dateKey': dateKey,
+            'disabled': false,
+            'createdBy': 'admin_1',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
       final bookingId = await bookingService.createBooking(buildBooking());
       expect(bookingId, isNotEmpty);
@@ -452,13 +479,14 @@ void main() {
       bookingId = ref.id;
     });
 
-    test(
-        'confirmAttendance deja la reserva en pendingApproval '
+    test('confirmAttendance deja la reserva en pendingApproval '
         '(no attended) con el flag activo', () async {
       await bookingService.confirmAttendance(bookingId);
 
-      final doc =
-          await fakeFirestore.collection('bookings').doc(bookingId).get();
+      final doc = await fakeFirestore
+          .collection('bookings')
+          .doc(bookingId)
+          .get();
       final data = doc.data()!;
 
       // Con AppFlags.attendanceApprovalFlow == true la confirmación del
@@ -469,18 +497,22 @@ void main() {
       expect(data['attendedAt'], isNull);
     });
 
-    test('markAttendance (aprobación admin) marca attended con attendedBy',
-        () async {
-      await bookingService.confirmAttendance(bookingId);
-      await bookingService.markAttendance(bookingId, 'admin_1');
+    test(
+      'markAttendance (aprobación admin) marca attended con attendedBy',
+      () async {
+        await bookingService.confirmAttendance(bookingId);
+        await bookingService.markAttendance(bookingId, 'admin_1');
 
-      final doc =
-          await fakeFirestore.collection('bookings').doc(bookingId).get();
-      final data = doc.data()!;
+        final doc = await fakeFirestore
+            .collection('bookings')
+            .doc(bookingId)
+            .get();
+        final data = doc.data()!;
 
-      expect(data['status'], BookingStatus.attended.name);
-      expect(data['attendedBy'], 'admin_1');
-      expect(data['attendedAt'], isNotNull);
-    });
+        expect(data['status'], BookingStatus.attended.name);
+        expect(data['attendedBy'], 'admin_1');
+        expect(data['attendedAt'], isNotNull);
+      },
+    );
   });
 }

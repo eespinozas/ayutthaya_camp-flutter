@@ -46,17 +46,18 @@ class _AvatarProgressWidgetState extends State<AvatarProgressWidget>
 
     _flashAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.0, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 30.0,
       ),
+      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 40.0),
       TweenSequenceItem(
-        tween: ConstantTween<double>(1.0),
-        weight: 40.0,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30.0,
       ),
     ]).animate(_flashController);
@@ -186,8 +187,12 @@ class _AvatarProgressWidgetState extends State<AvatarProgressWidget>
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
                       colors: [
-                        Colors.amber.withValues(alpha: 0.8 * _flashAnimation.value),
-                        Colors.orange.withValues(alpha: 0.6 * _flashAnimation.value),
+                        Colors.amber.withValues(
+                          alpha: 0.8 * _flashAnimation.value,
+                        ),
+                        Colors.orange.withValues(
+                          alpha: 0.6 * _flashAnimation.value,
+                        ),
                         Colors.transparent,
                       ],
                       stops: const [0.3, 0.6, 1.0],

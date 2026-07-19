@@ -145,10 +145,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
     final user = _auth.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Verificación de Email'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Verificación de Email'), elevation: 0),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -160,7 +157,9 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                    color: Theme.of(
+                      context,
+                    ).primaryColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -174,10 +173,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                 // Título
                 const Text(
                   'Verifica tu email',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -185,10 +181,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                 // Descripción
                 Text(
                   'Hemos enviado un correo de verificación a:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
@@ -243,7 +236,9 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _isCheckingVerification ? null : _checkEmailVerified,
+                    onPressed: _isCheckingVerification
+                        ? null
+                        : _checkEmailVerified,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,

@@ -43,10 +43,15 @@ class _AgendarPageState extends State<AgendarPage> {
   }
 
   // Obtener clases del día desde Firebase
-  List<ClassSchedule> _getSchedulesForDay(List<ClassSchedule> allSchedules, DateTime day) {
+  List<ClassSchedule> _getSchedulesForDay(
+    List<ClassSchedule> allSchedules,
+    DateTime day,
+  ) {
     // Feriados de lunes a viernes usan el horario del sábado
     final dayOfWeek = ChileanHolidays.effectiveDayOfWeek(day);
-    return allSchedules.where((schedule) => schedule.isOnDay(dayOfWeek)).toList();
+    return allSchedules
+        .where((schedule) => schedule.isOnDay(dayOfWeek))
+        .toList();
   }
 
   // Formatear hora en formato 12h
@@ -69,7 +74,8 @@ class _AgendarPageState extends State<AgendarPage> {
     final now = DateTime.now();
 
     // Solo verificar si es hoy
-    final isToday = classDate.year == now.year &&
+    final isToday =
+        classDate.year == now.year &&
         classDate.month == now.month &&
         classDate.day == now.day;
 
@@ -143,11 +149,7 @@ class _AgendarPageState extends State<AgendarPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: const [
-                  Icon(
-                    Icons.all_inclusive,
-                    size: 18,
-                    color: Colors.green,
-                  ),
+                  Icon(Icons.all_inclusive, size: 18, color: Colors.green),
                   SizedBox(width: 8),
                   Text(
                     'Plan ilimitado',
@@ -183,19 +185,12 @@ class _AgendarPageState extends State<AgendarPage> {
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: color.withValues(alpha: 0.3),
-                width: 1,
-              ),
+              border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.event_available,
-                  size: 18,
-                  color: color,
-                ),
+                Icon(Icons.event_available, size: 18, color: color),
                 const SizedBox(width: 8),
                 Text(
                   '$bookedThisMonth de $classesPerMonth clases usadas este mes',
@@ -208,7 +203,10 @@ class _AgendarPageState extends State<AgendarPage> {
                 if (remaining > 0 && remaining <= 2) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: color,
                       borderRadius: BorderRadius.circular(10),
@@ -258,10 +256,7 @@ class _AgendarPageState extends State<AgendarPage> {
       };
     } catch (e) {
       debugPrint('Error obteniendo info de límite de clases: $e');
-      return {
-        'classesPerMonth': null,
-        'bookedThisMonth': 0,
-      };
+      return {'classesPerMonth': null, 'bookedThisMonth': 0};
     }
   }
 
@@ -414,9 +409,7 @@ class _AgendarPageState extends State<AgendarPage> {
           centerTitle: false,
         ),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: Colors.orangeAccent,
-          ),
+          child: CircularProgressIndicator(color: Colors.orangeAccent),
         ),
       );
     }
@@ -446,7 +439,11 @@ class _AgendarPageState extends State<AgendarPage> {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.calendar_month, color: Colors.white, size: 22),
+                child: const Icon(
+                  Icons.calendar_month,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               const Text(
@@ -465,336 +462,340 @@ class _AgendarPageState extends State<AgendarPage> {
           children: [
             // Calendario
             Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              ),
-              border: Border.all(
-                color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFF6A00).withValues(alpha: 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: TableCalendar(
-              firstDay: DateTime.now(),
-              lastDay: DateTime.now().add(const Duration(days: 90)),
-              focusedDay: _focusedDay,
-              calendarFormat: _calendarFormat,
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              locale: 'es_ES',
-              startingDayOfWeek: StartingDayOfWeek.monday,
-              onDaySelected: _onDaySelected,
-              onFormatChanged: (format) {
-                if (_calendarFormat != format) {
-                  setState(() {
-                    _calendarFormat = format;
-                  });
-                }
-              },
-              onPageChanged: (focusedDay) {
-                _focusedDay = focusedDay;
-              },
-              // Estilos del calendario
-              calendarStyle: CalendarStyle(
-                // Días
-                defaultTextStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w500,
-                ),
-                weekendTextStyle: const TextStyle(
-                  color: Color(0xFFFF8534),
-                  fontWeight: FontWeight.w600,
-                ),
-                outsideTextStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.2),
-                ),
-
-                // Día seleccionado
-                selectedDecoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFFFF6A00),
-                      blurRadius: 8,
-                      spreadRadius: -2,
-                    ),
-                  ],
-                ),
-                selectedTextStyle: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                ),
-
-                // Día de hoy
-                todayDecoration: BoxDecoration(
-                  color: const Color(0xFFFF6A00).withValues(alpha: 0.25),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFFF6A00),
-                    width: 2,
-                  ),
-                ),
-                todayTextStyle: const TextStyle(
-                  color: Color(0xFFFF6A00),
-                  fontWeight: FontWeight.w900,
-                ),
-
-                // Marcadores
-                markerDecoration: const BoxDecoration(
-                  color: Color(0xFFFF6A00),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              headerStyle: const HeaderStyle(
-                formatButtonVisible: false,
-                titleCentered: true,
-                titleTextStyle: TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                ),
-                leftChevronIcon: Icon(
-                  Icons.chevron_left,
-                  color: Colors.white,
-                ),
-                rightChevronIcon: Icon(
-                  Icons.chevron_right,
-                  color: Colors.white,
-                ),
-              ),
-              daysOfWeekStyle: const DaysOfWeekStyle(
-                weekdayStyle: TextStyle(color: Colors.white70),
-                weekendStyle: TextStyle(color: Colors.orangeAccent),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Título de clases disponibles
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Container(
-              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFFFF6A00).withValues(alpha: 0.15),
-                    const Color(0xFFFF8534).withValues(alpha: 0.05),
-                  ],
+                color: const Color(0xFF1A1A1A),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
                 ),
-                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                  color: const Color(0xFFFF6A00).withValues(alpha: 0.2),
                   width: 1,
                 ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.event_available,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Clases Disponibles',
-                          style: TextStyle(
-                            color: Color(0xFFFF6A00),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _selectedDay != null
-                              ? DateFormat('EEEE, dd MMMM yyyy', 'es_ES').format(_selectedDay!)
-                              : 'Selecciona un día',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
-            ),
-          ),
+              child: TableCalendar(
+                firstDay: DateTime.now(),
+                lastDay: DateTime.now().add(const Duration(days: 90)),
+                focusedDay: _focusedDay,
+                calendarFormat: _calendarFormat,
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                locale: 'es_ES',
+                startingDayOfWeek: StartingDayOfWeek.monday,
+                onDaySelected: _onDaySelected,
+                onFormatChanged: (format) {
+                  if (_calendarFormat != format) {
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                  }
+                },
+                onPageChanged: (focusedDay) {
+                  _focusedDay = focusedDay;
+                },
+                // Estilos del calendario
+                calendarStyle: CalendarStyle(
+                  // Días
+                  defaultTextStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  weekendTextStyle: const TextStyle(
+                    color: Color(0xFFFF8534),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  outsideTextStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
 
-          const SizedBox(height: 12),
-
-          // Contador de clases usadas este mes
-          _buildClassCounter(),
-
-          const SizedBox(height: 12),
-
-          // Lista de clases desde Firebase
-          Expanded(
-            child: StreamBuilder<List<ClassSchedule>>(
-              stream: scheduleVM.getActiveSchedules(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.orangeAccent,
+                  // Día seleccionado
+                  selectedDecoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  );
-                }
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFFFF6A00),
+                        blurRadius: 8,
+                        spreadRadius: -2,
+                      ),
+                    ],
+                  ),
+                  selectedTextStyle: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
 
-                if (snapshot.hasError) {
-                  // Log detallado del error
-                  debugPrint('❌ ERROR EN AGENDAR_PAGE - StreamBuilder:');
-                  debugPrint('Error: ${snapshot.error}');
-                  debugPrint('StackTrace: ${snapshot.stackTrace}');
+                  // Día de hoy
+                  todayDecoration: BoxDecoration(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.25),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFF6A00),
+                      width: 2,
+                    ),
+                  ),
+                  todayTextStyle: const TextStyle(
+                    color: Color(0xFFFF6A00),
+                    fontWeight: FontWeight.w900,
+                  ),
 
-                  final errorMsg = snapshot.error.toString();
+                  // Marcadores
+                  markerDecoration: const BoxDecoration(
+                    color: Color(0xFFFF6A00),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                headerStyle: const HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  titleTextStyle: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  leftChevronIcon: Icon(
+                    Icons.chevron_left,
+                    color: Colors.white,
+                  ),
+                  rightChevronIcon: Icon(
+                    Icons.chevron_right,
+                    color: Colors.white,
+                  ),
+                ),
+                daysOfWeekStyle: const DaysOfWeekStyle(
+                  weekdayStyle: TextStyle(color: Colors.white70),
+                  weekendStyle: TextStyle(color: Colors.orangeAccent),
+                ),
+              ),
+            ),
 
-                  return Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
+            const SizedBox(height: 16),
+
+            // Título de clases disponibles
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFF6A00).withValues(alpha: 0.15),
+                      const Color(0xFFFF8534).withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.event_available,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(height: 16),
                           const Text(
-                            'Error al cargar clases',
+                            'Clases Disponibles',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFFF6A00),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          SelectableText(
-                            errorMsg,
-                            textAlign: TextAlign.center,
+                          const SizedBox(height: 2),
+                          Text(
+                            _selectedDay != null
+                                ? DateFormat(
+                                    'EEEE, dd MMMM yyyy',
+                                    'es_ES',
+                                  ).format(_selectedDay!)
+                                : 'Selecciona un día',
                             style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          if (errorMsg.contains('index'))
-                            const Text(
-                              'Necesitas crear un índice en Firestore.\nCopia el link del error y ábrelo en tu navegador.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.orangeAccent,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
                         ],
                       ),
                     ),
-                  );
-                }
-
-                final allSchedules = snapshot.data ?? [];
-                final classes = _selectedDay != null
-                    ? _getSchedulesForDay(allSchedules, _selectedDay!)
-                    : [];
-
-                if (classes.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(
-                          Icons.event_busy,
-                          size: 64,
-                          color: Colors.white24,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'No hay clases disponibles\npara este día',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white38,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                // Horarios suspendidos puntualmente en la fecha seleccionada
-                return StreamBuilder<Set<String>>(
-                  stream: _overrideService.disabledScheduleIdsForDate(_selectedDay!),
-                  builder: (context, overridesSnapshot) {
-                    final suspendedIds =
-                        overridesSnapshot.data ?? const <String>{};
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: classes.length,
-                      itemBuilder: (context, index) {
-                        final schedule = classes[index];
-
-                        // Usar un widget con estado para evitar flickering
-                        return ClassScheduleCard(
-                          key: ValueKey('${schedule.id}_${_selectedDay?.toString()}'),
-                          schedule: schedule,
-                          selectedDay: _selectedDay!,
-                          onBook: () => _bookClass(schedule),
-                          formatTime: _formatTime,
-                          hasClassPassed: _hasClassPassed,
-                          isSuspended: suspendedIds.contains(schedule.id),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
-      ),
+
+            const SizedBox(height: 12),
+
+            // Contador de clases usadas este mes
+            _buildClassCounter(),
+
+            const SizedBox(height: 12),
+
+            // Lista de clases desde Firebase
+            Expanded(
+              child: StreamBuilder<List<ClassSchedule>>(
+                stream: scheduleVM.getActiveSchedules(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.orangeAccent,
+                      ),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    // Log detallado del error
+                    debugPrint('❌ ERROR EN AGENDAR_PAGE - StreamBuilder:');
+                    debugPrint('Error: ${snapshot.error}');
+                    debugPrint('StackTrace: ${snapshot.stackTrace}');
+
+                    final errorMsg = snapshot.error.toString();
+
+                    return Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Error al cargar clases',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SelectableText(
+                              errorMsg,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            if (errorMsg.contains('index'))
+                              const Text(
+                                'Necesitas crear un índice en Firestore.\nCopia el link del error y ábrelo en tu navegador.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.orangeAccent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  final allSchedules = snapshot.data ?? [];
+                  final classes = _selectedDay != null
+                      ? _getSchedulesForDay(allSchedules, _selectedDay!)
+                      : [];
+
+                  if (classes.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.event_busy,
+                            size: 64,
+                            color: Colors.white24,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No hay clases disponibles\npara este día',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // Horarios suspendidos puntualmente en la fecha seleccionada
+                  return StreamBuilder<Set<String>>(
+                    stream: _overrideService.disabledScheduleIdsForDate(
+                      _selectedDay!,
+                    ),
+                    builder: (context, overridesSnapshot) {
+                      final suspendedIds =
+                          overridesSnapshot.data ?? const <String>{};
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: classes.length,
+                        itemBuilder: (context, index) {
+                          final schedule = classes[index];
+
+                          // Usar un widget con estado para evitar flickering
+                          return ClassScheduleCard(
+                            key: ValueKey(
+                              '${schedule.id}_${_selectedDay?.toString()}',
+                            ),
+                            schedule: schedule,
+                            selectedDay: _selectedDay!,
+                            onBook: () => _bookClass(schedule),
+                            formatTime: _formatTime,
+                            hasClassPassed: _hasClassPassed,
+                            isSuspended: suspendedIds.contains(schedule.id),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-
   // Método para encontrar la siguiente clase disponible según la hora actual
-
-
 }
 
 // Widget con estado para evitar flickering al hacer scroll
@@ -820,7 +821,8 @@ class ClassScheduleCard extends StatefulWidget {
   State<ClassScheduleCard> createState() => _ClassScheduleCardState();
 }
 
-class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKeepAliveClientMixin {
+class _ClassScheduleCardState extends State<ClassScheduleCard>
+    with AutomaticKeepAliveClientMixin {
   int? _bookedCount;
   bool? _alreadyBooked;
   bool _isLoading = true;
@@ -838,7 +840,8 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
   void didUpdateWidget(ClassScheduleCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Solo recargar si cambió el día seleccionado
-    if (oldWidget.selectedDay != widget.selectedDay || oldWidget.schedule.id != widget.schedule.id) {
+    if (oldWidget.selectedDay != widget.selectedDay ||
+        oldWidget.schedule.id != widget.schedule.id) {
       // Marcar como loading inmediatamente para evitar mostrar datos incorrectos
       setState(() {
         _isLoading = true;
@@ -855,7 +858,11 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
     try {
       final results = await Future.wait([
         bookingVM.getBookedCount(widget.schedule.id!, widget.selectedDay),
-        bookingVM.hasUserBookedSchedule(userId, widget.schedule.id!, widget.selectedDay),
+        bookingVM.hasUserBookedSchedule(
+          userId,
+          widget.schedule.id!,
+          widget.selectedDay,
+        ),
       ]);
 
       if (mounted) {
@@ -887,18 +894,11 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: color ?? Colors.white70,
-          ),
+          Icon(icon, size: 14, color: color ?? Colors.white70),
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(
-              color: color ?? Colors.white70,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: color ?? Colors.white70, fontSize: 12),
           ),
         ],
       ),
@@ -915,7 +915,8 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
     final availableSpots = widget.schedule.capacity - enrolled;
     final alreadyBooked = _alreadyBooked ?? false;
     // Una clase suspendida se muestra atenuada igual que una finalizada
-    final hasPassed = widget.isSuspended ||
+    final hasPassed =
+        widget.isSuspended ||
         widget.hasClassPassed(widget.schedule.time, widget.selectedDay);
 
     return Container(
@@ -927,17 +928,23 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
           color: isFull
               ? const Color(0xFFEF4444).withValues(alpha: 0.5)
               : hasPassed
-                  ? Colors.grey.withValues(alpha: 0.3)
-                  : const Color(0xFFFF6A00).withValues(alpha: 0.2),
+              ? Colors.grey.withValues(alpha: 0.3)
+              : const Color(0xFFFF6A00).withValues(alpha: 0.2),
           width: 1.5,
         ),
-        boxShadow: hasPassed ? [] : [
-          BoxShadow(
-            color: (isFull ? const Color(0xFFEF4444) : const Color(0xFFFF6A00)).withValues(alpha: 0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: hasPassed
+            ? []
+            : [
+                BoxShadow(
+                  color:
+                      (isFull
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFFFF6A00))
+                          .withValues(alpha: 0.1),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -970,7 +977,9 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
                           Text(
                             widget.schedule.instructor,
                             style: TextStyle(
-                              color: hasPassed ? Colors.white24 : Colors.white60,
+                              color: hasPassed
+                                  ? Colors.white24
+                                  : Colors.white60,
                               fontSize: 14,
                             ),
                           ),
@@ -999,13 +1008,17 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
                                 colors: [Color(0xFFFF6A00), Color(0xFFFF8534)],
                               ),
                         borderRadius: BorderRadius.circular(20),
-                        boxShadow: hasPassed ? [] : [
-                          BoxShadow(
-                            color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        boxShadow: hasPassed
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFFF6A00,
+                                  ).withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                       ),
                       child: Text(
                         widget.formatTime(widget.schedule.time),
@@ -1067,8 +1080,8 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
                   color: hasPassed
                       ? Colors.grey
                       : isFull
-                          ? Colors.red
-                          : Colors.green,
+                      ? Colors.red
+                      : Colors.green,
                 ),
               ],
             ),
@@ -1076,9 +1089,12 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: (_isLoading || isFull || alreadyBooked || hasPassed) ? null : widget.onBook,
+                onPressed: (_isLoading || isFull || alreadyBooked || hasPassed)
+                    ? null
+                    : widget.onBook,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: (_isLoading || isFull || alreadyBooked || hasPassed)
+                  backgroundColor:
+                      (_isLoading || isFull || alreadyBooked || hasPassed)
                       ? Colors.grey.shade800
                       : const Color(0xFFFF6A00),
                   foregroundColor: Colors.white,
@@ -1102,17 +1118,19 @@ class _ClassScheduleCardState extends State<ClassScheduleCard> with AutomaticKee
                         widget.isSuspended
                             ? 'CLASE SUSPENDIDA'
                             : hasPassed
-                                ? 'CLASE FINALIZADA'
-                                : isFull
-                                    ? 'CLASE LLENA'
-                                    : alreadyBooked
-                                        ? 'YA AGENDADA'
-                                        : 'RESERVAR CLASE',
+                            ? 'CLASE FINALIZADA'
+                            : isFull
+                            ? 'CLASE LLENA'
+                            : alreadyBooked
+                            ? 'YA AGENDADA'
+                            : 'RESERVAR CLASE',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
                           letterSpacing: 1,
-                          color: (isFull || alreadyBooked || hasPassed) ? Colors.white38 : Colors.white,
+                          color: (isFull || alreadyBooked || hasPassed)
+                              ? Colors.white38
+                              : Colors.white,
                         ),
                       ),
               ),

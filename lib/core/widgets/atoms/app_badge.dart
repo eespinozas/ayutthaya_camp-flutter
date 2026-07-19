@@ -3,14 +3,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_design_tokens.dart';
 
 /// Badge types for different states
-enum AppBadgeType {
-  success,
-  error,
-  warning,
-  info,
-  neutral,
-  primary,
-}
+enum AppBadgeType { success, error, warning, info, neutral, primary }
 
 /// Status badge component
 class AppBadge extends StatelessWidget {
@@ -43,17 +36,10 @@ class AppBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(
-              icon,
-              size: _getIconSize(),
-              color: _getTextColor(),
-            ),
+            Icon(icon, size: _getIconSize(), color: _getTextColor()),
             SizedBox(width: AppDesignTokens.spaceXs),
           ],
-          Text(
-            text,
-            style: _getTextStyle().copyWith(color: _getTextColor()),
-          ),
+          Text(text, style: _getTextStyle().copyWith(color: _getTextColor())),
         ],
       ),
     );
@@ -137,11 +123,7 @@ class AppBadge extends StatelessWidget {
 }
 
 /// Badge size enum
-enum AppBadgeSize {
-  small,
-  medium,
-  large,
-}
+enum AppBadgeSize { small, medium, large }
 
 /// Notification badge (dot with count)
 class AppNotificationBadge extends StatelessWidget {
@@ -169,15 +151,9 @@ class AppNotificationBadge extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.error,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primaryBlack,
-                  width: 2,
-                ),
+                border: Border.all(color: AppColors.primaryBlack, width: 2),
               ),
-              constraints: const BoxConstraints(
-                minWidth: 20,
-                minHeight: 20,
-              ),
+              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
               child: Center(
                 child: Text(
                   count > 99 ? '99+' : count.toString(),

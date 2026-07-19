@@ -11,8 +11,7 @@ class Validators {
   /// Largo mínimo de nombre y apellido.
   static const int nameMinLength = 2;
 
-  static final RegExp _emailRegex =
-      RegExp(r'^[\w\.\-\+]+@[\w\-]+\.[\w\.\-]+$');
+  static final RegExp _emailRegex = RegExp(r'^[\w\.\-\+]+@[\w\-]+\.[\w\.\-]+$');
   static final RegExp _uppercaseRegex = RegExp(r'\p{Lu}', unicode: true);
   static final RegExp _letterRegex = RegExp(r'\p{L}', unicode: true);
   static final RegExp _digitRegex = RegExp(r'[0-9]');
@@ -75,8 +74,7 @@ class Validators {
   /// Alfanumérica: al menos una letra Y al menos un número.
   static bool passwordIsAlphanumeric(String? value) {
     final password = (value ?? '').trim();
-    return _letterRegex.hasMatch(password) &&
-        _digitRegex.hasMatch(password);
+    return _letterRegex.hasMatch(password) && _digitRegex.hasMatch(password);
   }
 
   /// Contraseña: mínimo [passwordMinLength] caracteres, al menos una

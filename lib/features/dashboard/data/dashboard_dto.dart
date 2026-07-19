@@ -39,14 +39,14 @@ class DashboardDto {
   }
 
   DashboardEntity toEntity() => DashboardEntity(
-        planName: planName,
-        classesRemaining: classesRemaining,
-        vigenciaHasta: vigenciaHasta,
-        membershipStatus: membershipStatus,
-        agendadas: agendadas,
-        asistidas: asistidas,
-        noAsistidas: noAsistidas,
-        lastAmountCents: lastAmountCents,
-        lastStatus: lastStatus,
-      );
+    planName: planName,
+    classesRemaining: classesRemaining,
+    vigenciaHasta: vigenciaHasta,
+    membershipStatus: membershipStatus,
+    agendadas: agendadas,
+    asistidas: asistidas,
+    noAsistidas: noAsistidas,
+    lastAmountCents: lastAmountCents,
+    lastStatus: lastStatus,
+  );
 }

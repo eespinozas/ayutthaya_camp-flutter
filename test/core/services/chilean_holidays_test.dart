@@ -41,7 +41,10 @@ void main() {
     test('Viernes y Sábado Santo 2026 (3 y 4 de abril)', () {
       expect(ChileanHolidays.isHoliday(DateTime(2026, 4, 3)), isTrue);
       expect(ChileanHolidays.isHoliday(DateTime(2026, 4, 4)), isTrue);
-      expect(ChileanHolidays.isHoliday(DateTime(2026, 4, 5)), isFalse); // domingo no es feriado legal
+      expect(
+        ChileanHolidays.isHoliday(DateTime(2026, 4, 5)),
+        isFalse,
+      ); // domingo no es feriado legal
     });
   });
 
@@ -132,9 +135,18 @@ void main() {
     });
 
     test('isWeekdayHoliday', () {
-      expect(ChileanHolidays.isWeekdayHoliday(DateTime(2026, 9, 18)), isTrue); // viernes
-      expect(ChileanHolidays.isWeekdayHoliday(DateTime(2026, 10, 31)), isFalse); // sábado
-      expect(ChileanHolidays.isWeekdayHoliday(DateTime(2026, 3, 11)), isFalse); // normal
+      expect(
+        ChileanHolidays.isWeekdayHoliday(DateTime(2026, 9, 18)),
+        isTrue,
+      ); // viernes
+      expect(
+        ChileanHolidays.isWeekdayHoliday(DateTime(2026, 10, 31)),
+        isFalse,
+      ); // sábado
+      expect(
+        ChileanHolidays.isWeekdayHoliday(DateTime(2026, 3, 11)),
+        isFalse,
+      ); // normal
     });
   });
 }

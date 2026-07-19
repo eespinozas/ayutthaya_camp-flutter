@@ -4,12 +4,12 @@ import 'package:flutter/foundation.dart';
 import '../../../core/services/attendance_window.dart';
 
 enum BookingStatus {
-  confirmed,       // Reserva agendada
+  confirmed, // Reserva agendada
   pendingApproval, // Alumno confirmó por app; espera aprobación del admin
-  attended,        // Asistencia validada (check-in QR o aprobación del admin)
-  cancelled,       // Usuario canceló
-  noShow,          // No asistió (no confirmó dentro de la ventana)
-  rejected,        // Admin rechazó la confirmación del alumno
+  attended, // Asistencia validada (check-in QR o aprobación del admin)
+  cancelled, // Usuario canceló
+  noShow, // No asistió (no confirmó dentro de la ventana)
+  rejected, // Admin rechazó la confirmación del alumno
 }
 
 class Booking {
@@ -17,18 +17,18 @@ class Booking {
   final String userId;
   final String userName;
   final String userEmail;
-  final String scheduleId;         // ID del horario de clase
-  final String scheduleTime;       // "07:00"
-  final String scheduleType;       // "Muay Thai"
-  final String instructor;         // "Francisco Poveda"
-  final DateTime classDate;        // Fecha de la clase (ej: 2025-01-15)
+  final String scheduleId; // ID del horario de clase
+  final String scheduleTime; // "07:00"
+  final String scheduleType; // "Muay Thai"
+  final String instructor; // "Francisco Poveda"
+  final DateTime classDate; // Fecha de la clase (ej: 2025-01-15)
   final BookingStatus status;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? cancelledAt;
   final String? cancellationReason;
-  final DateTime? attendedAt;      // Cuando se marcó asistencia
-  final String? attendedBy;        // Admin que marcó asistencia
+  final DateTime? attendedAt; // Cuando se marcó asistencia
+  final String? attendedBy; // Admin que marcó asistencia
   final DateTime? attendanceConfirmedAt; // Cuando el alumno confirmó asistencia
   final bool userConfirmedAttendance; // Si el usuario confirmó su asistencia
 
@@ -67,11 +67,15 @@ class Booking {
       'status': status.name,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
-      'cancelledAt': cancelledAt != null ? Timestamp.fromDate(cancelledAt!) : null,
+      'cancelledAt': cancelledAt != null
+          ? Timestamp.fromDate(cancelledAt!)
+          : null,
       'cancellationReason': cancellationReason,
       'attendedAt': attendedAt != null ? Timestamp.fromDate(attendedAt!) : null,
       'attendedBy': attendedBy,
-      'attendanceConfirmedAt': attendanceConfirmedAt != null ? Timestamp.fromDate(attendanceConfirmedAt!) : null,
+      'attendanceConfirmedAt': attendanceConfirmedAt != null
+          ? Timestamp.fromDate(attendanceConfirmedAt!)
+          : null,
       'userConfirmedAttendance': userConfirmedAttendance,
     };
   }
@@ -83,7 +87,11 @@ class Booking {
     // Leer directamente el Timestamp y convertir la fecha
     final firestoreDate = (data['classDate'] as Timestamp).toDate();
     // Crear fecha en zona local usando los componentes de la fecha UTC
-    final classDate = DateTime(firestoreDate.year, firestoreDate.month, firestoreDate.day);
+    final classDate = DateTime(
+      firestoreDate.year,
+      firestoreDate.month,
+      firestoreDate.day,
+    );
 
     debugPrint('🔍 Booking.fromFirestore - ID: ${doc.id}');
     debugPrint('   Firestore date (UTC): $firestoreDate');
@@ -181,8 +189,10 @@ class Booking {
       cancellationReason: cancellationReason ?? this.cancellationReason,
       attendedAt: attendedAt ?? this.attendedAt,
       attendedBy: attendedBy ?? this.attendedBy,
-      attendanceConfirmedAt: attendanceConfirmedAt ?? this.attendanceConfirmedAt,
-      userConfirmedAttendance: userConfirmedAttendance ?? this.userConfirmedAttendance,
+      attendanceConfirmedAt:
+          attendanceConfirmedAt ?? this.attendanceConfirmedAt,
+      userConfirmedAttendance:
+          userConfirmedAttendance ?? this.userConfirmedAttendance,
     );
   }
 

@@ -162,16 +162,11 @@ class _MisClasesPageState extends State<MisClasesPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'No',
-              style: TextStyle(color: Colors.white70),
-            ),
+            child: const Text('No', style: TextStyle(color: Colors.white70)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text(
               'Sí, Cancelar',
               style: TextStyle(color: Colors.white),
@@ -232,9 +227,7 @@ class _MisClasesPageState extends State<MisClasesPage>
           centerTitle: false,
         ),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF6A00),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
         ),
       );
     }
@@ -257,34 +250,34 @@ class _MisClasesPageState extends State<MisClasesPage>
     return MembershipGuard(
       pageName: 'Mis Clases',
       child: Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text(
-          'Mis Clases',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        backgroundColor: const Color(0xFF0F0F0F),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1A1A1A),
+          title: const Text(
+            'Mis Clases',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          centerTitle: false,
+          bottom: TabBar(
+            controller: _tabController,
+            indicatorColor: const Color(0xFFFF6A00),
+            labelColor: const Color(0xFFFF6A00),
+            unselectedLabelColor: Colors.white60,
+            tabs: const [
+              Tab(text: 'Próximas'),
+              Tab(text: 'Completadas'),
+              Tab(text: 'Canceladas'),
+            ],
+          ),
         ),
-        centerTitle: false,
-        bottom: TabBar(
+        body: TabBarView(
           controller: _tabController,
-          indicatorColor: const Color(0xFFFF6A00),
-          labelColor: const Color(0xFFFF6A00),
-          unselectedLabelColor: Colors.white60,
-          tabs: const [
-            Tab(text: 'Próximas'),
-            Tab(text: 'Completadas'),
-            Tab(text: 'Canceladas'),
+          children: [
+            _buildBookingsList(user.uid, BookingStatus.confirmed),
+            _buildCompletedList(user.uid),
+            _buildBookingsList(user.uid, BookingStatus.cancelled),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildBookingsList(user.uid, BookingStatus.confirmed),
-          _buildCompletedList(user.uid),
-          _buildBookingsList(user.uid, BookingStatus.cancelled),
-        ],
-      ),
       ),
     );
   }
@@ -315,11 +308,7 @@ class _MisClasesPageState extends State<MisClasesPage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red,
-                  ),
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
                   const Text(
                     'Error al cargar clases',
@@ -333,10 +322,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                   SelectableText(
                     errorMsg,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                   const SizedBox(height: 16),
                   if (errorMsg.contains('index'))
@@ -357,27 +343,38 @@ class _MisClasesPageState extends State<MisClasesPage>
 
         final allBookings = snapshot.data ?? [];
 
-        debugPrint('📋 MIS_CLASES - Total bookings recibidas: ${allBookings.length}');
+        debugPrint(
+          '📋 MIS_CLASES - Total bookings recibidas: ${allBookings.length}',
+        );
         for (var booking in allBookings) {
-          debugPrint('   Booking: ${booking.scheduleType} - ${booking.classDate} - Status: ${booking.status.name}');
-          debugPrint('   isFuture: ${booking.isFuture()}, isToday: ${booking.isToday()}, isPast: ${booking.isPast()}');
+          debugPrint(
+            '   Booking: ${booking.scheduleType} - ${booking.classDate} - Status: ${booking.status.name}',
+          );
+          debugPrint(
+            '   isFuture: ${booking.isFuture()}, isToday: ${booking.isToday()}, isPast: ${booking.isPast()}',
+          );
         }
 
         final filteredBookings = allBookings.where((booking) {
           if (status == BookingStatus.confirmed) {
             // Incluir clases futuras Y clases de hoy; las confirmaciones de
             // hoy pendientes de aprobación siguen visibles como "próximas"
-            final shouldInclude = (booking.status == BookingStatus.confirmed &&
+            final shouldInclude =
+                (booking.status == BookingStatus.confirmed &&
                     (booking.isFuture() || booking.isToday())) ||
                 (booking.status == BookingStatus.pendingApproval &&
                     booking.isToday());
-            debugPrint('   Filtering ${booking.scheduleType}: status=${booking.status.name}, isFuture=${booking.isFuture()}, isToday=${booking.isToday()}, included=$shouldInclude');
+            debugPrint(
+              '   Filtering ${booking.scheduleType}: status=${booking.status.name}, isFuture=${booking.isFuture()}, isToday=${booking.isToday()}, included=$shouldInclude',
+            );
             return shouldInclude;
           }
           return booking.status == status;
         }).toList();
 
-        debugPrint('📋 Bookings filtradas ($status): ${filteredBookings.length}');
+        debugPrint(
+          '📋 Bookings filtradas ($status): ${filteredBookings.length}',
+        );
 
         if (filteredBookings.isEmpty) {
           return Center(
@@ -388,8 +385,8 @@ class _MisClasesPageState extends State<MisClasesPage>
                   status == BookingStatus.confirmed
                       ? Icons.event_available
                       : status == BookingStatus.cancelled
-                          ? Icons.event_busy
-                          : Icons.check_circle_outline,
+                      ? Icons.event_busy
+                      : Icons.check_circle_outline,
                   size: 64,
                   color: Colors.white24,
                 ),
@@ -398,13 +395,10 @@ class _MisClasesPageState extends State<MisClasesPage>
                   status == BookingStatus.confirmed
                       ? 'No tienes clases próximas'
                       : status == BookingStatus.cancelled
-                          ? 'No tienes clases canceladas'
-                          : 'Aún no has completado ninguna clase',
+                      ? 'No tienes clases canceladas'
+                      : 'Aún no has completado ninguna clase',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white38,
-                    fontSize: 16,
-                  ),
+                  style: const TextStyle(color: Colors.white38, fontSize: 16),
                 ),
               ],
             ),
@@ -449,11 +443,7 @@ class _MisClasesPageState extends State<MisClasesPage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red,
-                  ),
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
                   const Text(
                     'Error al cargar clases completadas',
@@ -467,10 +457,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                   SelectableText(
                     errorMsg,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                   const SizedBox(height: 16),
                   if (errorMsg.contains('index'))
@@ -513,10 +500,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                 Text(
                   'Aún no has completado ninguna clase',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white38,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.white38, fontSize: 16),
                 ),
               ],
             ),
@@ -536,7 +520,8 @@ class _MisClasesPageState extends State<MisClasesPage>
   }
 
   Widget _buildBookingCard(Booking booking) {
-    final isUpcoming = booking.status == BookingStatus.confirmed && booking.isFuture();
+    final isUpcoming =
+        booking.status == BookingStatus.confirmed && booking.isFuture();
     final isAttended = booking.status == BookingStatus.attended;
     final isNoShow = booking.status == BookingStatus.noShow;
     final isCancelled = booking.status == BookingStatus.cancelled;
@@ -592,10 +577,7 @@ class _MisClasesPageState extends State<MisClasesPage>
       color: const Color(0xFF1A1A1A),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: statusColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        side: BorderSide(color: statusColor.withValues(alpha: 0.3), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -611,7 +593,10 @@ class _MisClasesPageState extends State<MisClasesPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        DateFormat('EEEE, dd MMM yyyy', 'es_ES').format(booking.classDate),
+                        DateFormat(
+                          'EEEE, dd MMM yyyy',
+                          'es_ES',
+                        ).format(booking.classDate),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -638,7 +623,9 @@ class _MisClasesPageState extends State<MisClasesPage>
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.5)),
+                    border: Border.all(
+                      color: statusColor.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -683,10 +670,7 @@ class _MisClasesPageState extends State<MisClasesPage>
                 const SizedBox(width: 8),
                 Text(
                   booking.instructor,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
@@ -695,24 +679,27 @@ class _MisClasesPageState extends State<MisClasesPage>
             if (booking.status == BookingStatus.confirmed) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: booking.userConfirmedAttendance
                       ? Colors.green.withValues(alpha: 0.15)
                       : booking.missedConfirmationWindow()
-                          ? Colors.red.withValues(alpha: 0.15)
-                          : booking.canConfirmAttendance()
-                              ? Colors.orange.withValues(alpha: 0.15)
-                              : Colors.grey.withValues(alpha: 0.15),
+                      ? Colors.red.withValues(alpha: 0.15)
+                      : booking.canConfirmAttendance()
+                      ? Colors.orange.withValues(alpha: 0.15)
+                      : Colors.grey.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: booking.userConfirmedAttendance
                         ? Colors.green.withValues(alpha: 0.4)
                         : booking.missedConfirmationWindow()
-                            ? Colors.red.withValues(alpha: 0.4)
-                            : booking.canConfirmAttendance()
-                                ? Colors.orange.withValues(alpha: 0.4)
-                                : Colors.grey.withValues(alpha: 0.4),
+                        ? Colors.red.withValues(alpha: 0.4)
+                        : booking.canConfirmAttendance()
+                        ? Colors.orange.withValues(alpha: 0.4)
+                        : Colors.grey.withValues(alpha: 0.4),
                   ),
                 ),
                 child: Row(
@@ -720,32 +707,46 @@ class _MisClasesPageState extends State<MisClasesPage>
                     Icon(
                       booking.userConfirmedAttendance
                           ? Icons.check_circle
-                          : booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClase)
-                              ? Icons.cancel
-                              : booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClase)
-                                  ? Icons.schedule
-                                  : Icons.event,
+                          : booking.missedConfirmationWindow(
+                              esPrimeraClaseDelDia: esPrimeraClase,
+                            )
+                          ? Icons.cancel
+                          : booking.canConfirmAttendance(
+                              esPrimeraClaseDelDia: esPrimeraClase,
+                            )
+                          ? Icons.schedule
+                          : Icons.event,
                       color: booking.userConfirmedAttendance
                           ? Colors.green
-                          : booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClase)
-                              ? Colors.red
-                              : booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClase)
-                                  ? Colors.orange
-                                  : Colors.grey,
+                          : booking.missedConfirmationWindow(
+                              esPrimeraClaseDelDia: esPrimeraClase,
+                            )
+                          ? Colors.red
+                          : booking.canConfirmAttendance(
+                              esPrimeraClaseDelDia: esPrimeraClase,
+                            )
+                          ? Colors.orange
+                          : Colors.grey,
                       size: 18,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        booking.getConfirmationStatusText(esPrimeraClaseDelDia: esPrimeraClase),
+                        booking.getConfirmationStatusText(
+                          esPrimeraClaseDelDia: esPrimeraClase,
+                        ),
                         style: TextStyle(
                           color: booking.userConfirmedAttendance
                               ? Colors.green
-                              : booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClase)
-                                  ? Colors.red
-                                  : booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClase)
-                                      ? Colors.orange
-                                      : Colors.grey,
+                              : booking.missedConfirmationWindow(
+                                  esPrimeraClaseDelDia: esPrimeraClase,
+                                )
+                              ? Colors.red
+                              : booking.canConfirmAttendance(
+                                  esPrimeraClaseDelDia: esPrimeraClase,
+                                )
+                              ? Colors.orange
+                              : Colors.grey,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -759,55 +760,65 @@ class _MisClasesPageState extends State<MisClasesPage>
               // hoy y aún no abre la ventana, se muestra deshabilitado con la
               // hora desde la que estará disponible.
               if (!booking.userConfirmedAttendance &&
-                  (booking.canConfirmAttendance(esPrimeraClaseDelDia: esPrimeraClase) ||
+                  (booking.canConfirmAttendance(
+                        esPrimeraClaseDelDia: esPrimeraClase,
+                      ) ||
                       (booking.isToday() &&
-                          !booking.missedConfirmationWindow(esPrimeraClaseDelDia: esPrimeraClase)))) ...[
+                          !booking.missedConfirmationWindow(
+                            esPrimeraClaseDelDia: esPrimeraClase,
+                          )))) ...[
                 const SizedBox(height: 12),
-                Builder(builder: (context) {
-                  final habilitado = booking.canConfirmAttendance(
-                    esPrimeraClaseDelDia: esPrimeraClase,
-                  );
-                  final abre = booking.confirmationOpensAt();
-                  return SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: habilitado
-                          ? () async {
-                              final bookingVM = context.read<BookingViewModel>();
-                              final success =
-                                  await bookingVM.confirmAttendance(booking.id!);
-                              if (success && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      AppFlags.attendanceApprovalFlow
-                                          ? 'Confirmación enviada: queda pendiente de aprobación del admin'
-                                          : 'Asistencia confirmada',
+                Builder(
+                  builder: (context) {
+                    final habilitado = booking.canConfirmAttendance(
+                      esPrimeraClaseDelDia: esPrimeraClase,
+                    );
+                    final abre = booking.confirmationOpensAt();
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: habilitado
+                            ? () async {
+                                final bookingVM = context
+                                    .read<BookingViewModel>();
+                                final success = await bookingVM
+                                    .confirmAttendance(booking.id!);
+                                if (success && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        AppFlags.attendanceApprovalFlow
+                                            ? 'Confirmación enviada: queda pendiente de aprobación del admin'
+                                            : 'Asistencia confirmada',
+                                      ),
+                                      backgroundColor: Colors.green,
                                     ),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
+                                  );
+                                }
                               }
-                            }
-                          : null,
-                      icon: Icon(habilitado ? Icons.check : Icons.lock_clock, size: 20),
-                      label: Text(
-                        habilitado
-                            ? 'Confirmar Asistencia'
-                            : 'Disponible desde las ${abre.hour.toString().padLeft(2, '0')}:${abre.minute.toString().padLeft(2, '0')}',
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6A00),
-                        foregroundColor: Colors.black,
-                        disabledBackgroundColor: Colors.white12,
-                        disabledForegroundColor: Colors.white54,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                            : null,
+                        icon: Icon(
+                          habilitado ? Icons.check : Icons.lock_clock,
+                          size: 20,
+                        ),
+                        label: Text(
+                          habilitado
+                              ? 'Confirmar Asistencia'
+                              : 'Disponible desde las ${abre.hour.toString().padLeft(2, '0')}:${abre.minute.toString().padLeft(2, '0')}',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF6A00),
+                          foregroundColor: Colors.black,
+                          disabledBackgroundColor: Colors.white12,
+                          disabledForegroundColor: Colors.white54,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ],
             ],
 
@@ -820,7 +831,9 @@ class _MisClasesPageState extends State<MisClasesPage>
                   onPressed: canCancel ? () => _cancelClass(booking) : null,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: canCancel ? Colors.red : Colors.grey,
-                    side: BorderSide(color: canCancel ? Colors.red : Colors.grey),
+                    side: BorderSide(
+                      color: canCancel ? Colors.red : Colors.grey,
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

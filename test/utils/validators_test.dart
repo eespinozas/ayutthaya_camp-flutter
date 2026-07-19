@@ -5,8 +5,10 @@ import 'package:ayutthaya_camp/utils/validators.dart';
 void main() {
   group('Validators.normalizeEmail', () {
     test('hace trim y lowercase', () {
-      expect(Validators.normalizeEmail('  Juan.Perez@Gmail.COM  '),
-          'juan.perez@gmail.com');
+      expect(
+        Validators.normalizeEmail('  Juan.Perez@Gmail.COM  '),
+        'juan.perez@gmail.com',
+      );
       expect(Validators.normalizeEmail(null), '');
     });
   });
@@ -40,8 +42,11 @@ void main() {
         'juan@gm ail.com',
       ];
       for (final email in invalidos) {
-        expect(Validators.validateEmail(email), 'Ingresa un correo válido',
-            reason: email);
+        expect(
+          Validators.validateEmail(email),
+          'Ingresa un correo válido',
+          reason: email,
+        );
       }
     });
 
@@ -68,8 +73,10 @@ void main() {
     });
 
     test('vacío pide repetir', () {
-      expect(Validators.validateEmailMatch('', 'juan@gmail.com'),
-          'Repite tu correo');
+      expect(
+        Validators.validateEmailMatch('', 'juan@gmail.com'),
+        'Repite tu correo',
+      );
     });
   });
 
@@ -123,7 +130,9 @@ void main() {
   group('Validators.validatePasswordMatch', () {
     test('coincide', () {
       expect(
-          Validators.validatePasswordMatch('Ayutthaya1', 'Ayutthaya1'), isNull);
+        Validators.validatePasswordMatch('Ayutthaya1', 'Ayutthaya1'),
+        isNull,
+      );
     });
 
     test('no coincide', () {
@@ -141,8 +150,10 @@ void main() {
     });
 
     test('vacía pide repetirla', () {
-      expect(Validators.validatePasswordMatch('', 'Ayutthaya1'),
-          'Repite tu contraseña');
+      expect(
+        Validators.validatePasswordMatch('', 'Ayutthaya1'),
+        'Repite tu contraseña',
+      );
     });
   });
 

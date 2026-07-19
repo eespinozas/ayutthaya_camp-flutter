@@ -20,7 +20,6 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
@@ -89,10 +88,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                         SizedBox(height: 4),
                         Text(
                           'Este QR es único y permanente. Imprímelo y pégalo en la pared del gimnasio.',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                       ],
                     ),
@@ -125,10 +121,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                     const SizedBox(height: 8),
                     const Text(
                       'Código único para check-in automático',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                     const SizedBox(height: 24),
 
@@ -141,7 +134,9 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF6A00).withValues(alpha: 0.3),
+                              color: const Color(
+                                0xFFFF6A00,
+                              ).withValues(alpha: 0.3),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),
@@ -281,9 +276,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFFFF6A00),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFFFF6A00)),
                   );
                 }
 
@@ -294,7 +287,9 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                 // Filtrar clases de HOY
                 final today = DateTime.now();
                 // Feriados de lunes a viernes usan el horario del sábado
-                final todayDayOfWeek = ChileanHolidays.effectiveDayOfWeek(today);
+                final todayDayOfWeek = ChileanHolidays.effectiveDayOfWeek(
+                  today,
+                );
                 final schedules = snapshot.data!.docs
                     .map((doc) => ClassSchedule.fromFirestore(doc))
                     .where((schedule) => schedule.isOnDay(todayDayOfWeek))
@@ -330,7 +325,9 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    ...schedules.map((schedule) => _buildClassInfoCard(schedule)),
+                    ...schedules.map(
+                      (schedule) => _buildClassInfoCard(schedule),
+                    ),
                   ],
                 );
               },
@@ -345,18 +342,13 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
     return Card(
       color: const Color(0xFF1A1A1A),
       margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: const Color(0xFFFF6A00),
                 borderRadius: BorderRadius.circular(6),
@@ -385,10 +377,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                   ),
                   Text(
                     schedule.instructor,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ],
               ),
@@ -399,7 +388,11 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
     );
   }
 
-  Widget _buildInstructionItem(String number, String title, String description) {
+  Widget _buildInstructionItem(
+    String number,
+    String title,
+    String description,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,10 +430,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
               const SizedBox(height: 4),
               Text(
                 description,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
           ),
@@ -487,18 +477,12 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
               const SizedBox(height: 32),
               const Text(
                 'Escanea para registrar tu asistencia',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.black87),
               ),
               const SizedBox(height: 24),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Cerrar',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: const Text('Cerrar', style: TextStyle(fontSize: 18)),
               ),
             ],
           ),
@@ -512,9 +496,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: const [
             Icon(Icons.print, color: Color(0xFFFF6A00)),
@@ -539,17 +521,29 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildPrintStep('1', 'Captura de pantalla',
-                  'Haz una captura de pantalla del código QR en "Pantalla Completa"'),
+              _buildPrintStep(
+                '1',
+                'Captura de pantalla',
+                'Haz una captura de pantalla del código QR en "Pantalla Completa"',
+              ),
               const SizedBox(height: 12),
-              _buildPrintStep('2', 'Tamaño recomendado',
-                  'Imprime el QR en tamaño A4 o carta para mejor legibilidad'),
+              _buildPrintStep(
+                '2',
+                'Tamaño recomendado',
+                'Imprime el QR en tamaño A4 o carta para mejor legibilidad',
+              ),
               const SizedBox(height: 12),
-              _buildPrintStep('3', 'Ubicación',
-                  'Pega el QR en un lugar visible cerca de la entrada del gimnasio'),
+              _buildPrintStep(
+                '3',
+                'Ubicación',
+                'Pega el QR en un lugar visible cerca de la entrada del gimnasio',
+              ),
               const SizedBox(height: 12),
-              _buildPrintStep('4', 'Protección',
-                  'Opcional: Lamina el QR para mayor durabilidad'),
+              _buildPrintStep(
+                '4',
+                'Protección',
+                'Opcional: Lamina el QR para mayor durabilidad',
+              ),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -567,10 +561,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
                     Expanded(
                       child: Text(
                         'Este QR es permanente y funcionará para todas las clases',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
                       ),
                     ),
                   ],
@@ -634,10 +625,7 @@ class _AdminQRCodesPageState extends State<AdminQRCodesPage> {
               const SizedBox(height: 2),
               Text(
                 description,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
             ],
           ),

@@ -86,7 +86,9 @@ class PaginationService<T> {
       } else {
         _lastDocument = snapshot.docs.last;
 
-        final newItems = snapshot.docs.map((doc) => fromFirestore(doc)).toList();
+        final newItems = snapshot.docs
+            .map((doc) => fromFirestore(doc))
+            .toList();
         _items.addAll(newItems);
 
         // Si recibimos menos documentos que el pageSize, no hay más
@@ -95,7 +97,9 @@ class PaginationService<T> {
         }
       }
 
-      debugPrint('📄 Pagination: Loaded ${snapshot.docs.length} items (Total: ${_items.length})');
+      debugPrint(
+        '📄 Pagination: Loaded ${snapshot.docs.length} items (Total: ${_items.length})',
+      );
     } catch (e) {
       debugPrint('❌ Error loading page: $e');
       rethrow;
@@ -147,11 +151,11 @@ class UserSnapshot {
       role: data['role'] ?? 'student',
       membershipStatus: data['membershipStatus'] ?? 'none',
       createdAt: data['createdAt'] != null
-        ? (data['createdAt'] as Timestamp).toDate()
-        : null,
+          ? (data['createdAt'] as Timestamp).toDate()
+          : null,
       membershipExpirationDate: data['membershipExpirationDate'] != null
-        ? (data['membershipExpirationDate'] as Timestamp).toDate()
-        : null,
+          ? (data['membershipExpirationDate'] as Timestamp).toDate()
+          : null,
     );
   }
 }
