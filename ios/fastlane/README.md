@@ -39,6 +39,30 @@ Download signing certificates & provisioning profiles (read-only).
 
 Build and upload a new beta to TestFlight
 
+### ios promote
+
+```sh
+[bundle exec] fastlane ios promote
+```
+
+Envía a revisión de App Store el último build de TestFlight de la versión actual (sin recompilar)
+
+### ios enable_push
+
+```sh
+[bundle exec] fastlane ios enable_push
+```
+
+Habilita Push Notifications en el App ID y regenera el perfil (match force)
+
+### ios live
+
+```sh
+[bundle exec] fastlane ios live
+```
+
+Muestra la versión publicada (live) y la versión en preparación/revisión
+
 ### ios diagnose
 
 ```sh
