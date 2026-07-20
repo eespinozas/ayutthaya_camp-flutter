@@ -2,12 +2,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'firebase_options.dart';
 import 'app/app.dart';
 import 'core/services/config_service.dart';
 import 'core/services/notification_service.dart';
 
 Future<void> main() async {
+  // URLs limpias en web (sin #), p. ej. /beta en vez de /#/beta
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
   FlutterError.onError = (FlutterErrorDetails details) {

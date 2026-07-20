@@ -36,6 +36,11 @@ export {confirmAccountDeletion} from "./functions/confirmAccountDeletion";
 export {createAdminUser} from "./functions/createAdminUser";
 
 // ============================================================================
+// BETA (Google Play closed testing)
+// ============================================================================
+export {joinBeta} from "./functions/joinBeta";
+
+// ============================================================================
 // NOTIFICACIONES PUSH (FCM)
 // Migradas del index.js original, que nunca entraba al build.
 // ============================================================================

@@ -38,7 +38,7 @@ export function generateNewUserNotificationTemplate(params: NewUserNotificationP
     mainHeading: "Nuevo Usuario Registrado 🎉",
     bodyText: `Un nuevo usuario se ha registrado en la plataforma y está esperando la aprobación de su pago para comenzar a entrenar.<br><br><strong>Detalles del usuario:</strong><br>👤 Nombre: ${newUserName}<br>📧 Email: ${newUserEmail}${phoneInfo}<br>📅 Fecha de registro: ${registrationDate}`,
     buttonText: "Ver usuarios pendientes",
-    buttonUrl: `https://ayuthaya-camp.firebaseapp.com/admin/alumnos`,
+    buttonUrl: `https://login.ayutthayacamp.cl/admin/alumnos`,
     footerText: `Este es un correo automático para administradores`,
     supportEmail,
     companyAddress,

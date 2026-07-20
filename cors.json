@@ -1,6 +1,12 @@
 [
   {
-    "origin": ["*"],
+    "origin": [
+      "https://login.ayutthayacamp.cl",
+      "https://ayutthayacamp.cl",
+      "https://ayuthaya-camp.web.app",
+      "https://ayuthaya-camp.firebaseapp.com",
+      "http://localhost:5051"
+    ],
     "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
     "maxAgeSeconds": 3600,
     "responseHeader": ["Content-Type", "Authorization"]

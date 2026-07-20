@@ -38,7 +38,7 @@ export function generatePaymentApprovedTemplate(params: PaymentApprovedParams): 
     mainHeading: "¡Tu pago ha sido aprobado! ✅",
     bodyText: `Nos complace informarte que tu pago de ${amount} para el plan "${planName}" ha sido aprobado exitosamente. Ahora puedes comenzar a agendar tus clases y disfrutar de todos los beneficios de tu membresía.`,
     buttonText: "Agendar mi primera clase",
-    buttonUrl: `https://ayuthaya-camp.firebaseapp.com/agendar`,
+    buttonUrl: `https://login.ayutthayacamp.cl/agendar`,
     footerText: `Pago aprobado el ${approvedDate} • Plan: ${planName}`,
     supportEmail,
     companyAddress,

@@ -42,7 +42,7 @@ export function generateClassReminderTemplate(params: ClassReminderParams): stri
     mainHeading: `Tu clase es en ${timeText} ⏰`,
     bodyText: `Este es un recordatorio de que tienes una clase programada próximamente.<br><br><strong>Detalles de la clase:</strong><br>🥊 Clase: ${className}<br>📅 Fecha: ${classDate}<br>🕐 Hora: ${classTime}<br><br>¡Prepárate para entrenar duro! No olvides traer tu equipo y llegar con algunos minutos de anticipación.`,
     buttonText: "Ver mis clases",
-    buttonUrl: `https://ayuthaya-camp.firebaseapp.com/mis-clases`,
+    buttonUrl: `https://login.ayutthayacamp.cl/mis-clases`,
     footerText: `Clase programada para ${classDate} a las ${classTime}`,
     supportEmail,
     companyAddress,

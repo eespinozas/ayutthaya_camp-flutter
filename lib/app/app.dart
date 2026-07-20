@@ -8,6 +8,7 @@ import '../features/auth/presentation/pages/force_password_change_page.dart';
 import '../features/auth/presentation/widgets/session_guard.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 import '../features/auth/presentation/pages/forgot_password_page.dart';
+import '../features/auth/presentation/pages/beta_signup_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/dashboard/presentation/pages/main_nav_bar.dart';
 import '../features/admin/presentation/pages/admin_main_nav_bar.dart';
@@ -28,6 +29,7 @@ class Routes {
   static const shell = '/shell'; // (lo puedes dejar si se usa en otra parte)
   static const mainNav = '/main'; // 👈 NUEVA ruta (navbar)
   static const avatarTest = '/avatar-test'; // Test screen for avatar animations
+  static const beta = '/beta'; // Inscripción a la beta de Android
 }
 
 class App extends StatelessWidget {
@@ -92,6 +94,7 @@ class App extends StatelessWidget {
           Routes.mainNav: (_) => const MainNavBar(), // 👈 ruta a la navbar
           Routes.avatarTest: (_) =>
               const AvatarTestScreen(), // Avatar animation test screen
+          Routes.beta: (_) => const BetaSignupPage(), // Inscripción a la beta
         },
 
         // Pantalla inicial que decide a dónde ir

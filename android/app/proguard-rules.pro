@@ -28,6 +28,9 @@
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
+# Play Core (deferred components): Flutter lo referencia pero la app no lo usa
+-dontwarn com.google.android.play.core.**
+
 # Remove logging
 -assumenosideeffects class android.util.Log {
     public static *** d(...);

@@ -52,6 +52,6 @@ export function getAppConfig() {
     logoUrl: process.env.APP_LOGO_URL || "https://via.placeholder.com/120x120?text=Logo",
     supportEmail: process.env.SUPPORT_EMAIL || "soporte@ayutthaya.com",
     companyAddress: process.env.COMPANY_ADDRESS || "Tu Dirección, Ciudad, País",
-    firebaseActionDomain: process.env.ACTION_DOMAIN || "ayutthaya-camp.firebaseapp.com",
+    firebaseActionDomain: process.env.ACTION_DOMAIN || "login.ayutthayacamp.cl",
   };
 }
