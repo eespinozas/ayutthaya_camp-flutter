@@ -1,0 +1,5 @@
+Mejoras en la gestión de clases y asistencia:
+- Confirmación de asistencia con aprobación del instructor.
+- Historial de clases por alumno en el panel de administración.
+- Reportes de asistencia y ocupación corregidos.
+- Correcciones generales de estabilidad.

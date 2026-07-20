@@ -1,0 +1,56 @@
+name: App Store
+
+# Flujo de producción: merge de main -> prd = enviar a revisión de App Store
+# el ÚLTIMO build de TestFlight de la versión del pubspec (el mismo binario
+# ya probado; aquí no se compila nada).
+#
+# Uso:
+#   1. Probar el build en TestFlight (workflow Release / fastlane beta).
+#   2. Editar ios/fastlane/release_notes.txt con las novedades (en main).
+#   3. Merge main -> prd y push: este workflow envía a revisión.
+#   Al aprobar Apple, la versión se publica automáticamente
+#   (automatic_release en el lane `promote`).
+#
+# Nota: si la versión del pubspec ya está publicada en App Store, Apple
+# rechaza el envío — sube la versión (scripts/versioning.sh bump patch)
+# y pasa por TestFlight antes de mergear a prd.
+
+on:
+  push:
+    branches: [ prd ]
+  workflow_dispatch:
+
+jobs:
+  submit-appstore:
+    name: Enviar a revisión de App Store
+    # Solo llamadas a la API de App Store Connect: corre en Linux (1x minutos).
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Setup App Store Connect API Key
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "${{ secrets.ASC_KEY_CONTENT }}" | base64 -d \
+            > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+
+      - name: Fastlane promote (submit a revisión)
+        working-directory: ios
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_FILEPATH: /home/runner/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+        run: fastlane promote
