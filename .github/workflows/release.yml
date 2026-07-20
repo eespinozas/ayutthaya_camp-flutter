@@ -196,6 +196,16 @@ jobs:
           channel: 'stable'
           cache: true
 
+      # El default de la imagen macos-15 es Xcode 16.4 (SDK iOS 18.5) y
+      # Apple exige SDK iOS 26+ para subir a App Store Connect. La imagen
+      # trae Xcode 26.x instalado: se selecciona el más nuevo.
+      - name: Select Xcode 26
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)
+          echo "Usando $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
       - name: Setup Ruby for Fastlane
         uses: ruby/setup-ruby@v1
         with:
