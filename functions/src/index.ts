@@ -36,7 +36,11 @@ export {confirmAccountDeletion} from "./functions/confirmAccountDeletion";
 export {createAdminUser} from "./functions/createAdminUser";
 
 // ============================================================================
-// FUNCIONES EXISTENTES (del index.js original)
+// NOTIFICACIONES PUSH (FCM)
+// Migradas del index.js original, que nunca entraba al build.
 // ============================================================================
-// Si deseas mantener las funciones existentes, re-impórtalas aquí
-// O migra su código a TypeScript siguiendo la misma estructura
+export {
+  sendImmediateNotification,
+  processScheduledNotifications,
+  cleanupOldNotifications,
+} from "./functions/notifications";

@@ -124,6 +124,25 @@ service cloud.firestore {
     }
 
     // ============================================
+    // NOTIFICATIONS - Push inmediatos
+    // La app crea el doc; la Cloud Function (Admin SDK, no pasa por rules)
+    // lo procesa y actualiza. El cliente no necesita leer ni modificar.
+    // ============================================
+    match /notifications/{notificationId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if false;
+    }
+
+    // ============================================
+    // SCHEDULED_NOTIFICATIONS - Recordatorios de clase
+    // La app los crea al reservar y los busca/elimina al cancelar.
+    // ============================================
+    match /scheduled_notifications/{reminderId} {
+      allow create, read, delete: if request.auth != null;
+      allow update: if false;
+    }
+
+    // ============================================
     // CONFIG - Configuración de la app
     // ============================================
     match /config/{document} {
