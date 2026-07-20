@@ -291,6 +291,36 @@ platform :ios do
     UI.success("Enviado a revisión: #{v[:name]} (#{build}). Apple suele demorar 1-2 días.")
   end
 
+  desc "Habilita Push Notifications en el App ID y regenera el perfil (match force)"
+  lane :enable_push do
+    require "spaceship"
+    key = asc_api_key
+
+    bundle = Spaceship::ConnectAPI::BundleId.all(
+      filter: {identifier: BUNDLE_ID}
+    ).find { |b| b.identifier == BUNDLE_ID }
+    UI.user_error!("Bundle ID #{BUNDLE_ID} no encontrado") unless bundle
+
+    caps = bundle.get_capabilities.map(&:capability_type)
+    if caps.include?("PUSH_NOTIFICATIONS")
+      UI.success("Push Notifications ya estaba habilitado en el App ID")
+    else
+      bundle.create_capability("PUSH_NOTIFICATIONS")
+      UI.success("Push Notifications habilitado en el App ID #{BUNDLE_ID}")
+    end
+
+    # Regenerar el perfil App Store para que incluya aps-environment.
+    keychain = prepare_signing_keychain
+    match(
+      api_key: key,
+      type: "appstore",
+      force: true,
+      keychain_name: keychain,
+      keychain_password: ENV.fetch("KEYCHAIN_PASSWORD")
+    )
+    UI.success("Perfil regenerado con la capability de push")
+  end
+
   desc "Muestra la versión publicada (live) y la versión en preparación/revisión"
   lane :live do
     require "spaceship"

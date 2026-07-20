@@ -36,6 +36,14 @@ class NotificationService {
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         debugPrint('✅ Notificaciones autorizadas');
 
+        // iOS: sin esto los push NO se muestran con la app en primer plano
+        // (llegan a onMessage pero no hay banner ni sonido).
+        await _messaging.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
         // Configurar handlers
         _setupMessageHandlers();
 
