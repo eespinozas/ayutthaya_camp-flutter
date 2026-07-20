@@ -291,6 +291,28 @@ platform :ios do
     UI.success("Enviado a revisión: #{v[:name]} (#{build}). Apple suele demorar 1-2 días.")
   end
 
+  desc "Muestra la versión publicada (live) y la versión en preparación/revisión"
+  lane :live do
+    require "spaceship"
+    asc_api_key
+    app = Spaceship::ConnectAPI::App.find(BUNDLE_ID)
+    UI.user_error!("App no encontrada para #{BUNDLE_ID}") unless app
+
+    live_version = app.get_live_app_store_version
+    if live_version
+      UI.success("Publicada en App Store: #{live_version.version_string} (#{live_version.app_store_state})")
+    else
+      UI.important("No hay versión publicada actualmente")
+    end
+
+    edit_version = app.get_edit_app_store_version
+    if edit_version
+      UI.message("En preparación/revisión: #{edit_version.version_string} (#{edit_version.app_store_state})")
+    else
+      UI.message("Sin versión en preparación/revisión")
+    end
+  end
+
   desc "Diagnostic: list apps & bundle IDs visible to the API key"
   lane :diagnose do
     require "spaceship"
