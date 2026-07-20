@@ -48,13 +48,15 @@ class NotificationService {
         // Configurar handlers
         _setupMessageHandlers();
 
-        // Guardar el token en cada arranque con sesión activa (antes solo
-        // se guardaba en el login: un token nunca registrado o rotado
-        // dejaba al usuario sin push hasta que volviera a loguearse).
-        final currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser != null) {
-          await saveUserToken(currentUser.uid);
-        }
+        // Guardar el token cuando la sesión esté disponible. OJO: en este
+        // punto del arranque currentUser aún es null (Firebase Auth restaura
+        // la sesión de forma asíncrona), por eso se escucha authStateChanges:
+        // emite al restaurar la sesión persistida y también en cada login.
+        FirebaseAuth.instance.authStateChanges().listen((user) {
+          if (user != null) {
+            saveUserToken(user.uid);
+          }
+        });
 
         // Y re-guardar automáticamente cuando FCM rote el token.
         _messaging.onTokenRefresh.listen((newToken) async {
