@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -46,6 +47,29 @@ class NotificationService {
 
         // Configurar handlers
         _setupMessageHandlers();
+
+        // Guardar el token en cada arranque con sesión activa (antes solo
+        // se guardaba en el login: un token nunca registrado o rotado
+        // dejaba al usuario sin push hasta que volviera a loguearse).
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser != null) {
+          await saveUserToken(currentUser.uid);
+        }
+
+        // Y re-guardar automáticamente cuando FCM rote el token.
+        _messaging.onTokenRefresh.listen((newToken) async {
+          final uid = FirebaseAuth.instance.currentUser?.uid;
+          if (uid == null) return;
+          try {
+            await _firestore.collection('users').doc(uid).update({
+              'fcmToken': newToken,
+              'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+            });
+            debugPrint('🔄 FCM token rotado y guardado');
+          } catch (e) {
+            debugPrint('⚠️ Error guardando token rotado: $e');
+          }
+        });
 
         // Intentar obtener token (puede fallar en web si no hay service worker)
         try {
@@ -135,6 +159,18 @@ class NotificationService {
         if (!await _isNotificationSupported()) {
           debugPrint('⚠️ Navegador no soporta notificaciones push');
           return;
+        }
+      }
+
+      // iOS: getToken() lanza "apns-token-not-set" si se llama antes de que
+      // Apple entregue el token APNs (carrera típica justo tras el arranque
+      // o el login). Esperamos hasta ~15 s a que esté disponible.
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        for (var i = 0; i < 15; i++) {
+          final apnsToken = await _messaging.getAPNSToken();
+          if (apnsToken != null) break;
+          debugPrint('⏳ Esperando token APNs... (${i + 1}s)');
+          await Future.delayed(const Duration(seconds: 1));
         }
       }
 
