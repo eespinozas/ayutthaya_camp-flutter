@@ -59,6 +59,13 @@ jobs:
             VERSION="${{ github.event.inputs.version }}"
           fi
 
+          # Sin versión explícita (dispatch manual) se usa la del pubspec,
+          # descartando el build number (1.0.1+5 -> 1.0.1).
+          if [ -z "$VERSION" ]; then
+            VERSION=$(grep '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//' | cut -d+ -f1)
+            echo "Sin input de versión: usando ${VERSION} desde pubspec.yaml"
+          fi
+
           # Version code Android desde el conteo de commits.
           # iOS NO usa esto: el lane beta numera desde TestFlight.
           VERSION_CODE=$(git rev-list --count HEAD)
@@ -138,6 +145,9 @@ jobs:
             --build-number=${{ needs.prepare.outputs.version_code }} \
             --build-name=${{ needs.prepare.outputs.version }}
 
+      # Mientras la app no esté publicada, Google Play solo acepta releases
+      # con status "draft". Se intenta primero el flujo normal (completed) y,
+      # si falla exactamente por eso, se reintenta como draft.
       - name: Upload to Google Play
         env:
           SUPPLY_JSON_KEY_DATA: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
@@ -145,15 +155,29 @@ jobs:
           SUPPLY_TRACK: ${{ needs.prepare.outputs.play_track }}
           SUPPLY_AAB: build/app/outputs/bundle/release/app-release.aab
         run: |
-          fastlane supply \
-            --aab $SUPPLY_AAB \
-            --track $SUPPLY_TRACK \
-            --json_key_data "$SUPPLY_JSON_KEY_DATA" \
-            --package_name $SUPPLY_PACKAGE_NAME \
-            --skip_upload_apk \
-            --skip_upload_metadata \
-            --skip_upload_images \
-            --skip_upload_screenshots
+          set -o pipefail
+
+          upload() {
+            fastlane supply \
+              --aab $SUPPLY_AAB \
+              --track $SUPPLY_TRACK \
+              --json_key_data "$SUPPLY_JSON_KEY_DATA" \
+              --package_name $SUPPLY_PACKAGE_NAME \
+              --skip_upload_apk \
+              --skip_upload_metadata \
+              --skip_upload_images \
+              --skip_upload_screenshots \
+              "$@" 2>&1 | tee supply.log
+          }
+
+          if ! upload; then
+            if grep -qi "draft app" supply.log; then
+              echo "::warning::App en estado draft en Play Console; reintentando con release_status=draft"
+              upload --release_status draft
+            else
+              exit 1
+            fi
+          fi
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
