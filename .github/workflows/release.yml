@@ -125,9 +125,11 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      # tr elimina espacios/CRLF que invalidan el base64 si el secreto se
+      # pegó con saltos de línea (p. ej. generado con certutil en Windows).
       - name: Decode Android keystore
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | tr -d ' \t\r\n' | base64 -d > android/app/upload-keystore.jks
 
       - name: Create key.properties
         run: |
