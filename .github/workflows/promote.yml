@@ -8,9 +8,13 @@ name: Promote to Production
 # Flujo completo:
 #   1. release.yml construye y sube a alpha (Android) + TestFlight (iOS)
 #   2. Se prueba en beta cerrada / TestFlight
-#   3. Este workflow promueve exactamente esos binarios a producción
+#   3. Merge de main a prd (o dispatch manual) promueve exactamente esos
+#      binarios a producción — jamás se recompila para producción.
 
 on:
+  push:
+    branches:
+      - prd
   workflow_dispatch:
     inputs:
       platform:
@@ -32,7 +36,7 @@ jobs:
   promote-android:
     name: Promote Android (alpha → production)
     runs-on: ubuntu-latest
-    if: contains(fromJSON('["android","both"]'), github.event.inputs.platform)
+    if: contains(fromJSON('["android","both"]'), github.event.inputs.platform || 'both')
     timeout-minutes: 10
 
     steps:
@@ -52,13 +56,13 @@ jobs:
         env:
           SUPPLY_JSON_KEY_DATA: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           SUPPLY_PACKAGE_NAME: com.ayutthaya.ayutthaya_camp
-          SUPPLY_ROLLOUT: ${{ github.event.inputs.rollout }}
+          SUPPLY_ROLLOUT: ${{ github.event.inputs.rollout || '1.0' }}
         run: fastlane android promote_to_production
 
   promote-ios:
     name: Promote iOS (TestFlight → App Store review)
     runs-on: ubuntu-latest
-    if: contains(fromJSON('["ios","both"]'), github.event.inputs.platform)
+    if: contains(fromJSON('["ios","both"]'), github.event.inputs.platform || 'both')
     timeout-minutes: 10
 
     steps:
