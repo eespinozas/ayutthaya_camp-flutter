@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'firebase_options.dart';
+import 'firebase_env.dart';
 import 'app/app.dart';
 import 'core/services/config_service.dart';
 import 'core/services/notification_service.dart';
@@ -18,7 +18,8 @@ Future<void> main() async {
   };
 
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(options: firebaseOptionsForEnv);
+  if (isQa) debugPrint('🧪 Entorno QA: proyecto ayutthaya-camp-qa');
 
   // Inicializar servicio de notificaciones
   try {
