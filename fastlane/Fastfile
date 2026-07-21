@@ -36,20 +36,20 @@ platform :android do
     UI.success("✅ Successfully uploaded to Google Play (#{track})")
   end
 
-  desc "Promote a build from internal to beta"
+  desc "Promote a build from internal to alpha (prueba cerrada)"
   lane :promote_to_beta do
     promote(
       from_track: 'internal',
-      to_track: 'beta'
+      to_track: 'alpha'
     )
   end
 
-  desc "Promote a build from beta to production"
-  lane :promote_to_production do
+  desc "Promote the alpha (prueba cerrada) build to production without rebuilding"
+  lane :promote_to_production do |options|
     promote(
-      from_track: 'beta',
+      from_track: 'alpha',
       to_track: 'production',
-      rollout: '0.1'  # 10% rollout
+      rollout: options[:rollout] || ENV['SUPPLY_ROLLOUT'] || '1.0'
     )
   end
 
@@ -151,6 +151,43 @@ platform :ios do
     )
 
     UI.success("✅ Successfully uploaded to App Store")
+  end
+
+  desc "Promote the latest TestFlight build to App Store review (no rebuild)"
+  lane :release do
+    api_key = app_store_connect_api_key(
+      key_id: ENV['ASC_KEY_ID'],
+      issuer_id: ENV['ASC_ISSUER_ID'],
+      key_filepath: ENV['ASC_KEY_FILEPATH']
+    )
+
+    build_number = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: 'com.ayutthaya.ayutthayaCamp'
+    )
+    version = lane_context[SharedValues::LATEST_TESTFLIGHT_VERSION]
+
+    UI.message("🚀 Enviando a revisión el build #{build_number} (v#{version}) ya presente en TestFlight")
+
+    deliver(
+      api_key: api_key,
+      app_identifier: 'com.ayutthaya.ayutthayaCamp',
+      app_version: version,
+      build_number: build_number.to_s,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true,
+      submit_for_review: true,
+      automatic_release: true,
+      precheck_include_in_app_purchases: false,
+      submission_information: {
+        add_id_info_uses_idfa: false,
+        export_compliance_uses_encryption: false
+      }
+    )
+
+    UI.success("✅ Build #{build_number} enviado a revisión de App Store")
   end
 
   desc "Download metadata from App Store Connect"

@@ -20,10 +20,10 @@ on:
         required: false
         type: string
       play_track:
-        description: 'Google Play track'
+        description: 'Google Play track (alpha = prueba cerrada)'
         required: false
         type: choice
-        default: 'internal'
+        default: 'alpha'
         options:
           - internal
           - alpha
@@ -76,7 +76,7 @@ jobs:
       - name: Set deployment targets
         id: inputs
         run: |
-          PLAY_TRACK="${{ github.event.inputs.play_track || 'internal' }}"
+          PLAY_TRACK="${{ github.event.inputs.play_track || 'alpha' }}"
           PLATFORM="${{ github.event.inputs.platform || 'both' }}"
 
           echo "play_track=${PLAY_TRACK}" >> $GITHUB_OUTPUT

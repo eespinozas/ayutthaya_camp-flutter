@@ -1,0 +1,89 @@
+name: Promote to Production
+
+# Promueve a producción los binarios YA construidos y probados:
+#   - Android: el AAB del track alpha (prueba cerrada) -> production, sin recompilar.
+#   - iOS: el último build de TestFlight -> revisión de App Store, sin recompilar.
+# Ningún job compila nada; ambos corren en Linux en ~2 minutos.
+#
+# Flujo completo:
+#   1. release.yml construye y sube a alpha (Android) + TestFlight (iOS)
+#   2. Se prueba en beta cerrada / TestFlight
+#   3. Este workflow promueve exactamente esos binarios a producción
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Plataforma a promover'
+        required: true
+        type: choice
+        default: 'both'
+        options:
+          - android
+          - ios
+          - both
+      rollout:
+        description: 'Rollout Android (0.1 = 10%, 1.0 = 100%)'
+        required: false
+        type: string
+        default: '1.0'
+
+jobs:
+  promote-android:
+    name: Promote Android (alpha → production)
+    runs-on: ubuntu-latest
+    if: contains(fromJSON('["android","both"]'), github.event.inputs.platform)
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Promote alpha build to production
+        env:
+          SUPPLY_JSON_KEY_DATA: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          SUPPLY_PACKAGE_NAME: com.ayutthaya.ayutthaya_camp
+          SUPPLY_ROLLOUT: ${{ github.event.inputs.rollout }}
+        run: fastlane android promote_to_production
+
+  promote-ios:
+    name: Promote iOS (TestFlight → App Store review)
+    runs-on: ubuntu-latest
+    if: contains(fromJSON('["ios","both"]'), github.event.inputs.platform)
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Setup App Store Connect API Key
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "${{ secrets.ASC_KEY_CONTENT }}" | base64 -d \
+            > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+
+      - name: Submit latest TestFlight build for review
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_FILEPATH: /home/runner/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+        run: fastlane ios release
