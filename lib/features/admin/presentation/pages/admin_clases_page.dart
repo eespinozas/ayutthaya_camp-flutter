@@ -950,9 +950,7 @@ class _ClassCardState extends State<_ClassCard> {
                                             Navigator.pop(ctx, true),
                                         child: const Text(
                                           'Confirmar todos',
-                                          style: TextStyle(
-                                            color: Colors.green,
-                                          ),
+                                          style: TextStyle(color: Colors.green),
                                         ),
                                       ),
                                     ],

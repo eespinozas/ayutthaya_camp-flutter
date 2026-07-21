@@ -321,7 +321,9 @@ class NotificationService {
 
       // A los 15 minutos se pide confirmar asistencia; antes es solo aviso
       final isConfirmAsk = minutesBefore <= 15;
-      final title = isConfirmAsk ? '¿Nos confirmas tu asistencia?' : '🥊 Tu clase se acerca';
+      final title = isConfirmAsk
+          ? '¿Nos confirmas tu asistencia?'
+          : '🥊 Tu clase se acerca';
       final body = isConfirmAsk
           ? 'Tu clase de $className comienza en $minutesBefore minutos. '
                 'Entra a la app y cuéntanos si asistirás.'

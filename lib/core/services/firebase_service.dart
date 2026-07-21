@@ -3,8 +3,6 @@ import '../../firebase_env.dart';
 
 class FirebaseService {
   static Future<void> init() async {
-    await Firebase.initializeApp(
-      options: firebaseOptionsForEnv,
-    );
+    await Firebase.initializeApp(options: firebaseOptionsForEnv);
   }
 }

@@ -11,5 +11,6 @@ const String appEnv = String.fromEnvironment('APP_ENV', defaultValue: 'prod');
 
 bool get isQa => appEnv == 'qa';
 
-FirebaseOptions get firebaseOptionsForEnv =>
-    isQa ? QaFirebaseOptions.currentPlatform : DefaultFirebaseOptions.currentPlatform;
+FirebaseOptions get firebaseOptionsForEnv => isQa
+    ? QaFirebaseOptions.currentPlatform
+    : DefaultFirebaseOptions.currentPlatform;
