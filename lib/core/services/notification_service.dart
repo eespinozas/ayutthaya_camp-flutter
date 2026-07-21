@@ -319,17 +319,25 @@ class NotificationService {
         Duration(minutes: minutesBefore),
       );
 
-      // Crear documento de recordatorio programado
+      // A los 15 minutos se pide confirmar asistencia; antes es solo aviso
+      final isConfirmAsk = minutesBefore <= 15;
+      final title = isConfirmAsk ? '¿Nos confirmas tu asistencia?' : '🥊 Tu clase se acerca';
+      final body = isConfirmAsk
+          ? 'Tu clase de $className comienza en $minutesBefore minutos. '
+                'Entra a la app y cuéntanos si asistirás.'
+          : 'Tienes clase de $className a las $classTime. ¡Te esperamos!';
+
+      // Crear documento de recordatorio programado.
+      // OJO: los valores de 'data' deben ser strings (requisito de FCM).
       await _firestore.collection('scheduled_notifications').add({
         'bookingId': bookingId,
         'userId': userId,
-        'title': 'Recordatorio de Clase',
-        'body':
-            'Tu clase de $className es en $minutesBefore minutos. No olvides confirmar tu asistencia.',
+        'title': title,
+        'body': body,
         'data': {
           'type': 'class_reminder',
           'bookingId': bookingId,
-          'minutesBefore': minutesBefore,
+          'minutesBefore': '$minutesBefore',
         },
         'scheduledFor': Timestamp.fromDate(reminderTime),
         'sent': false,

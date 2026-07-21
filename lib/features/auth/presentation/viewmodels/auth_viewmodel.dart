@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/config/app_constants.dart';
+import '../../../../core/error/error_handler.dart';
 import '../../../../core/services/auth_email_service.dart';
 import '../../../../core/services/notification_service.dart';
 
@@ -309,29 +310,10 @@ class AuthViewModel extends ChangeNotifier {
       await Future.delayed(const Duration(milliseconds: 100));
 
       return true;
-    } on FirebaseAuthException catch (e) {
-      switch (e.code) {
-        case 'user-not-found':
-          _error = 'Usuario no encontrado';
-          break;
-        case 'wrong-password':
-          _error = 'Contraseña incorrecta';
-          break;
-        case 'invalid-email':
-          _error = 'Email inválido';
-          break;
-        case 'user-disabled':
-          _error = 'Usuario deshabilitado';
-          break;
-        case 'too-many-requests':
-          _error = 'Demasiados intentos, intenta más tarde';
-          break;
-        default:
-          _error = e.message ?? 'Error al iniciar sesión';
-      }
-      return false;
     } catch (e) {
-      _error = e.toString();
+      // ErrorHandler traduce todos los códigos de Firebase Auth (incluido
+      // invalid-credential, que el switch anterior no cubría) a español.
+      _error = ErrorHandler.getUserMessage(e);
       return false;
     } finally {
       _loading = false;

@@ -139,13 +139,20 @@ export const processScheduledNotifications = onSchedule(
           continue;
         }
 
+        // FCM exige que todos los valores de data sean strings; los docs
+        // antiguos guardaban minutesBefore como número.
+        const safeData: Record<string, string> = {};
+        for (const [k, v] of Object.entries(reminder.data || {})) {
+          safeData[k] = String(v);
+        }
+
         const message: admin.messaging.Message = {
           token: fcmToken,
           notification: {
             title: reminder.title,
             body: reminder.body,
           },
-          data: reminder.data || {},
+          data: safeData,
           android: {
             notification: {
               sound: "default",

@@ -91,8 +91,10 @@ class ErrorHandler {
         return 'No existe una cuenta con este correo electrónico.';
       case 'wrong-password':
         return 'Contraseña incorrecta. Intenta nuevamente.';
+      // Firebase moderno colapsa user-not-found/wrong-password en este código
       case 'invalid-credential':
-        return 'Credenciales inválidas. Verifica tus datos.';
+      case 'INVALID_LOGIN_CREDENTIALS':
+        return 'Correo o contraseña incorrectos. Intenta nuevamente.';
       case 'user-disabled':
         return 'Esta cuenta ha sido deshabilitada.';
 

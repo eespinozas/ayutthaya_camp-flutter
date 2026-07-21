@@ -478,6 +478,31 @@ class _ClassCardState extends State<_ClassCard> {
     }
   }
 
+  /// Registra la decisión definitiva de asistencia de un alumno.
+  /// Confirmar -> asistió; Rechazar -> no asistió (o rechaza la confirmación
+  /// del alumno si estaba esperando aprobación). No es reversible desde la UI.
+  Future<void> _decideAttendance(
+    BuildContext context,
+    Booking booking, {
+    required bool attended,
+  }) async {
+    try {
+      if (attended) {
+        await widget.viewModel.markAttendance(booking.id!);
+      } else if (booking.status == BookingStatus.pendingApproval) {
+        await widget.viewModel.rejectAttendance(booking.id!);
+      } else {
+        await widget.viewModel.markNoShow(booking.id!);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = widget.viewModel.getClassStatus(widget.schedule.time);
@@ -694,13 +719,26 @@ class _ClassCardState extends State<_ClassCard> {
                               booking.status == BookingStatus.pendingApproval;
                           final isRejected =
                               booking.status == BookingStatus.rejected;
+                          final isNoShow =
+                              booking.status == BookingStatus.noShow;
+                          final isCancelled =
+                              booking.status == BookingStatus.cancelled;
+                          // La decisión de asistencia es definitiva: una vez
+                          // confirmada o rechazada, no se puede modificar.
+                          final isDecided =
+                              hasAttended ||
+                              isNoShow ||
+                              isRejected ||
+                              isCancelled;
 
                           final rowColor = hasAttended
                               ? Colors.green
                               : isPending
                               ? Colors.amber
-                              : isRejected
+                              : (isRejected || isNoShow)
                               ? Colors.red
+                              : isCancelled
+                              ? Colors.grey
                               : null;
 
                           return Container(
@@ -723,41 +761,32 @@ class _ClassCardState extends State<_ClassCard> {
                             ),
                             child: Row(
                               children: [
-                                if (isPending)
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                    child: Icon(
-                                      Icons.hourglass_top,
-                                      color: Colors.amber,
-                                      size: 22,
-                                    ),
-                                  )
-                                else
-                                  Checkbox(
-                                    value: hasAttended,
-                                    onChanged: (_) async {
-                                      try {
-                                        await widget.viewModel.toggleAttendance(
-                                          booking,
-                                        );
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Error: $e'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                                    activeColor: Colors.green,
-                                    checkColor: Colors.white,
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
                                   ),
+                                  child: Icon(
+                                    isPending
+                                        ? Icons.hourglass_top
+                                        : hasAttended
+                                        ? Icons.check_circle
+                                        : (isNoShow || isRejected)
+                                        ? Icons.cancel
+                                        : isCancelled
+                                        ? Icons.block
+                                        : Icons.radio_button_unchecked,
+                                    color: isPending
+                                        ? Colors.amber
+                                        : hasAttended
+                                        ? Colors.green
+                                        : (isNoShow || isRejected)
+                                        ? Colors.red
+                                        : isCancelled
+                                        ? Colors.grey
+                                        : Colors.white38,
+                                    size: 22,
+                                  ),
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
@@ -838,31 +867,21 @@ class _ClassCardState extends State<_ClassCard> {
                                     ],
                                   ),
                                 ),
-                                if (isPending) ...[
+                                // Sin decisión aún: Confirmar (asistió) o
+                                // Rechazar (no asistió). Ambas son definitivas.
+                                if (!isDecided) ...[
                                   IconButton(
-                                    onPressed: () async {
-                                      try {
-                                        await widget.viewModel
-                                            .approveAttendance(booking.id!);
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Error: $e'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
+                                    onPressed: () => _decideAttendance(
+                                      context,
+                                      booking,
+                                      attended: true,
+                                    ),
                                     icon: const Icon(
                                       Icons.check_circle,
                                       color: Colors.green,
                                       size: 24,
                                     ),
-                                    tooltip: 'Aprobar asistencia',
+                                    tooltip: 'Confirmar (asistió)',
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(
                                       minWidth: 36,
@@ -870,54 +889,76 @@ class _ClassCardState extends State<_ClassCard> {
                                     ),
                                   ),
                                   IconButton(
-                                    onPressed: () async {
-                                      try {
-                                        await widget.viewModel.rejectAttendance(
-                                          booking.id!,
-                                        );
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Error: $e'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
+                                    onPressed: () => _decideAttendance(
+                                      context,
+                                      booking,
+                                      attended: false,
+                                    ),
                                     icon: const Icon(
                                       Icons.cancel,
                                       color: Colors.red,
                                       size: 24,
                                     ),
-                                    tooltip: 'Rechazar confirmación',
+                                    tooltip: 'Rechazar (no asistió)',
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(
                                       minWidth: 36,
                                       minHeight: 36,
                                     ),
                                   ),
-                                ] else if (hasAttended)
-                                  const Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green,
-                                    size: 18,
-                                  ),
+                                ],
                               ],
                             ),
                           );
                         }),
                       const SizedBox(height: 12),
-                      // Quick actions
-                      if (bookings.isNotEmpty)
+                      // Confirmar todos los pendientes de decisión como
+                      // asistidos (definitivo). Pide confirmación previa
+                      // porque la acción no es reversible.
+                      if (bookings.any(
+                        (b) =>
+                            b.status == BookingStatus.confirmed ||
+                            b.status == BookingStatus.pendingApproval,
+                      ))
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             TextButton.icon(
                               onPressed: () async {
+                                final ok = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    backgroundColor: const Color(0xFF1A1A1A),
+                                    title: const Text(
+                                      '¿Confirmar a todos?',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    content: const Text(
+                                      'Todos los alumnos sin decisión quedarán '
+                                      'como asistidos. Esta acción no se puede '
+                                      'deshacer.',
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, false),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, true),
+                                        child: const Text(
+                                          'Confirmar todos',
+                                          style: TextStyle(
+                                            color: Colors.green,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (ok != true) return;
                                 try {
                                   await widget.viewModel.markAllAttended(
                                     bookings,
@@ -926,7 +967,7 @@ class _ClassCardState extends State<_ClassCard> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
-                                          'Todos marcados como asistidos',
+                                          'Todos confirmados como asistidos',
                                         ),
                                         backgroundColor: Colors.green,
                                       ),
@@ -944,39 +985,9 @@ class _ClassCardState extends State<_ClassCard> {
                                 }
                               },
                               icon: const Icon(Icons.done_all, size: 16),
-                              label: const Text('Marcar Todos'),
+                              label: const Text('Confirmar todos (asistieron)'),
                               style: TextButton.styleFrom(
                                 foregroundColor: Colors.green,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton.icon(
-                              onPressed: () async {
-                                try {
-                                  await widget.viewModel.unmarkAll(bookings);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Todos desmarcados'),
-                                        backgroundColor: Colors.orange,
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Error: $e'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              icon: const Icon(Icons.remove_done, size: 16),
-                              label: const Text('Desmarcar Todos'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
                               ),
                             ),
                           ],

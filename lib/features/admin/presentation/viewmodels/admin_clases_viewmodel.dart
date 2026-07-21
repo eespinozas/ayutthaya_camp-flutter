@@ -5,7 +5,6 @@ import '../../../bookings/models/booking.dart';
 import '../../../schedules/models/class_schedule.dart';
 import '../../../schedules/models/schedule_override.dart';
 import '../../../schedules/services/schedule_override_service.dart';
-import '../../../../core/config/app_constants.dart';
 import '../../../../core/services/chilean_holidays.dart';
 
 class AdminClasesViewModel extends ChangeNotifier {
@@ -346,55 +345,24 @@ class AdminClasesViewModel extends ChangeNotifier {
     }
   }
 
-  /// Estado al que vuelve una reserva cuando el admin desmarca su
-  /// asistencia: si el alumno había confirmado (y el flujo de aprobación
-  /// está activo) vuelve a pendiente de aprobación; si no, a agendada.
-  String _revertStatusFor(Booking booking) {
-    return (AppFlags.attendanceApprovalFlow && booking.userConfirmedAttendance)
-        ? BookingStatus.pendingApproval.name
-        : BookingStatus.confirmed.name;
-  }
-
   // ---------------------------------------------------------------------------
-  // Toggle asistencia (marcar/desmarcar)
-  // ---------------------------------------------------------------------------
-  Future<void> toggleAttendance(Booking booking) async {
-    try {
-      if (booking.status == BookingStatus.attended) {
-        // Si ya estaba marcado como asistido, revertir
-        await _firestore.collection('bookings').doc(booking.id).update({
-          'status': _revertStatusFor(booking),
-          'attendedAt': null,
-          'attendedBy': null,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        debugPrint('✅ Asistencia removida');
-      } else {
-        // Marcar como asistido
-        await markAttendance(booking.id!);
-      }
-    } catch (e) {
-      debugPrint('❌ Error toggling asistencia: $e');
-      rethrow;
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Marcar todos los alumnos de una clase como asistentes
+  // Confirmar como asistidos a todos los alumnos sin decisión.
+  // La asistencia es DEFINITIVA: los estados ya decididos (attended, noShow,
+  // rejected, cancelled) no se tocan y no existe operación de reversión.
   // ---------------------------------------------------------------------------
   Future<void> markAllAttended(List<Booking> bookings) async {
     try {
       debugPrint(
-        '🔄 Marcando todos como asistidos: ${bookings.length} bookings',
+        '🔄 Confirmando todos como asistidos: ${bookings.length} bookings',
       );
 
       final adminId = _auth.currentUser?.uid ?? 'unknown';
       final batch = _firestore.batch();
 
       for (var booking in bookings) {
-        // No tocar asistencias ya registradas ni reservas canceladas
-        if (booking.status != BookingStatus.attended &&
-            booking.status != BookingStatus.cancelled) {
+        // Solo reservas aún sin decisión de asistencia
+        if (booking.status == BookingStatus.confirmed ||
+            booking.status == BookingStatus.pendingApproval) {
           final docRef = _firestore.collection('bookings').doc(booking.id);
           batch.update(docRef, {
             'status': BookingStatus.attended.name,
@@ -406,38 +374,9 @@ class AdminClasesViewModel extends ChangeNotifier {
       }
 
       await batch.commit();
-      debugPrint('✅ Todos marcados como asistidos');
+      debugPrint('✅ Todos confirmados como asistidos');
     } catch (e) {
-      debugPrint('❌ Error marcando todos como asistidos: $e');
-      rethrow;
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Desmarcar todos los alumnos de una clase
-  // ---------------------------------------------------------------------------
-  Future<void> unmarkAll(List<Booking> bookings) async {
-    try {
-      debugPrint('🔄 Desmarcando todos: ${bookings.length} bookings');
-
-      final batch = _firestore.batch();
-
-      for (var booking in bookings) {
-        if (booking.status == BookingStatus.attended) {
-          final docRef = _firestore.collection('bookings').doc(booking.id);
-          batch.update(docRef, {
-            'status': _revertStatusFor(booking),
-            'attendedAt': null,
-            'attendedBy': null,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-      }
-
-      await batch.commit();
-      debugPrint('✅ Todos desmarcados');
-    } catch (e) {
-      debugPrint('❌ Error desmarcando todos: $e');
+      debugPrint('❌ Error confirmando todos: $e');
       rethrow;
     }
   }
