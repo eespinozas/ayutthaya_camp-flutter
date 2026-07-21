@@ -19,6 +19,10 @@ class AuthViewModel extends ChangeNotifier {
   bool _isCheckingSession = false;
   User? _user;
   String _userRole = 'student'; // 'student' o 'admin'
+  // Alcance de clases para admins: 'all' ve todas (dueño/head coach),
+  // 'own' solo las clases donde figura como instructor (instructorName).
+  String _classVisibility = 'all';
+  String? _instructorName;
   String _membershipStatus = 'none'; // none, pending, active, expired, frozen
   bool _mustChangePassword = false; // Cuenta creada con contraseña temporal
   DateTime? _expirationDate;
@@ -28,6 +32,12 @@ class AuthViewModel extends ChangeNotifier {
   User? get currentUser => _user;
   String get userRole => _userRole;
   bool get isAdmin => _userRole == 'admin';
+  String get classVisibility => _classVisibility;
+  String? get instructorName => _instructorName;
+
+  /// Admin restringido: solo ve las clases donde es instructor.
+  bool get seesOnlyOwnClasses =>
+      isAdmin && _classVisibility == 'own' && _instructorName != null;
   bool get mustChangePassword => _mustChangePassword;
   String get membershipStatus => _membershipStatus;
   DateTime? get expirationDate => _expirationDate;
@@ -51,6 +61,8 @@ class AuthViewModel extends ChangeNotifier {
         await _loadUserRole(user.uid);
       } else {
         _userRole = 'student';
+        _classVisibility = 'all';
+        _instructorName = null;
         _membershipStatus = 'none';
         _expirationDate = null;
       }
@@ -68,6 +80,8 @@ class AuthViewModel extends ChangeNotifier {
       if (doc.exists) {
         final data = doc.data()!;
         _userRole = data['role'] ?? 'student';
+        _classVisibility = data['classVisibility'] ?? 'all';
+        _instructorName = data['instructorName'];
         _membershipStatus = data['membershipStatus'] ?? 'none';
         _mustChangePassword = data['mustChangePassword'] == true;
 

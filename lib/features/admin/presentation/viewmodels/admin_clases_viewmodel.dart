@@ -19,6 +19,27 @@ class AdminClasesViewModel extends ChangeNotifier {
   bool loading = false;
   String? errorMsg;
 
+  // Visibilidad de clases del admin logueado: 'all' ve todas; 'own' solo
+  // aquellas donde class_schedules.instructor coincide con su instructorName.
+  // Se resuelve una vez antes de emitir schedules (ver getSchedules).
+  late final Future<void> _visibilityLoaded = _loadClassVisibility();
+  String _classVisibility = 'all';
+  String? _instructorName;
+
+  Future<void> _loadClassVisibility() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      final data = doc.data();
+      _classVisibility = data?['classVisibility'] ?? 'all';
+      _instructorName = data?['instructorName'];
+    } catch (e) {
+      // Ante cualquier error se conserva 'all' para no ocultar clases al dueño
+      debugPrint('⚠️ No se pudo cargar classVisibility: $e');
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Cambiar fecha seleccionada
   // ---------------------------------------------------------------------------
@@ -40,7 +61,14 @@ class AdminClasesViewModel extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Stream: Obtener horarios de clases (schedules) para la fecha seleccionada
   // ---------------------------------------------------------------------------
-  Stream<List<ClassSchedule>> getSchedules() {
+  Stream<List<ClassSchedule>> getSchedules() async* {
+    // La visibilidad debe estar resuelta antes del primer emit para que un
+    // admin restringido nunca vea (ni por un instante) clases ajenas.
+    await _visibilityLoaded;
+    yield* _schedulesStream();
+  }
+
+  Stream<List<ClassSchedule>> _schedulesStream() {
     // Obtener el día de la semana de la fecha seleccionada
     // weekday: 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves, 5=Viernes, 6=Sábado, 7=Domingo
     // Feriados de lunes a viernes usan el horario del sábado
@@ -129,6 +157,15 @@ class AdminClasesViewModel extends ChangeNotifier {
           }
 
           debugPrint('Schedules parseados exitosamente: ${schedules.length}');
+
+          // Admin restringido: solo sus propias clases
+          if (_classVisibility == 'own' && _instructorName != null) {
+            schedules.retainWhere((s) => s.instructor == _instructorName);
+            debugPrint(
+              'Filtro por instructor "$_instructorName": ${schedules.length} clases',
+            );
+          }
+
           debugPrint('═══════════════════════════════════════════════════════');
           debugPrint('');
 
